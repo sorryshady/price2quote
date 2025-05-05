@@ -1,0 +1,81 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Code Style Guidelines
+
+## Naming Conventions
+- PascalCase for components and types
+  ```tsx
+  export function UserProfile() {}
+  interface UserData {}
+  type AuthState = {}
+  ```
+- camelCase for functions and variables
+  ```tsx
+  const getUserData = () => {}
+  const isLoading = true
+  ```
+- UPPER_CASE for constants
+  ```tsx
+  const API_ENDPOINT = '/api/v1'
+  const MAX_RETRIES = 3
+  ```
+- kebab-case for files and directories
+  ```
+  components/user-profile/index.tsx
+  utils/date-formatter.ts
+  ```
+
+## Import Order
+1. React and Next.js imports
+2. External dependencies
+3. Internal modules
+4. Types and interfaces
+5. Styles and assets
+
+Example:
+```tsx
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+
+import { motion } from 'framer-motion'
+import * as z from 'zod'
+
+import { useAuth } from '@/lib/auth'
+import { Button } from '@/components/ui'
+
+import type { User } from '@/types'
+
+import './styles.css'
+```
+
+## Code Formatting
+- Use Prettier for consistent formatting
+- 2 space indentation
+- Single quotes for strings
+- Semicolons required
+- Trailing commas in multi-line
+- Max line length: 80 characters
+
+## TypeScript Usage
+- Enable strict mode
+- Use proper type annotations
+- Avoid `any` type
+- Use type inference when obvious
+- Document complex types
+
+## Comments and Documentation
+- Use JSDoc for component props
+- Document complex logic
+- Keep comments current
+- Use self-documenting code
+- Include usage examples
+
+## Error Handling
+- Use try/catch blocks
+- Implement error boundaries
+- Provide meaningful error messages
+- Handle edge cases
+- Log errors appropriately

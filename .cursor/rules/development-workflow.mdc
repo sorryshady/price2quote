@@ -1,0 +1,88 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Development Workflow
+
+## Getting Started
+1. Clone the repository
+2. Install dependencies with pnpm:
+   ```bash
+   pnpm install
+   ```
+3. Start development server:
+   ```bash
+   pnpm dev
+   ```
+
+## Development Process
+1. Create feature branch from main
+2. Implement changes following style guides
+3. Run tests and linting
+4. Create pull request
+5. Address review feedback
+6. Merge after approval
+
+## Quality Checks
+Run before committing:
+```bash
+# Format code
+pnpm format
+
+# Lint code
+pnpm lint
+
+# Type check
+pnpm type-check
+
+# Run tests
+pnpm test
+```
+
+## Branch Naming
+- feature/feature-name
+- fix/bug-description
+- chore/task-description
+- docs/documentation-update
+
+## Commit Messages
+Format: `type(scope): description`
+
+Types:
+- feat: New feature
+- fix: Bug fix
+- docs: Documentation
+- style: Formatting
+- refactor: Code restructuring
+- test: Testing
+- chore: Maintenance
+
+Example:
+```
+feat(auth): add user authentication
+fix(api): handle network errors
+docs(readme): update setup instructions
+```
+
+## Pull Requests
+- Clear title and description
+- Link related issues
+- Include test coverage
+- Update documentation
+- Add screenshots for UI changes
+
+## Code Review
+- Review for style compliance
+- Check type safety
+- Verify test coverage
+- Assess performance impact
+- Validate accessibility
+
+## Deployment
+1. Merge to main branch
+2. Automated tests run
+3. Build process starts
+4. Deploy to staging
+5. Verify deployment
+6. Deploy to production

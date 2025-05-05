@@ -1,0 +1,88 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Performance Guidelines
+
+## Performance Targets
+- Lighthouse score > 90
+- First Contentful Paint < 1.5s
+- Time to Interactive < 3.5s
+- Initial bundle size < 200KB
+
+## Code Optimization
+- Use React.memo for expensive renders
+- Implement proper dependency arrays in hooks
+- Avoid unnecessary re-renders
+- Lazy load components and routes
+
+Example:
+```tsx
+// Lazy loading components
+const HeavyComponent = lazy(() => import('./HeavyComponent'))
+
+// Proper hook dependencies
+useEffect(() => {
+  // Effect logic
+}, [dependency1, dependency2])
+
+// Memoization
+const MemoizedComponent = memo(Component, (prev, next) => {
+  return prev.id === next.id
+})
+```
+
+## Image Optimization
+- Use Next.js Image component
+- Implement responsive images
+- Optimize image formats
+- Use appropriate sizes
+
+Example:
+```tsx
+import Image from 'next/image'
+
+export function OptimizedImage() {
+  return (
+    <Image
+      src="/image.jpg"
+      alt="Description"
+      width={800}
+      height={600}
+      priority={false}
+      loading="lazy"
+    />
+  )
+}
+```
+
+## State Management
+- Keep state close to where it's used
+- Use appropriate state solutions
+- Implement proper caching
+- Optimize context usage
+
+## Bundle Optimization
+- Use dynamic imports
+- Implement code splitting
+- Tree shake unused code
+- Minimize dependencies
+
+## Server-Side Optimization
+- Use server components where appropriate
+- Implement proper caching
+- Optimize API routes
+- Use edge functions when needed
+
+## Monitoring
+- Track Core Web Vitals
+- Monitor bundle sizes
+- Implement error tracking
+- Use performance profiling
+
+## Best Practices
+- Implement virtualization for long lists
+- Use proper loading states
+- Optimize fonts and icons
+- Minimize main thread blocking

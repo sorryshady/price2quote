@@ -1,0 +1,67 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Component Development Patterns
+
+## Component Structure
+- Use functional components with TypeScript
+- Follow atomic design principles
+- Keep components focused and small
+- Implement proper prop types and interfaces
+
+Example component structure:
+```tsx
+import { type ReactNode } from 'react'
+
+interface ButtonProps {
+  children: ReactNode
+  variant?: 'primary' | 'secondary'
+  onClick?: () => void
+}
+
+export function Button({ children, variant = 'primary', onClick }: ButtonProps) {
+  return (
+    <button
+      className={`btn ${variant}`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+## Component Organization
+- Place components in appropriate feature directories
+- Use index files for clean exports
+- Co-locate related components
+- Keep styles close to components
+
+## State Management
+- Use React hooks for local state
+- Implement context for shared state
+- Keep state close to where it's used
+- Extract complex logic to custom hooks
+
+## Component Best Practices
+- Write self-documenting code
+- Use proper TypeScript types
+- Implement error boundaries
+- Handle loading states
+- Follow accessibility guidelines
+
+## Styling Guidelines
+- Use Tailwind utility classes
+- Follow mobile-first approach
+- Maintain consistent spacing
+- Use CSS variables for theming
+- Keep styles modular and reusable
+
+## Testing Requirements
+- Write unit tests for components
+- Test component interactions
+- Verify accessibility
+- Test responsive behavior
+- Mock external dependencies

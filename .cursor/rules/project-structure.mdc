@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Structure Guide
+
+## Directory Organization
+The project follows a clear directory structure under `src/`:
+
+- [app/layout.tsx](mdc:src/app/layout.tsx) - Root layout with providers and main structure
+- `app/` - Pages and layouts using Next.js App Router
+- `components/` - Reusable React components
+- `lib/` - Utility functions and shared logic
+- `styles/` - Global styles and Tailwind config
+- `types/` - TypeScript type definitions
+
+## File Naming
+- Use kebab-case for all file names (e.g., `app-navbar.tsx`)
+- Component files should match their component name (e.g., `UserProfile.tsx` -> `user-profile.tsx`)
+- Use `index.ts` for clean exports in directories
+- Test files should end with `.test.ts` or `.test.tsx`
+
+## Component Organization
+- Group related components in feature directories
+- Keep components close to where they're used
+- Use barrel exports through index files
+- Maintain flat hierarchy where possible
+
+## Configuration Files
+Key configuration files in root:
+- [next.config.js](mdc:next.config.js) - Next.js configuration
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript settings
+- [eslint.config.mjs](mdc:eslint.config.mjs) - ESLint rules
+- [.prettierrc](mdc:.prettierrc) - Prettier formatting
