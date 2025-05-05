@@ -45,6 +45,7 @@ export function AppNavbar() {
             <IconPackage
               size={32}
               color={theme === 'dark' ? 'white' : 'black'}
+              suppressHydrationWarning
             />
           }
           companyName="ACME"
@@ -68,6 +69,7 @@ export function AppNavbar() {
               <IconPackage
                 size={32}
                 color={theme === 'dark' ? 'white' : 'black'}
+                suppressHydrationWarning
               />
             }
             companyName="ACME"

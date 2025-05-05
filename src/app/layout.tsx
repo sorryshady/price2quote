@@ -26,7 +26,7 @@ export default function RootLayout({
       <body className={`antialiased`}>
         <Provider>
           <AppNavbar />
-          {children}
+          <main>{children}</main>
         </Provider>
       </body>
     </html>
