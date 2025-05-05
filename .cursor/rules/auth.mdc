@@ -1,0 +1,48 @@
+---
+description: This rule is attached for any auth related functionality being implemented.
+globs: 
+alwaysApply: false
+---
+# Authentication Patterns
+
+## Overview
+
+This project implements a bulletproof, extensible authentication system designed for both credentials-based and social login (Google, GitHub, etc.).
+
+## Key Patterns
+
+### 1. Extensible Schema
+- Users table supports both credentials and social login.
+- Accounts table links users to external OAuth providers.
+- Sessions table (or JWT) manages user sessions securely.
+- Verification tokens table for email verification and password reset.
+
+### 2. Secure Password Handling
+- Passwords are hashed using bcrypt or argon2.
+- Plain text passwords are never stored.
+- Password validation and error handling are robust and user-friendly.
+
+### 3. Session Management
+- Supports both JWT and DB-backed sessions.
+- Secure cookies (httpOnly, sameSite) are used for session tokens.
+- Session invalidation and logout are handled securely.
+
+### 4. Provider Abstraction
+- Logic is modular to allow easy addition of new OAuth providers.
+- Account linking and provider-specific logic are abstracted for maintainability.
+
+### 5. Security Best Practices
+- CSRF protection for all forms and API routes.
+- Rate limiting on authentication endpoints to prevent brute-force attacks.
+- Input validation using zod schemas.
+- Error messages are clear but do not leak sensitive information.
+
+### 6. UI & API Integration
+- Auth flows are integrated with both API routes and React UI.
+- User context/provider manages authentication state in the app.
+- Forms provide accessible error and loading states.
+
+## Implementation Notes
+- All authentication logic should be type-safe and follow project code style.
+- Schema and logic should be modular for future extensibility.
+- Tests must cover all critical auth flows and edge cases.

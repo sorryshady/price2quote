@@ -4,6 +4,15 @@
 
 The project follows Next.js App Router architecture with a focus on component-based development and modern React patterns.
 
+## Authentication System Architecture
+
+- **Extensible Schema**: Users table supports credentials and social login. Accounts table links users to external providers (Google, GitHub, etc.).
+- **Secure Password Handling**: Passwords are hashed (bcrypt/argon2) and never stored in plain text.
+- **Session Management**: Supports JWT or DB-backed sessions for user authentication.
+- **Provider Abstraction**: Logic is modular to allow easy addition of new OAuth providers.
+- **Security Best Practices**: CSRF protection, rate limiting, input validation (zod), secure cookies.
+- **Separation of Concerns**: Schema, logic, and UI are modularized for maintainability.
+
 ## Directory Structure
 
 ```
@@ -37,6 +46,7 @@ src/
 - Context for theme management
 - Server components for data fetching
 - Props for component communication
+- **User context for authentication state**
 
 ### 4. Styling Approach
 
@@ -74,6 +84,7 @@ src/
 - Loading and error states
 - Optimistic updates
 - Proper type validation
+- **Auth flows with clear error handling and feedback**
 
 ### Performance Patterns
 
@@ -88,6 +99,7 @@ src/
 - Layout components for structure
 - Shared components for reuse
 - Page components for routes
+- **Auth provider/context for user state**
 
 ## Technical Constraints
 

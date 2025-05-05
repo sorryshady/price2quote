@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-Initial project setup and documentation of the Next.js starter template.
+Designing and implementing a bulletproof authentication system. Initial focus is on credentials-based login, with extensibility for social login (Google, GitHub) in the near future.
 
 ## Recent Changes
 
@@ -23,22 +23,24 @@ Initial project setup and documentation of the Next.js starter template.
 3. Adopting Radix UI for accessible components
 4. Using Tailwind CSS for styling
 5. Setting up comprehensive linting rules
+6. Authentication system will use credentials login first, with a schema and logic designed for easy addition of social providers.
 
 ## Current Considerations
 
-1. Component architecture optimization
-2. Performance monitoring setup
-3. Documentation completeness
-4. Developer experience improvements
-5. Testing strategy implementation
+1. Schema extensibility for multiple auth providers
+2. Secure password handling and session management
+3. API and UI integration for auth flows
+4. Security best practices (hashing, CSRF, rate limiting)
+5. Testing and error handling for auth flows
 
 ## Next Steps
 
-1. Review and enhance component library
-2. Add comprehensive testing setup
-3. Implement CI/CD workflow
-4. Create example pages and components
-5. Add detailed component documentation
+1. Update DB schema for credentials and social login extensibility
+2. Implement credentials registration and login (with password hashing)
+3. Add session management (JWT or DB sessions)
+4. Prepare for OAuth provider integration (Google, GitHub)
+5. Build UI forms and API endpoints for auth
+6. Harden security and add tests
 
 ## Known Issues
 
@@ -46,12 +48,10 @@ None at present - initial setup phase
 
 ## Active Questions
 
-1. Testing framework selection
-2. CI/CD pipeline configuration
-3. Documentation tooling
-4. Performance monitoring tools
-5. Component library organization
+1. Password hashing algorithm selection (bcrypt/argon2)
+2. JWT vs DB session management
+3. OAuth provider library choice (next-auth vs custom)
 
 ## Current State
 
-The project is in its initial setup phase with core configurations and basic structure in place. The focus is on establishing best practices and patterns for future development.
+The project is transitioning from initial setup to implementing a robust authentication system, starting with credentials and planning for social login extensibility.

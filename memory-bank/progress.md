@@ -34,6 +34,15 @@
 
 ## In Progress 🚧
 
+### Authentication System
+
+- Planning and design of a bulletproof, extensible authentication system
+- Credentials login (email + password) as initial implementation
+- Schema updates for social login extensibility (Google, GitHub)
+- Security best practices (password hashing, CSRF, rate limiting)
+- Session management (JWT or DB sessions)
+- UI and API integration for auth flows
+
 ### Testing
 
 - Unit testing setup
@@ -57,12 +66,23 @@
 
 ### Features
 
-- Authentication system
+- Authentication system (in progress)
 - API routes
 - Database integration
 - Error handling
 
 ## To Do 📝
+
+### Authentication
+
+- [ ] Update DB schema for credentials and social login
+- [ ] Implement registration and login endpoints
+- [ ] Add password hashing (bcrypt/argon2)
+- [ ] Implement session management (JWT/DB)
+- [ ] Build UI forms for login/register
+- [ ] Integrate OAuth providers (Google, GitHub)
+- [ ] Add security hardening (rate limiting, CSRF)
+- [ ] Write tests for auth flows
 
 ### Components
 
