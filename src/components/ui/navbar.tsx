@@ -55,11 +55,12 @@ interface MobileNavMenuProps {
 }
 
 interface NavbarLogoProps {
-  logoUrl: string
+  logoUrl?: string
   companyName: string
   logoWidth?: number
   logoHeight?: number
   className?: string
+  icon?: React.ReactNode
 }
 
 export const Navbar = ({ children, className }: NavbarProps) => {
@@ -246,7 +247,7 @@ export const MobileNavMenu = ({
               damping: 30,
             }}
             className={cn(
-              'fixed top-0 left-1/2 z-50 mt-20 flex w-[90vw] max-w-md -translate-x-1/2 flex-col gap-6 rounded-2xl border border-neutral-200 bg-white px-6 py-8 shadow-2xl backdrop-blur-[20px] dark:border-neutral-800 dark:bg-neutral-950',
+              'fixed top-0 left-1/2 z-50 mt-16 flex w-[90vw] max-w-md -translate-x-1/2 flex-col gap-6 rounded-2xl border border-neutral-200 bg-white px-6 py-8 shadow-2xl backdrop-blur-[20px] dark:border-neutral-800 dark:bg-neutral-950',
               className,
             )}
           >
@@ -274,6 +275,7 @@ export const MobileNavToggle = ({
 
 export const NavbarLogo = ({
   logoUrl,
+  icon,
   companyName,
   logoWidth = 30,
   logoHeight = 30,
@@ -287,14 +289,17 @@ export const NavbarLogo = ({
         className,
       )}
     >
-      <Image
-        src={logoUrl}
-        alt={`${companyName} logo`}
-        width={logoWidth}
-        height={logoHeight}
-        className="object-contain"
-      />
-      <span className="font-medium text-black dark:text-white">
+      {logoUrl && (
+        <Image
+          src={logoUrl}
+          alt={`${companyName} logo`}
+          width={logoWidth}
+          height={logoHeight}
+          className="object-contain"
+        />
+      )}
+      {icon && icon}
+      <span className="text-xl font-semibold dark:text-white">
         {companyName}
       </span>
     </Link>

@@ -5,4 +5,5 @@
         "source.organizeImports": "always"
     },
     "typescript.tsdk": "node_modules/typescript/lib",
+    "tailwindcss-intellisense.trace.server": "verbose"
 }

@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
+import { IconPackage } from '@tabler/icons-react'
+
 import {
   MobileNav,
   MobileNavHeader,
@@ -14,6 +16,10 @@ import {
   NavbarButton,
   NavbarLogo,
 } from '@/components/ui/navbar'
+
+import useSystemTheme from '@/hooks/use-system-theme'
+
+import ThemeToggle from './ui/theme-toggler'
 
 const navItems = [
   {
@@ -28,23 +34,29 @@ const navItems = [
 
 export function AppNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { theme } = useSystemTheme()
 
   return (
     <Navbar>
       {/* Desktop Navigation */}
       <NavBody>
         <NavbarLogo
-          logoUrl="/logo.png"
+          icon={
+            <IconPackage
+              size={32}
+              color={theme === 'dark' ? 'white' : 'black'}
+            />
+          }
           companyName="ACME"
           logoWidth={60}
           logoHeight={60}
         />
         <NavItems items={navItems} />
-        <div className="flex items-center gap-4">
+        <div className="z-90 flex items-center gap-6">
+          <ThemeToggle />
           <NavbarButton variant="gradient" href="/login">
             Login
           </NavbarButton>
-          <NavbarButton variant="primary">Book a call</NavbarButton>
         </div>
       </NavBody>
 
@@ -52,7 +64,12 @@ export function AppNavbar() {
       <MobileNav>
         <MobileNavHeader>
           <NavbarLogo
-            logoUrl="/logo.png"
+            icon={
+              <IconPackage
+                size={32}
+                color={theme === 'dark' ? 'white' : 'black'}
+              />
+            }
             companyName="ACME"
             logoWidth={60}
             logoHeight={60}
@@ -64,6 +81,7 @@ export function AppNavbar() {
         </MobileNavHeader>
 
         <MobileNavMenu isOpen={isMobileMenuOpen}>
+          <ThemeToggle expanded={true} />
           {navItems.map((item, idx) => (
             <Link
               key={`mobile-link-${idx}`}
@@ -77,17 +95,11 @@ export function AppNavbar() {
           <div className="flex w-full flex-col gap-4">
             <NavbarButton
               onClick={() => setIsMobileMenuOpen(false)}
+              href="/login"
               variant="gradient"
               className="w-full"
             >
               Login
-            </NavbarButton>
-            <NavbarButton
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-full"
-              variant="primary"
-            >
-              Book a call
             </NavbarButton>
           </div>
         </MobileNavMenu>
