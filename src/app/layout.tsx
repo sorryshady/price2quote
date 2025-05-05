@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 
 import { AppNavbar } from '@/components/app-navbar'
 import Provider from '@/components/provider'
@@ -27,9 +26,7 @@ export default function RootLayout({
       <body className={`antialiased`}>
         <Provider>
           <AppNavbar />
-          <main>
-            <Suspense>{children}</Suspense>
-          </main>
+          <main>{children}</main>
         </Provider>
       </body>
     </html>

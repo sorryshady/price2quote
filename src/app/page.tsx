@@ -5,7 +5,7 @@ import { AppContainer } from '@/components/app-container'
 import db from '@/db'
 
 export default async function HomePage() {
-  await new Promise((resolve) => setTimeout(resolve, 20000))
+  await new Promise((resolve) => setTimeout(resolve, 10000))
   const results = await db.execute(sql`SELECT * FROM pg_catalog.pg_tables`)
   return (
     <AppContainer>

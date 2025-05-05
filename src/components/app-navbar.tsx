@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 import { IconPackage } from '@tabler/icons-react'
+import { useTheme } from 'next-themes'
 
 import {
   MobileNav,
@@ -16,8 +17,6 @@ import {
   NavbarButton,
   NavbarLogo,
 } from '@/components/ui/navbar'
-
-import useSystemTheme from '@/hooks/use-system-theme'
 
 import ThemeToggle from './ui/theme-toggler'
 
@@ -34,7 +33,7 @@ const navItems = [
 
 export function AppNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { theme } = useSystemTheme()
+  const { theme } = useTheme()
 
   return (
     <Navbar>

@@ -1,16 +1,13 @@
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
-
-import useSystemTheme from '@/hooks/use-system-theme'
+import { useTheme } from 'next-themes'
 
 import { Switch } from './switch'
 
 const ThemeToggle = ({ expanded = false }: { expanded?: boolean }) => {
-  const { theme, setTheme, mounted } = useSystemTheme()
+  const { theme, setTheme } = useTheme()
   const isDark = theme === 'dark'
-
-  if (!mounted) return null
 
   return (
     <div className="flex items-center gap-2">
