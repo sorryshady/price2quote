@@ -1,23 +1,22 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useTheme } from 'next-themes'
 
 type Theme = 'dark' | 'light'
-type SetTheme = Dispatch<SetStateAction<Theme>>
 
 export default function useSystemTheme() {
   const { theme, setTheme, systemTheme } = useTheme()
-  const [isMounted, setIsMounted] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
+    setMounted(true)
   }, [])
 
-  return useMemo(() => {
-    return {
-      theme: theme === 'system' ? systemTheme : theme,
-      setTheme,
-      mounted: isMounted,
-    } as { theme: Theme; setTheme: SetTheme; mounted: boolean }
-  }, [theme, systemTheme, setTheme, isMounted])
+  return {
+    theme: (theme === 'system' ? systemTheme : theme) as Theme,
+    setTheme,
+    mounted,
+    systemTheme: systemTheme as Theme,
+    userTheme: theme as Theme | 'system',
+  }
 }

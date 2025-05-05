@@ -1,0 +1,87 @@
+---
+description: Whenever an animation is made using the motion library.
+globs: 
+alwaysApply: false
+---
+# Motion Animation Library Guidelines
+
+## Installation and Import
+Motion is now framework-independent and should be imported from 'motion/react' for React applications:
+
+```typescript
+import { motion } from 'motion/react'
+```
+
+## Core Components and Features
+
+### Motion Component
+The `motion` component is the foundation for animations. It extends regular DOM elements with animation capabilities:
+
+```typescript
+<motion.div /> // Basic motion component
+<motion.button /> // Motion button
+<motion.section /> // Motion section
+```
+
+### Animation Properties
+- `animate`: Defines the animation target state
+- `initial`: Sets the starting state
+- `transition`: Configures animation timing and behavior
+- `whileHover`: Animation state during hover
+- `whileTap`: Animation state during tap/click
+- `whileInView`: Animation state when in viewport
+
+### Common Animation Patterns
+
+1. **Basic Animation**:
+```typescript
+<motion.div
+  animate={{ scale: 1.2, rotate: 360 }}
+  transition={{ duration: 2 }}
+/>
+```
+
+2. **Hover Effects**:
+```typescript
+<motion.div
+  whileHover={{ scale: 1.1 }}
+  whileTap={{ scale: 0.95 }}
+/>
+```
+
+3. **Enter/Exit Animations**:
+```typescript
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+/>
+```
+
+### Best Practices
+
+1. **Performance**:
+   - Use hardware-accelerated properties (transform, opacity)
+   - Avoid animating layout properties when possible
+   - Use `layoutId` for shared element transitions
+
+2. **Accessibility**:
+   - Ensure animations respect reduced-motion preferences
+   - Keep animations subtle and purposeful
+   - Avoid excessive motion that might cause discomfort
+
+3. **Code Organization**:
+   - Define reusable animation variants
+   - Keep animation logic separate from component logic
+   - Use consistent animation patterns across the application
+
+### Project Integration
+Motion is integrated into our Next.js project and should be used for:
+- Page transitions
+- Component animations
+- Loading states
+- Interactive elements
+- Scroll-based animations
+
+Reference files:
+- [loading.tsx](mdc:src/app/loading.tsx) - Example of Motion usage in loading state

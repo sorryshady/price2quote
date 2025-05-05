@@ -8,18 +8,19 @@ function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
-}
-
-export default function Provider({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider
+    <NextThemesProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
+      {...props}
     >
       {children}
-    </ThemeProvider>
+    </NextThemesProvider>
   )
+}
+
+export default function Provider({ children }: { children: React.ReactNode }) {
+  return <ThemeProvider>{children}</ThemeProvider>
 }

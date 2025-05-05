@@ -1,6 +1,12 @@
+import { sql } from 'drizzle-orm'
+
 import { AppContainer } from '@/components/app-container'
 
-export default function HomePage() {
+import db from '@/db'
+
+export default async function HomePage() {
+  await new Promise((resolve) => setTimeout(resolve, 20000))
+  const results = await db.execute(sql`SELECT * FROM pg_catalog.pg_tables`)
   return (
     <AppContainer>
       <h1 className="mb-4 text-center text-3xl font-bold">
@@ -93,6 +99,7 @@ export default function HomePage() {
           </div>
         ))}
       </div>
+      <pre>{JSON.stringify(results, null, 2)}</pre>
     </AppContainer>
   )
 }
