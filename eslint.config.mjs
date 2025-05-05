@@ -1,7 +1,7 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import checkFile from 'eslint-plugin-check-file';
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,7 +20,7 @@ const eslintConfig = [
       "prefer-arrow-callback": ["error"],
       "prefer-template": ["error"],
       "check-file/filename-naming-convention": [
-        "error",
+        "error", 
         {
           "**/*.{ts,tsx}": "KEBAB_CASE"
         },
