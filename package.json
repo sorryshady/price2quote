@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier src/ --write ."
+    "format": "prettier src/ --write .",
+    "db:migrate": "cross-env DB_MIGRATING=true drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.4",
@@ -18,6 +20,8 @@
     "@tabler/icons-react": "^3.31.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^16.5.0",
+    "dotenv-expand": "^12.0.2",
     "drizzle-orm": "^0.43.1",
     "jiti": "^2.4.2",
     "lucide-react": "^0.507.0",
@@ -39,6 +43,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "drizzle-kit": "^0.31.1",
     "eslint": "^9.26.0",
     "eslint-config-next": "15.3.1",

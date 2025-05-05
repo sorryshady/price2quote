@@ -3,14 +3,10 @@ import postgres from 'postgres'
 
 import { env } from '@/env/server'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var postgresClient: ReturnType<typeof postgres> | undefined
-}
+export const client = postgres(env.DATABASE_URL, {
+  max: env.DB_MIGRATING ? 1 : undefined,
+})
 
-const queryClient =
-  global.postgresClient ?? (global.postgresClient = postgres(env.DATABASE_URL))
-
-const db = drizzle(queryClient)
+const db = drizzle(client)
 
 export default db
