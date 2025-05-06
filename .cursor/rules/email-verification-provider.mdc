@@ -1,0 +1,25 @@
+---
+description: When handling anything related to email sending.
+globs: 
+alwaysApply: false
+---
+# Email Verification & Provider Abstraction Rule
+
+This project implements a secure, maintainable, and provider-agnostic email verification system. Key practices:
+
+- **Server-only Token Generation:**
+  - Email verification tokens (JWT, 15 min expiry) are generated only in API routes or server actions, never in client components.
+  - See [token.ts](mdc:src/lib/token.ts) for token generation logic.
+- **React Email Template Rendering:**
+  - Email templates are authored as React components and rendered to HTML using `@react-email/render` in the API route before sending.
+  - See [verify-email.tsx](mdc:src/email-templates/verify-email.tsx) for the template.
+- **Provider-Agnostic Email Delivery:**
+  - Email sending is abstracted behind a provider interface (Mailhog for local/dev, Resend for production).
+  - The provider is selected via environment variable or NODE_ENV, allowing seamless switching with minimal code changes.
+  - See [mailer.ts](mdc:src/lib/mailer.ts) for the abstraction.
+- **Separation of Concerns:**
+  - Client components never import or use server-only code (e.g., nodemailer, process.env, token generation).
+  - All sensitive logic and secrets are handled server-side.
+- **Pattern Benefits:**
+  - Secure, maintainable, and easily extensible for new providers or email types.
+  - Enables local email testing (Mailhog) and production delivery (Resend) with the same codebase.

@@ -28,6 +28,17 @@ This starter template provides a pre-configured, production-ready Next.js founda
 - Smooth animations
 - SEO optimization
 
+## Registration & Email Verification Experience
+
+- End users now experience a seamless registration flow:
+  - Instant feedback on registration and email verification status
+  - Secure, time-limited verification links (15 min expiry)
+  - Clear, branded email templates
+- Developers benefit from provider-agnostic email delivery:
+  - Local testing with Mailhog
+  - Production-ready with Resend
+  - No code changes required to switch providers
+
 ## Key Features
 
 1. **Modern Stack**

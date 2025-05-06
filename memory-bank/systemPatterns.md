@@ -108,3 +108,20 @@ src/
 3. TypeScript strict mode
 4. Tailwind class order
 5. ESLint rules
+
+## Email Verification & Provider Abstraction Pattern
+
+- **Server-only Token Generation:**
+  - Email verification tokens (JWT, 15 min expiry) are generated only in API routes or server actions, never in client components.
+  - Tokens include user id, email, and a type for validation.
+- **React Email Template Rendering:**
+  - Email templates are authored as React components and rendered to HTML using `@react-email/render` in the API route before sending.
+- **Provider-Agnostic Email Delivery:**
+  - Email sending is abstracted behind a provider interface (Mailhog for local/dev, Resend for production).
+  - The provider is selected via environment variable or NODE_ENV, allowing seamless switching with minimal code changes.
+- **Separation of Concerns:**
+  - Client components never import or use server-only code (e.g., nodemailer, process.env, token generation).
+  - All sensitive logic and secrets are handled server-side.
+- **Pattern Benefits:**
+  - Secure, maintainable, and easily extensible for new providers or email types.
+  - Enables local email testing (Mailhog) and production delivery (Resend) with the same codebase.

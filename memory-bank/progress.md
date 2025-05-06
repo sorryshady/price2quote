@@ -17,6 +17,11 @@
 - Theme provider
 - Basic UI components
 - Registration form UI (with Zod validation, React Hook Form, API integration, and toast feedback)
+- **Registration and email verification flow (end-to-end):**
+  - User registration
+  - Secure, expiring email verification token (JWT, 15 min)
+  - Provider-agnostic email delivery (Mailhog for dev, Resend for prod)
+  - All server-only logic handled in API routes
 
 ### Development Tools ✅
 
@@ -37,12 +42,10 @@
 
 ### Authentication System
 
-- Planning and design of a bulletproof, extensible authentication system
-- Credentials login (email + password) as initial implementation
-- Schema updates for social login extensibility (Google, GitHub)
+- Login and session management (JWT or DB sessions)
+- OAuth provider integration (Google, GitHub)
 - Security best practices (password hashing, CSRF, rate limiting)
-- Session management (JWT or DB sessions)
-- UI and API integration for auth flows
+- UI and API integration for login/auth flows
 
 ### Testing
 
@@ -78,8 +81,9 @@
 
 - [ ] Update DB schema for credentials and social login
 - [x] Build UI forms for login/register (register form complete)
-- [ ] Implement registration endpoint logic (user creation, password hashing, error handling)
-- [ ] Add tests for registration flow
+- [x] Implement registration endpoint logic (user creation, password hashing, error handling, email verification)
+- [ ] Implement login endpoint and session management
+- [ ] Add tests for registration and verification flow
 - [ ] Harden registration security (rate limiting, CSRF, etc.)
 - [ ] Integrate OAuth providers (Google, GitHub)
 - [ ] Add security hardening (rate limiting, CSRF)

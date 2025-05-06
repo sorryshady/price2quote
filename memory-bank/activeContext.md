@@ -2,29 +2,29 @@
 
 ## Current Focus
 
-Designing and implementing a bulletproof authentication system. Initial focus is on credentials-based login, with extensibility for social login (Google, GitHub) in the near future.
+Implementing a robust authentication system. Registration flow is now complete, including email verification with secure token and provider-agnostic email delivery. Next focus: login, session management, and OAuth integration.
 
 ## Recent Changes
 
-1. Project initialization with Next.js 15.3.1
-2. Configuration of development tools:
-   - ESLint
-   - Prettier
-   - TypeScript
-   - Tailwind CSS
-3. Setup of base components and layouts
-4. Implementation of theme switching
-5. Documentation setup
-6. Registration form UI implemented with Zod validation, React Hook Form, and API integration for user registration. Toast notifications provide user feedback.
+1. Registration flow completed:
+   - User registration with Zod validation and React Hook Form
+   - API integration for user creation
+   - Email verification with secure, expiring token (JWT, 15 min)
+   - Provider-agnostic email sending (Mailhog for dev, Resend for prod)
+   - All server-only logic (token, email) moved to API routes
+2. Toast notifications for user feedback
+3. Refactored code to ensure no server-only logic in client components
 
 ## Active Decisions
 
 1. Using App Router for modern Next.js features
-2. Implementing strict TypeScript configuration
-3. Adopting Radix UI for accessible components
-4. Using Tailwind CSS for styling
-5. Setting up comprehensive linting rules
-6. Authentication system will use credentials login first, with a schema and logic designed for easy addition of social providers.
+2. Strict TypeScript configuration
+3. Radix UI for accessible components
+4. Tailwind CSS for styling
+5. Comprehensive linting rules
+6. Credentials login as initial auth, schema extensible for social providers
+7. Email verification tokens generated and validated server-side only
+8. Email provider abstraction for easy switching between dev/prod
 
 ## Current Considerations
 
@@ -36,18 +36,15 @@ Designing and implementing a bulletproof authentication system. Initial focus is
 
 ## Next Steps
 
-1. Update DB schema for credentials and social login extensibility
-2. Implement credentials registration and login (with password hashing)
-3. Add session management (JWT or DB sessions)
-4. Prepare for OAuth provider integration (Google, GitHub)
-5. Build UI forms and API endpoints for auth
-6. Harden security and add tests
-7. Add tests for registration flow
-8. Harden registration security (rate limiting, CSRF, etc.)
+1. Implement login and session management (JWT or DB sessions)
+2. Prepare for OAuth provider integration (Google, GitHub)
+3. Harden security and add tests
+4. Add tests for registration and verification flows
+5. Harden registration security (rate limiting, CSRF, etc.)
 
 ## Known Issues
 
-None at present - initial setup phase
+None at present
 
 ## Active Questions
 
@@ -57,4 +54,4 @@ None at present - initial setup phase
 
 ## Current State
 
-The project is transitioning from initial setup to implementing a robust authentication system, starting with credentials and planning for social login extensibility.
+Registration and email verification are fully functional. The system is ready for login, session, and OAuth work.
