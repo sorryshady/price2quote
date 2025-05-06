@@ -22,6 +22,10 @@
   - Secure, expiring email verification token (JWT, 15 min)
   - Provider-agnostic email delivery (Mailhog for dev, Resend for prod)
   - All server-only logic handled in API routes
+  - **Polished email verification page:**
+    - Loader, success, and error states with icons
+    - Card component and modern, centered styling
+    - Automatic redirection on success or error
 
 ### Development Tools ✅
 
@@ -82,6 +86,7 @@
 - [ ] Update DB schema for credentials and social login
 - [x] Build UI forms for login/register (register form complete)
 - [x] Implement registration endpoint logic (user creation, password hashing, error handling, email verification)
+- [x] Implement polished email verification page (loader, success/error, redirect)
 - [ ] Implement login endpoint and session management
 - [ ] Add tests for registration and verification flow
 - [ ] Harden registration security (rate limiting, CSRF, etc.)
