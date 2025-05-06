@@ -27,7 +27,7 @@ const FormCard = ({
   backHref,
 }: FormCardProps) => {
   return (
-    <Card className="bg-background mx-auto w-full max-w-lg border border-zinc-200 shadow-lg dark:border-zinc-800">
+    <Card className="bg-background mx-auto w-full max-w-lg gap-0 border border-zinc-200 shadow-lg dark:border-zinc-800">
       <CardHeader className="pb-2">
         <CardTitle className="text-center text-2xl font-bold">
           {heading}

@@ -4,6 +4,8 @@ import * as React from 'react'
 
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 
+import { Toaster } from './ui/sonner'
+
 function ThemeProvider({
   children,
   ...props
@@ -22,5 +24,10 @@ function ThemeProvider({
 }
 
 export default function Provider({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>
+  return (
+    <ThemeProvider>
+      {children}
+      <Toaster />
+    </ThemeProvider>
+  )
 }

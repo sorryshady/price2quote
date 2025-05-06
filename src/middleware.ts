@@ -40,6 +40,11 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value
 
+  // Allow all /api/auth/* requests through (no session check)
+  if (pathname.startsWith('/api/auth/')) {
+    return NextResponse.next()
+  }
+
   // If on login or register and already logged in, redirect to home
   if (AUTH_ONLY_ROUTES.includes(pathname) && sessionToken) {
     return NextResponse.redirect(new URL('/', request.url))
@@ -52,7 +57,7 @@ export async function middleware(request: NextRequest) {
   // Protected route: validate session
   const valid = await isSessionValid(sessionToken)
   if (!valid) {
-    // Redirect to login with ?redirect=<original_path>
+    // For all routes except /api/auth/*, redirect to login with ?redirect for non-API, plain for API
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
     return NextResponse.redirect(loginUrl)
