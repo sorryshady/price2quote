@@ -42,7 +42,10 @@ export async function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value
 
   // Allow all /api/auth/* requests through (no session check)
-  if (pathname.startsWith('/api/auth/')) {
+  if (
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/send-email')
+  ) {
     return NextResponse.next()
   }
 

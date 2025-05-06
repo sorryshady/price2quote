@@ -44,7 +44,7 @@ export const VerifyEmail = ({
       <Tailwind>
         <Body className="mx-auto my-auto bg-gray-100 px-2 py-8 font-sans">
           <Preview>{previewText}</Preview>
-          <Container className="mx-auto max-w-[420px] rounded-2xl border border-solid border-[#eaeaea] bg-white p-0 shadow-lg">
+          <Container className="mx-auto max-w-[600px] rounded-2xl border border-solid border-[#eaeaea] bg-white p-0 shadow-lg">
             <Section className="flex flex-col items-center justify-center pt-8 pb-2">
               <Img
                 src={logo.src}
