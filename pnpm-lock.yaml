@@ -26,6 +26,9 @@ importers:
       '@react-email/render':
         specifier: ^1.1.0
         version: 1.1.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@react-email/tailwind':
+        specifier: ^1.0.5
+        version: 1.0.5(react@19.1.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.4
         version: 0.13.4(arktype@2.1.20)(typescript@5.8.3)(zod@3.24.3)
