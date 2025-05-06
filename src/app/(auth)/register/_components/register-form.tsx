@@ -18,11 +18,10 @@ import {
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
 
+import { generateEmailVerificationToken } from '@/app/server-actions/action'
 import VerifyEmail from '@/email-templates/verify-email'
 import { env } from '@/env/client'
 import { RegisterSchema, registerSchema } from '@/lib/schemas'
-
-import { generateEmailVerificationToken } from '../action'
 
 export function RegisterForm() {
   const form = useForm<RegisterSchema>({

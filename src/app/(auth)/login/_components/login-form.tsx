@@ -31,11 +31,10 @@ import {
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
 
+import { generateEmailVerificationToken } from '@/app/server-actions/action'
 import { VerifyEmail } from '@/email-templates/verify-email'
 import { env } from '@/env/client'
 import { LoginSchema, loginSchema } from '@/lib/schemas'
-
-import { generateEmailVerificationToken } from '../../register/action'
 
 interface UserInfo {
   email: string
