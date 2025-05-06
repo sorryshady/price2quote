@@ -1,3 +1,4 @@
+/* eslint-disable n/no-process-env */
 import { createEnv } from '@t3-oss/env-nextjs'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
@@ -20,11 +21,16 @@ export const env = createEnv({
       .transform((s) => s === 'true')
       .optional(),
     AUTH_SECRET: z.string(),
-    EMAIL_PROVIDER: z.enum(['nodemailer', 'resend']),
     MAILHOG_PORT: z.coerce.number(),
     MAILHOG_HOST: z.string(),
-    MAILHOG_USER: z.string(),
-    MAILHOG_PASSWORD: z.string(),
+    RESEND_API_KEY: z
+      .string()
+      .optional()
+      .refine(
+        (val) => process.env.NODE_ENV !== 'production' || val !== undefined,
+        { message: 'RESEND_API_KEY is required in production' },
+      ),
+    EMAIL_FROM: z.string(),
   },
   onValidationError: (issues) => {
     console.error(
@@ -44,6 +50,6 @@ export const env = createEnv({
     )
   },
   emptyStringAsUndefined: true,
-  // eslint-disable-next-line n/no-process-env
+
   experimental__runtimeEnv: process.env,
 })
