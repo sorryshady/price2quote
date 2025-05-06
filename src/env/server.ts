@@ -20,6 +20,11 @@ export const env = createEnv({
       .transform((s) => s === 'true')
       .optional(),
     AUTH_SECRET: z.string(),
+    EMAIL_PROVIDER: z.enum(['nodemailer', 'resend']),
+    MAILHOG_PORT: z.coerce.number(),
+    MAILHOG_HOST: z.string(),
+    MAILHOG_USER: z.string(),
+    MAILHOG_PASSWORD: z.string(),
   },
   onValidationError: (issues) => {
     console.error(
