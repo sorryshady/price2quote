@@ -19,6 +19,7 @@ export const env = createEnv({
       .refine((s) => s === 'true' || s === 'false')
       .transform((s) => s === 'true')
       .optional(),
+    AUTH_SECRET: z.string(),
   },
   onValidationError: (issues) => {
     console.error(

@@ -22,12 +22,12 @@ import ThemeToggle from './ui/theme-toggler'
 
 const navItems = [
   {
-    name: 'Profile',
-    href: '/profile',
+    name: 'About',
+    href: '/about',
   },
   {
-    name: 'Services',
-    href: '/services',
+    name: 'Contact',
+    href: '/contact',
   },
 ]
 
