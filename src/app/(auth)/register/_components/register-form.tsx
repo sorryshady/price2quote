@@ -17,7 +17,9 @@ import {
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
 
+import VerifyEmail from '@/email-templates/verify-email'
 import { env } from '@/env/client'
+import { sendEmail } from '@/lib/mailer'
 import { RegisterSchema, registerSchema } from '@/lib/schemas'
 
 export function RegisterForm() {
@@ -46,8 +48,23 @@ export function RegisterForm() {
         toast.error(body.error)
         return
       }
-      toast.success('User registered successfully. Verify your email.')
+      const { name: userName, email: userEmail, ip, location } = body.user
+      toast.success('User registered successfully. Sending verification email.')
       form.reset()
+
+      await sendEmail({
+        to: userEmail,
+        subject: 'Verify your email',
+        reactComponent: (
+          <VerifyEmail
+            userName={userName}
+            requestIp={ip}
+            requestLocation={location}
+            verificationUrl={`${env.NEXT_PUBLIC_API_URL}/verify-email?token=${body.token}`}
+          />
+        ),
+      })
+      toast.success('Email verification sent. Check your inbox.')
     } catch (error) {
       console.error(error)
     }

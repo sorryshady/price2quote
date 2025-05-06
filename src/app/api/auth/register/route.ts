@@ -7,6 +7,11 @@ import { z } from 'zod'
 import db from '@/db'
 import { accounts, users } from '@/db/schema'
 import { env } from '@/env/server'
+import {
+  generateEmailVerificationToken,
+  getIpAddress,
+  getLocation,
+} from '@/lib/utils'
 
 const registerSchema = z.object({
   name: z.string().min(1),
@@ -17,6 +22,8 @@ const registerSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    const ip = getIpAddress(req)
+    const location = await getLocation(ip)
     const parsed = registerSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
@@ -53,9 +60,14 @@ export async function POST(req: NextRequest) {
       type: 'credentials',
     })
 
+    const token = generateEmailVerificationToken({
+      id: user.id,
+      email: user.email,
+    })
     return NextResponse.json({
       success: true,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, ip, location },
+      token,
     })
   } catch (err) {
     return NextResponse.json(

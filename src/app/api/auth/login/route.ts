@@ -8,6 +8,7 @@ import { z } from 'zod'
 import db from '@/db'
 import { sessions, users } from '@/db/schema'
 import { env } from '@/env/server'
+import { getIpAddress } from '@/lib/utils'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -54,8 +55,7 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(
       now.getTime() + SESSION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
     )
-    const ip =
-      req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || ''
+    const ip = getIpAddress(req)
     const userAgent = req.headers.get('user-agent') || ''
 
     // Store session in DB

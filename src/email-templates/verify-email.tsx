@@ -24,16 +24,14 @@ const baseUrl = env.NEXT_PUBLIC_API_URL
   : 'http://localhost:3000'
 
 interface VerifyEmailProps {
-  userName?: string
-  userImage?: string
-  verificationUrl?: string
+  userName: string
+  verificationUrl: string
   requestIp?: string
   requestLocation?: string
 }
 
 export const VerifyEmail = ({
   userName,
-  userImage,
   verificationUrl,
   requestIp,
   requestLocation,
@@ -67,17 +65,6 @@ export const VerifyEmail = ({
                 Thank you for registering. Please verify your email address to
                 activate your account.
               </Text>
-              {userImage && (
-                <Section className="my-4 flex justify-center">
-                  <Img
-                    className="mx-auto rounded-full border border-gray-200 shadow"
-                    src={userImage}
-                    width="64"
-                    height="64"
-                    alt={`${userName || 'User'}&apos;s profile picture`}
-                  />
-                </Section>
-              )}
               <Section className="mt-4 mb-2 flex justify-center">
                 <Button
                   className="rounded-full bg-blue-600 px-8 py-3 text-center text-[15px] font-semibold text-white no-underline shadow-md transition-colors hover:bg-blue-700"
@@ -131,7 +118,6 @@ export const VerifyEmail = ({
 
 VerifyEmail.PreviewProps = {
   userName: 'Ada Lovelace',
-  userImage: `${baseUrl}/static/user.png`,
   verificationUrl: `${baseUrl}/verify?token=abc123`,
   requestIp: '192.168.1.1',
   requestLocation: 'London, UK',
