@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { render } from '@react-email/render'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -19,8 +20,9 @@ import PasswordInput from '@/components/ui/password-input'
 
 import VerifyEmail from '@/email-templates/verify-email'
 import { env } from '@/env/client'
-import { sendEmail } from '@/lib/mailer'
 import { RegisterSchema, registerSchema } from '@/lib/schemas'
+
+import { generateEmailVerificationToken } from '../action'
 
 export function RegisterForm() {
   const form = useForm<RegisterSchema>({
@@ -48,22 +50,34 @@ export function RegisterForm() {
         toast.error(body.error)
         return
       }
-      const { name: userName, email: userEmail, ip, location } = body.user
+      const { name: userName, email: userEmail, ip, location, id } = body.user
       toast.success('User registered successfully. Sending verification email.')
       form.reset()
-
-      await sendEmail({
-        to: userEmail,
-        subject: 'Verify your email',
-        reactComponent: (
-          <VerifyEmail
-            userName={userName}
-            requestIp={ip}
-            requestLocation={location}
-            verificationUrl={`${env.NEXT_PUBLIC_API_URL}/verify-email?token=${body.token}`}
-          />
-        ),
-      })
+      const token = await generateEmailVerificationToken(id, userEmail)
+      const html = await render(
+        <VerifyEmail
+          userName={userName}
+          requestIp={ip}
+          requestLocation={location}
+          verificationUrl={`${env.NEXT_PUBLIC_API_URL}/verify-email?token=${token}`}
+        />,
+      )
+      const emailResponse = await fetch(
+        `${env.NEXT_PUBLIC_API_URL}/api/send-email`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            html,
+            userEmail,
+            purpose: 'email-verification',
+          }),
+        },
+      )
+      if (!emailResponse.ok) {
+        console.error('Error: ', emailResponse)
+        toast.error('Error sending email verification. Please try again.')
+        return
+      }
       toast.success('Email verification sent. Check your inbox.')
     } catch (error) {
       console.error(error)

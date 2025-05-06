@@ -1,4 +1,3 @@
-import { render } from '@react-email/render'
 import nodemailer from 'nodemailer'
 
 import { env } from '@/env/server'
@@ -25,15 +24,10 @@ const transporter = nodemailer.createTransport(
 type SendEmailParams = {
   to: string
   subject: string
-  reactComponent: React.ReactElement
+  html: string
 }
-export async function sendEmail({
-  to,
-  subject,
-  reactComponent,
-}: SendEmailParams) {
+export async function sendEmail({ to, subject, html }: SendEmailParams) {
   const from = env.EMAIL_FROM
-  const html = await render(reactComponent)
 
   await transporter.sendMail({
     from,
