@@ -5,15 +5,15 @@ import jwt from 'jsonwebtoken'
 import { env } from '@/env/server'
 
 export async function generateEmailVerificationToken(
-  userId: string,
   email: string,
+  userId?: string,
 ) {
   const secret = env.AUTH_SECRET
   if (!secret)
     throw new Error('AUTH_SECRET is not set in environment variables')
   return jwt.sign(
     {
-      sub: userId,
+      sub: userId ?? '',
       email: email,
       type: 'email-verification',
     },

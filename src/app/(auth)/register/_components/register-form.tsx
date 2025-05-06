@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { render } from '@react-email/render'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 
 import FormCard from '@/components/form-card'
 import { Button } from '@/components/ui/button'
@@ -53,7 +53,7 @@ export function RegisterForm() {
       const { name: userName, email: userEmail, ip, location, id } = body.user
       toast.success('User registered successfully. Sending verification email.')
       form.reset()
-      const token = await generateEmailVerificationToken(id, userEmail)
+      const token = await generateEmailVerificationToken(userEmail, id)
       const html = await render(
         <VerifyEmail
           userName={userName}

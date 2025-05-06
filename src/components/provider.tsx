@@ -3,8 +3,7 @@
 import * as React from 'react'
 
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
-
-import { Toaster } from './ui/sonner'
+import { Toaster } from 'react-hot-toast'
 
 function ThemeProvider({
   children,
@@ -27,7 +26,13 @@ export default function Provider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       {children}
-      <Toaster />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
+          style: { fontSize: '14px', fontWeight: 'bold', padding: '10px' },
+        }}
+      />
     </ThemeProvider>
   )
 }

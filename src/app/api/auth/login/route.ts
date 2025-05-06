@@ -8,7 +8,7 @@ import { z } from 'zod'
 import db from '@/db'
 import { sessions, users } from '@/db/schema'
 import { env } from '@/env/server'
-import { getIpAddress } from '@/lib/utils'
+import { getIpAddress, getLocation } from '@/lib/utils'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -35,6 +35,19 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
+        { status: 404 },
+      )
+    }
+    const ip = getIpAddress(req)
+    const location = await getLocation(ip)
+    const userAgent = req.headers.get('user-agent') || ''
+    const { email: userEmail, emailVerified, name, id } = user
+    if (!emailVerified) {
+      return NextResponse.json(
+        {
+          error: 'Email not verified',
+          user: { email: userEmail, id, name, ip, location },
+        },
         { status: 401 },
       )
     }
@@ -55,8 +68,6 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(
       now.getTime() + SESSION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
     )
-    const ip = getIpAddress(req)
-    const userAgent = req.headers.get('user-agent') || ''
 
     // Store session in DB
     await db.insert(sessions).values({
