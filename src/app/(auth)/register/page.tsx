@@ -1,3 +1,9 @@
+import { AppContainer } from '@/components/app-container'
+
 export default function RegisterPage() {
-  return <div>RegisterPage</div>
+  return (
+    <AppContainer>
+      <div>RegisterPage</div>
+    </AppContainer>
+  )
 }

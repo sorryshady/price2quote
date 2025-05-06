@@ -46,27 +46,18 @@ export async function middleware(request: NextRequest) {
   }
 
   if (PUBLIC_ROUTES.includes(pathname)) {
-    console.log('Middleware: public/auth route', {
-      pathname,
-      cookies: request.cookies.getAll(),
-    })
     return NextResponse.next()
   }
 
   // Protected route: validate session
   const valid = await isSessionValid(sessionToken)
   if (!valid) {
-    console.log(
-      'Middleware: invalid or missing session, redirecting to /login',
-      { pathname },
-    )
-    return NextResponse.redirect(new URL('/login', request.url))
+    // Redirect to login with ?redirect=<original_path>
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
+    return NextResponse.redirect(loginUrl)
   }
 
-  console.log('Middleware: protected route, session valid', {
-    pathname,
-    cookies: request.cookies.getAll(),
-  })
   return NextResponse.next()
 }
 
