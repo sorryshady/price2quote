@@ -15,6 +15,7 @@ Designing and implementing a bulletproof authentication system. Initial focus is
 3. Setup of base components and layouts
 4. Implementation of theme switching
 5. Documentation setup
+6. Registration form UI implemented with Zod validation, React Hook Form, and API integration for user registration. Toast notifications provide user feedback.
 
 ## Active Decisions
 
@@ -41,6 +42,8 @@ Designing and implementing a bulletproof authentication system. Initial focus is
 4. Prepare for OAuth provider integration (Google, GitHub)
 5. Build UI forms and API endpoints for auth
 6. Harden security and add tests
+7. Add tests for registration flow
+8. Harden registration security (rate limiting, CSRF, etc.)
 
 ## Known Issues
 

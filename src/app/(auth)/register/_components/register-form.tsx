@@ -40,9 +40,8 @@ export function RegisterForm() {
           body: JSON.stringify({ name, email, password }),
         },
       )
-
+      const body = await response.json()
       if (!response.ok) {
-        const body = await response.json()
         console.error('Error: ', body)
         toast.error(body.error)
         return

@@ -16,6 +16,7 @@
 - App navigation bar
 - Theme provider
 - Basic UI components
+- Registration form UI (with Zod validation, React Hook Form, API integration, and toast feedback)
 
 ### Development Tools ✅
 
@@ -76,10 +77,10 @@
 ### Authentication
 
 - [ ] Update DB schema for credentials and social login
-- [ ] Implement registration and login endpoints
-- [ ] Add password hashing (bcrypt/argon2)
-- [ ] Implement session management (JWT/DB)
-- [ ] Build UI forms for login/register
+- [x] Build UI forms for login/register (register form complete)
+- [ ] Implement registration endpoint logic (user creation, password hashing, error handling)
+- [ ] Add tests for registration flow
+- [ ] Harden registration security (rate limiting, CSRF, etc.)
 - [ ] Integrate OAuth providers (Google, GitHub)
 - [ ] Add security hardening (rate limiting, CSRF)
 - [ ] Write tests for auth flows
