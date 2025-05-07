@@ -75,6 +75,7 @@ const ForgotPasswordForm = () => {
         return
       }
       toast.success('Password reset email sent. Check your inbox.')
+      form.reset()
     } catch (error) {
       console.error(error)
       toast.error('An error occurred during forgot password')

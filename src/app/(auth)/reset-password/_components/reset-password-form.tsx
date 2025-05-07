@@ -18,7 +18,14 @@ import PasswordInput from '@/components/ui/password-input'
 
 import { ResetPasswordSchema, resetPasswordSchema } from '@/lib/schemas'
 
-const ResetPasswordForm = () => {
+interface ResetPasswordFormProps {
+  user: {
+    email: string
+    id: string
+    name: string
+  }
+}
+const ResetPasswordForm = ({ user }: ResetPasswordFormProps) => {
   const form = useForm<ResetPasswordSchema>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
