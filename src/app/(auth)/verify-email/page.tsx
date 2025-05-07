@@ -37,12 +37,11 @@ export default function VerifyEmailPage() {
         if (res.ok) {
           setStatus('success')
           setMessage(data.message || 'Email verified successfully!')
-          setTimeout(() => router.replace('/'), 2000)
         } else {
           setStatus('error')
           setMessage(data.error || 'Verification failed.')
-          setTimeout(() => router.replace('/login'), 2500)
         }
+        setTimeout(() => router.replace('/login'), 2500)
       } catch {
         setStatus('error')
         setMessage('An unexpected error occurred.')
@@ -84,7 +83,7 @@ export default function VerifyEmailPage() {
                 {message}
               </div>
               <div className="mt-2 text-sm text-gray-500">
-                Redirecting to home...
+                Redirecting to login...
               </div>
             </div>
           )}

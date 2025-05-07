@@ -5,6 +5,8 @@ import * as React from 'react'
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import { Toaster } from 'react-hot-toast'
 
+import { AuthProvider } from '@/components/providers/auth-provider'
+
 function ThemeProvider({
   children,
   ...props
@@ -25,14 +27,16 @@ function ThemeProvider({
 export default function Provider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      {children}
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          duration: 3000,
-          style: { fontSize: '14px', fontWeight: 'bold', padding: '10px' },
-        }}
-      />
+      <AuthProvider>
+        {children}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 3000,
+            style: { fontSize: '14px', fontWeight: 'bold', padding: '10px' },
+          }}
+        />
+      </AuthProvider>
     </ThemeProvider>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { IconPackage } from '@tabler/icons-react'
@@ -18,6 +19,8 @@ import {
   NavbarLogo,
 } from '@/components/ui/navbar'
 
+import { useAuthState } from '@/hooks/use-auth'
+
 import ThemeToggle from './ui/theme-toggler'
 
 const navItems = [
@@ -34,6 +37,13 @@ const navItems = [
 export function AppNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme } = useTheme()
+  const { isAuthenticated, logout } = useAuthState()
+  const router = useRouter()
+
+  const logoutHandler = async () => {
+    await logout()
+    router.push('/login')
+  }
 
   return (
     <Navbar>
@@ -54,9 +64,15 @@ export function AppNavbar() {
         <NavItems items={navItems} />
         <div className="z-90 flex items-center gap-6">
           <ThemeToggle />
-          <NavbarButton variant="gradient" href="/login">
-            Login
-          </NavbarButton>
+          {!isAuthenticated ? (
+            <NavbarButton variant="gradient" href="/login">
+              Login
+            </NavbarButton>
+          ) : (
+            <NavbarButton variant="gradient" onClick={logoutHandler}>
+              Logout
+            </NavbarButton>
+          )}
         </div>
       </NavBody>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -34,6 +34,7 @@ import PasswordInput from '@/components/ui/password-input'
 import { generateEmailVerificationToken } from '@/app/server-actions/action'
 import { VerifyEmail } from '@/email-templates/verify-email'
 import { env } from '@/env/client'
+import { useAuthState } from '@/hooks/use-auth'
 import { LoginSchema, loginSchema } from '@/lib/schemas'
 
 interface UserInfo {
@@ -49,6 +50,10 @@ const LoginForm = () => {
   const [isResending, setIsResending] = useState(false)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect') || '/'
+  const { setUser } = useAuthState()
+
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -76,10 +81,16 @@ const LoginForm = () => {
         toast.error(body.error)
         return
       }
+
+      // Update auth state with user data
+      setUser(body.user)
       toast.success('Login successful')
-      router.push('/')
+
+      // Get redirect URL from query params or default to home
+      router.push(redirectUrl)
     } catch (error) {
       console.error(error)
+      toast.error('An error occurred during login')
     }
   }
 
