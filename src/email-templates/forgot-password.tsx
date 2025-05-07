@@ -14,20 +14,20 @@ import {
   Text,
 } from '@react-email/components'
 
-interface VerifyEmailProps {
+interface ForgotPasswordProps {
   userName: string
-  verificationUrl: string
+  passwordResetUrl: string
   requestIp?: string
   requestLocation?: string
 }
 
-export const VerifyEmail = ({
+export const ForgotPassword = ({
   userName,
-  verificationUrl,
+  passwordResetUrl,
   requestIp,
   requestLocation,
-}: VerifyEmailProps) => {
-  const previewText = 'Verify your email address to activate your account'
+}: ForgotPasswordProps) => {
+  const previewText = 'Reset your password'
 
   return (
     <Html>
@@ -46,22 +46,22 @@ export const VerifyEmail = ({
               />
             </Section>
             <Heading className="mx-0 mt-0 mb-2 p-0 text-center text-2xl font-bold tracking-tight text-gray-900">
-              Verify your email address
+              Reset your password
             </Heading>
             <Section className="px-8 pb-2">
               <Text className="mb-1 text-center text-[15px] leading-[24px] text-gray-800">
                 Hello {userName},
               </Text>
               <Text className="mb-4 text-center text-[15px] leading-[24px] text-gray-700">
-                Thank you for registering. Please verify your email address to
-                activate your account.
+                You are receiving this email because you (or someone else) has
+                requested a password reset for your account.
               </Text>
               <Section className="mt-4 mb-2 flex justify-center">
                 <Button
                   className="rounded-full bg-blue-600 px-8 py-3 text-center text-[15px] font-semibold text-white no-underline shadow-md transition-colors hover:bg-blue-700"
-                  href={verificationUrl}
+                  href={passwordResetUrl}
                 >
-                  Verify Email
+                  Reset Password
                 </Button>
               </Section>
               <Text className="mb-4 text-center text-[14px] leading-[22px] text-gray-600">
@@ -72,15 +72,15 @@ export const VerifyEmail = ({
               </Text>
               <Text className="mb-4 text-center text-[13px] leading-[20px] break-all text-blue-600">
                 <Link
-                  href={verificationUrl}
+                  href={passwordResetUrl}
                   className="text-blue-600 no-underline"
                 >
-                  {verificationUrl}
+                  {passwordResetUrl}
                 </Link>
               </Text>
               <Hr className="mx-0 my-6 w-full border border-solid border-[#eaeaea]" />
               <Text className="mb-2 text-center text-[12px] leading-[20px] text-gray-400">
-                This verification was requested for
+                This password reset was requested for
                 {userName && <span className="text-black"> {userName}</span>}
                 {requestIp && (
                   <>
@@ -107,4 +107,4 @@ export const VerifyEmail = ({
   )
 }
 
-export default VerifyEmail
+export default ForgotPassword

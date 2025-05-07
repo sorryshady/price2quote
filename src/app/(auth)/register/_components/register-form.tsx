@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
 
-import { generateEmailVerificationToken } from '@/app/server-actions/action'
+import { generateToken } from '@/app/server-actions/action'
 import VerifyEmail from '@/email-templates/verify-email'
 import { env } from '@/env/client'
 import { RegisterSchema, registerSchema } from '@/lib/schemas'
@@ -52,7 +52,7 @@ export function RegisterForm() {
       const { name: userName, email: userEmail, ip, location, id } = body.user
       toast.success('User registered successfully. Sending verification email.')
       form.reset()
-      const token = await generateEmailVerificationToken(userEmail, id)
+      const token = await generateToken(userEmail, id, 'email-verification')
       const html = await render(
         <VerifyEmail
           userName={userName}

@@ -7,9 +7,10 @@ import db from '@/db'
 import { users } from '@/db/schema'
 import { env } from '@/env/server'
 
-export async function generateEmailVerificationToken(
+export async function generateToken(
   email: string,
-  userId?: string,
+  userId: string,
+  type: 'email-verification' | 'password-reset',
 ) {
   const secret = env.AUTH_SECRET
   if (!secret)
@@ -18,7 +19,7 @@ export async function generateEmailVerificationToken(
     {
       sub: userId ?? '',
       email: email,
-      type: 'email-verification',
+      type,
     },
     secret,
     { expiresIn: '15m' },

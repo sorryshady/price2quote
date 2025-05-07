@@ -26,5 +26,20 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       )
     }
+  } else if (purpose === 'password-reset') {
+    try {
+      await sendEmail({
+        to: userEmail,
+        subject: 'Reset your password',
+        html,
+      })
+      return NextResponse.json({ success: true }, { status: 200 })
+    } catch (error) {
+      console.error(error)
+      return NextResponse.json(
+        { error: 'Failed to send email' },
+        { status: 500 },
+      )
+    }
   }
 }
