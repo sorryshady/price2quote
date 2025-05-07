@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
 
 import FormCard from '@/components/form-card'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/form'
 import PasswordInput from '@/components/ui/password-input'
 
+import { env } from '@/env/client'
 import { ResetPasswordSchema, resetPasswordSchema } from '@/lib/schemas'
 
 interface ResetPasswordFormProps {
@@ -34,7 +36,19 @@ const ResetPasswordForm = ({ user }: ResetPasswordFormProps) => {
     },
   })
   const submitHandler = async (data: ResetPasswordSchema) => {
-    console.log(data)
+    try {
+      const { password } = data
+      const response = await fetch(
+        `${env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ password }),
+        },
+      )
+    } catch (error) {
+      console.error(error)
+      toast.error('An error occurred during reset')
+    }
   }
   return (
     <FormCard heading="Reset Password" subheading="Enter your new password">

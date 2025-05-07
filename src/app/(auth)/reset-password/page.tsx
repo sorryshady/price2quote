@@ -12,19 +12,22 @@ import { env } from '@/env/client'
 
 import ResetPasswordForm from './_components/reset-password-form'
 
+type User = {
+  email: string
+  id: string
+  name: string
+}
+
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const router = useRouter()
-  const [user, setUser] = useState<{
-    email: string
-    id: string
-    name: string
-  } | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(
     'verifying',
   )
   const [message, setMessage] = useState('Verifying authorization...')
+
   useEffect(() => {
     if (!token) {
       setStatus('error')
@@ -32,6 +35,7 @@ export default function ResetPasswordPage() {
       setTimeout(() => router.replace('/forgot-password'), 2000)
       return
     }
+
     const verify = async () => {
       setStatus('verifying')
       setMessage('Verifying authorization...')
@@ -67,26 +71,12 @@ export default function ResetPasswordPage() {
     verify()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
-  if (!user) {
-    setStatus('error')
-    setMessage('Encountered an error. Redirecting to forgot password...')
-    setTimeout(() => router.replace('/forgot-password'), 2000)
-  }
-  return (
-    <div className="flex h-[80svh] items-center justify-center">
-      <AppContainer>
-        {status === 'verifying' && (
-          <Card className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="animate-spin text-blue-600" size={48} />
-              <div className="text-lg font-semibold text-gray-800">
-                {message}
-              </div>
-            </div>
-          </Card>
-        )}
-        {status === 'success' && <ResetPasswordForm user={user} />}
-        {status === 'error' && (
+
+  // Early return for error states
+  if (status === 'error') {
+    return (
+      <div className="flex h-[80svh] items-center justify-center">
+        <AppContainer>
           <Card className="mx-auto flex w-full max-w-fit flex-col items-center gap-6 p-8">
             <div className="flex flex-col items-center gap-4">
               <div className="text-red-600">
@@ -109,8 +99,40 @@ export default function ResetPasswordPage() {
               </div>
             </div>
           </Card>
-        )}
-      </AppContainer>
-    </div>
-  )
+        </AppContainer>
+      </div>
+    )
+  }
+
+  // Show loading state
+  if (status === 'verifying') {
+    return (
+      <div className="flex h-[80svh] items-center justify-center">
+        <AppContainer>
+          <Card className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="animate-spin text-blue-600" size={48} />
+              <div className="text-lg font-semibold text-gray-800">
+                {message}
+              </div>
+            </div>
+          </Card>
+        </AppContainer>
+      </div>
+    )
+  }
+
+  // Show reset password form only when we have a user and status is success
+  if (status === 'success' && user) {
+    return (
+      <div className="flex h-[80svh] items-center justify-center">
+        <AppContainer>
+          <ResetPasswordForm user={user} />
+        </AppContainer>
+      </div>
+    )
+  }
+
+  // Fallback - should not reach here
+  return null
 }
