@@ -244,7 +244,7 @@ export const MobileNavMenu = ({
               damping: 30,
             }}
             className={cn(
-              'fixed top-0 left-1/2 z-50 mt-16 flex w-[90vw] max-w-md -translate-x-1/2 flex-col gap-6 rounded-2xl border border-neutral-200 bg-white px-6 py-8 shadow-2xl backdrop-blur-[20px] dark:border-neutral-800 dark:bg-neutral-950',
+              'fixed top-0 left-1/2 z-50 mt-16 flex w-[90vw] -translate-x-1/2 flex-col gap-6 rounded-2xl border border-neutral-200 bg-white px-6 py-8 shadow-2xl backdrop-blur-[20px] dark:border-neutral-800 dark:bg-neutral-950',
               className,
             )}
           >
