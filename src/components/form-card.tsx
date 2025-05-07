@@ -39,7 +39,7 @@ const FormCard = ({
       <CardContent className="flex flex-col gap-4 py-4">{children}</CardContent>
       <hr className="mx-6 my-2 border-zinc-200 dark:border-zinc-800" />
       <CardFooter className="flex items-center justify-between px-6 py-4">
-        <div className="flex w-full items-center justify-end gap-2">
+        <div className="flex w-full items-center justify-end">
           {backPrefix && (
             <span className="text-sm text-zinc-500">{backPrefix}</span>
           )}

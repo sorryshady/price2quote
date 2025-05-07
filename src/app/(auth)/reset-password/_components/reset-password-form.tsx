@@ -1,5 +1,7 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -21,13 +23,10 @@ import { env } from '@/env/client'
 import { ResetPasswordSchema, resetPasswordSchema } from '@/lib/schemas'
 
 interface ResetPasswordFormProps {
-  user: {
-    email: string
-    id: string
-    name: string
-  }
+  token: string
 }
-const ResetPasswordForm = ({ user }: ResetPasswordFormProps) => {
+const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
+  const router = useRouter()
   const form = useForm<ResetPasswordSchema>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -42,16 +41,32 @@ const ResetPasswordForm = ({ user }: ResetPasswordFormProps) => {
         `${env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
         {
           method: 'POST',
-          body: JSON.stringify({ password }),
+          body: JSON.stringify({ password, token }),
         },
       )
+      const body = await response.json()
+      if (!response.ok) {
+        toast.error(body.error)
+        return
+      }
+      toast.success(body.message)
+      form.reset()
+      setTimeout(() => {
+        router.push('/login')
+      }, 1500)
     } catch (error) {
       console.error(error)
       toast.error('An error occurred during reset')
     }
   }
   return (
-    <FormCard heading="Reset Password" subheading="Enter your new password">
+    <FormCard
+      heading="Reset Password"
+      subheading="Enter your new password"
+      backPrefix="Back to"
+      backHref="/forgot-password"
+      backLabel="forgot password?"
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-6">
           <FormField
