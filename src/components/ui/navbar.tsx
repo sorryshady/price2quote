@@ -5,12 +5,7 @@ import Link from 'next/link'
 import React, { useEffect, useRef, useState } from 'react'
 
 import { Menu, X } from 'lucide-react'
-import {
-  AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
-} from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 
 import { cn } from '@/lib/utils'
 
@@ -65,20 +60,21 @@ interface NavbarLogoProps {
 
 export const Navbar = ({ children, className }: NavbarProps) => {
   const ref = useRef<HTMLDivElement>(null)
-
-  const { scrollY } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
-  })
   const [visible, setVisible] = useState<boolean>(false)
 
-  useMotionValueEvent(scrollY, 'change', (latest) => {
-    if (latest > 100) {
-      setVisible(true)
-    } else {
-      setVisible(false)
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY
+      if (scrollY > 100) {
+        setVisible(true)
+      } else {
+        setVisible(false)
+      }
     }
-  })
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
     <motion.div
