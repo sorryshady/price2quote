@@ -1,3 +1,5 @@
+'use client'
+
 import { AppContainer } from '@/components/app-container'
 
 import ForgotPasswordForm from './_components/forgot-password-form'

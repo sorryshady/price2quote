@@ -8,6 +8,8 @@ import { Loader2 } from 'lucide-react'
 import { AppContainer } from '@/components/app-container'
 import { Card } from '@/components/ui/card'
 
+import { env } from '@/env/client'
+
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -28,11 +30,14 @@ export default function VerifyEmailPage() {
       setStatus('verifying')
       setMessage('Verifying your email...')
       try {
-        const res = await fetch('/api/auth/verify-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
-        })
+        const res = await fetch(
+          `${env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          },
+        )
         const data = await res.json()
         if (res.ok) {
           setStatus('success')

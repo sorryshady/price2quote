@@ -6,6 +6,7 @@ const PUBLIC_ROUTES = [
   '/contact',
   '/forgot-password',
   '/verify-email',
+  '/reset-password',
 ]
 
 const AUTH_ONLY_ROUTES = ['/login', '/register']

@@ -100,3 +100,72 @@ export async function verifyEmailToken(
     }
   }
 }
+
+export type ForgotPasswordTokenResult =
+  | { success: true; user: { email: string; id: string; name: string } }
+  | {
+      success: false
+      error: string
+    }
+
+export async function verifyForgotPasswordToken(
+  token: string,
+): Promise<ForgotPasswordTokenResult> {
+  const secret = env.AUTH_SECRET
+  if (!secret)
+    return {
+      success: false,
+      error: 'Server misconfiguration',
+    }
+  try {
+    const decoded = jwt.verify(token, secret)
+    if (!decoded || typeof decoded !== 'object') {
+      return { success: false, error: 'Invalid token' }
+    }
+    const { email, type } = decoded as jwt.JwtPayload & {
+      email?: string
+      type?: string
+    }
+    if (type !== 'password-reset') {
+      return {
+        success: false,
+        error: 'Invalid token type',
+      }
+    }
+    if (!email) {
+      return {
+        success: false,
+        error: 'Token does not contain email',
+      }
+    }
+    const usersResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+    const user = usersResult[0]
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    return {
+      success: true,
+      user: { email: user.email, id: user.id, name: user.name ?? '' },
+    }
+  } catch (err: unknown) {
+    if (
+      typeof err === 'object' &&
+      err &&
+      'name' in err &&
+      (err as { name?: string }).name === 'TokenExpiredError'
+    ) {
+      return {
+        success: false,
+        error: 'Password reset link has expired. Please request a new one.',
+      }
+    }
+    return {
+      success: false,
+      error: 'Invalid or malformed token',
+    }
+  }
+}

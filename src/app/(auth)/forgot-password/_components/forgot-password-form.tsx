@@ -116,10 +116,10 @@ const ForgotPasswordForm = () => {
             {form.formState.isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" />
-                Resetting password...
+                Sending reset link...
               </>
             ) : (
-              <>Reset Password</>
+              <>Send reset link</>
             )}
           </Button>
         </form>
