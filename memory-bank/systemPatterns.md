@@ -2,126 +2,117 @@
 
 ## Architecture Overview
 
-The project follows Next.js App Router architecture with a focus on component-based development and modern React patterns.
+### Authentication System
 
-## Authentication System Architecture
+- Database-backed sessions with secure cookie handling
+- Client-side state management using Zustand
+- Server-side session validation and management
+- Middleware-based route protection
+- Provider pattern for auth state management
 
-- **Extensible Schema**: Users table supports credentials and social login. Accounts table links users to external providers (Google, GitHub, etc.).
-- **Secure Password Handling**: Passwords are hashed (bcrypt/argon2) and never stored in plain text.
-- **Session Management**: Supports JWT or DB-backed sessions for user authentication.
-- **Provider Abstraction**: Logic is modular to allow easy addition of new OAuth providers.
-- **Security Best Practices**: CSRF protection, rate limiting, input validation (zod), secure cookies.
-- **Separation of Concerns**: Schema, logic, and UI are modularized for maintainability.
+### UI Components
 
-## Directory Structure
+- Responsive navbar with scroll-based animations
+- Theme-aware components with dark mode support
+- Form components with validation and error handling
+- Toast notifications for user feedback
+- Loading states and transitions
 
-```
-src/
-├── app/             # App Router pages and layouts
-├── components/      # Reusable React components
-├── lib/            # Utility functions and shared logic
-├── styles/         # Global styles and Tailwind config
-└── types/          # TypeScript type definitions
-```
+### State Management
 
-## Key Technical Decisions
+- Zustand for global state (auth, theme)
+- React Query for server state (planned)
+- Local storage for persistence
+- Context providers for theme and auth
 
-### 1. Routing & Layout
+### Security Patterns
 
-- App Router for file-based routing
-- Root layout with provider wrapping
-- Nested layouts for shared UI elements
-- Client and server components separation
+- Password hashing with bcrypt and pepper
+- Secure session cookies (httpOnly, sameSite)
+- CSRF protection
+- Rate limiting preparation
+- Input validation with Zod
 
-### 2. Component Architecture
+### API Patterns
 
-- Atomic design principles
-- Composition over inheritance
-- Radix UI for accessible primitives
-- Component-specific styling with Tailwind
-
-### 3. State Management
-
-- React hooks for local state
-- Context for theme management
-- Server components for data fetching
-- Props for component communication
-- **User context for authentication state**
-
-### 4. Styling Approach
-
-- Tailwind CSS for utility-first styling
-- CSS modules for component-specific styles
-- CSS variables for theming
-- Responsive design patterns
-
-### 5. Type System
-
-- Strict TypeScript configuration
-- Zod for runtime type validation
-- Type-safe environment variables
-- Proper type exports
-
-### 6. Code Quality
-
-- ESLint for code linting
-- Prettier for code formatting
-- Import sorting
-- File naming conventions
-
-## Design Patterns
-
-### Component Patterns
-
-- Compound components
-- Render props (when needed)
-- Custom hooks
-- Higher-order components (sparingly)
-
-### Data Patterns
-
-- Server components for data fetching
-- Loading and error states
-- Optimistic updates
-- Proper type validation
-- **Auth flows with clear error handling and feedback**
-
-### Performance Patterns
-
-- Code splitting
-- Image optimization
-- Font optimization
-- Bundle size monitoring
+- RESTful API routes
+- Middleware for route protection
+- Error handling and validation
+- Session management
+- Database operations with Drizzle ORM
 
 ## Component Relationships
 
-- Provider wrapping application
-- Layout components for structure
-- Shared components for reuse
-- Page components for routes
-- **Auth provider/context for user state**
+### Auth Flow
 
-## Technical Constraints
+```mermaid
+graph TD
+    A[AuthProvider] --> B[useAuth Hook]
+    B --> C[Auth State]
+    C --> D[Protected Routes]
+    C --> E[Public Routes]
+    D --> F[Middleware]
+    E --> F
+```
 
-1. Next.js App Router conventions
-2. React server components rules
-3. TypeScript strict mode
-4. Tailwind class order
-5. ESLint rules
+### Session Management
 
-## Email Verification & Provider Abstraction Pattern
+```mermaid
+graph TD
+    A[Login] --> B[Session Creation]
+    B --> C[Database]
+    B --> D[Cookies]
+    E[Auth Check] --> C
+    E --> D
+    F[Logout] --> C
+    F --> D
+```
 
-- **Server-only Token Generation:**
-  - Email verification tokens (JWT, 15 min expiry) are generated only in API routes or server actions, never in client components.
-  - Tokens include user id, email, and a type for validation.
-- **React Email Template Rendering:**
-  - Email templates are authored as React components and rendered to HTML using `@react-email/render` in the API route before sending.
-- **Provider-Agnostic Email Delivery:**
-  - Email sending is abstracted behind a provider interface (Mailhog for local/dev, Resend for production).
-  - The provider is selected via environment variable or NODE_ENV, allowing seamless switching with minimal code changes.
-- **Separation of Concerns:**
-  - Client components never import or use server-only code (e.g., nodemailer, process.env, token generation).
-  - All sensitive logic and secrets are handled server-side.
-- **Pattern Benefits:**
-  - Secure, maintainable, and easily extensible for new providers or email types.
-  - Enables local email testing (Mailhog) and production delivery (Resend) with the same codebase.
+## Design Patterns
+
+### Provider Pattern
+
+- AuthProvider for authentication state
+- ThemeProvider for theme management
+- ToastProvider for notifications
+
+### Hook Pattern
+
+- useAuth for authentication
+- useTheme for theme management
+- Custom hooks for reusable logic
+
+### Middleware Pattern
+
+- Route protection
+- Session validation
+- API route protection
+
+## Technical Decisions
+
+### Database
+
+- PostgreSQL with Drizzle ORM
+- Session storage in database
+- User and account management
+
+### Authentication
+
+- Database-backed sessions
+- Secure cookie handling
+- Regular auth checks
+
+### UI/UX
+
+- Responsive design
+- Theme support
+- Animation system
+- Loading states
+
+## Implementation Notes
+
+- All components are type-safe
+- Error handling is comprehensive
+- Security is prioritized
+- Performance is monitored
+- Code is modular and maintainable

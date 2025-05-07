@@ -1,133 +1,168 @@
 # Technical Context
 
-## Technology Stack
+## Core Technologies
 
-- **Framework**: Next.js 15.3.1
-- **Language**: TypeScript 5.x
-- **UI Library**: React 19.0.0
-- **Styling**: Tailwind CSS 4.x
-- **Package Manager**: pnpm
-- **Node Version**: >= 18.17.0
+### Frontend
 
-## Development Environment
+- Next.js 15.3.1 (App Router)
+- React 19.0.0
+- TypeScript 5.8.3
+- Tailwind CSS 4
+- Motion 12.9.4 (for animations)
 
-### Required Tools
+### State Management
 
-- Node.js (>= 18.17.0)
-- pnpm
-- Git
-- VS Code (recommended)
+- Zustand 5.0.4
+- React Hook Form 7.56.2
+- React Hot Toast 2.5.2
 
-### VS Code Extensions
+### UI Components
 
-- ESLint
-- Prettier
-- Tailwind CSS IntelliSense
-- TypeScript and JavaScript Language Features
+- Radix UI
+- Lucide React 0.507.0
+- Tabler Icons 3.31.0
 
-### Setup Commands
+### Authentication
 
-```bash
-# Install dependencies
-pnpm install
+- bcryptjs 3.0.2
+- jsonwebtoken 9.0.2
+- Drizzle ORM 0.43.1
 
-# Start development server
-pnpm dev
+### Database
 
-# Build production
-pnpm build
+- PostgreSQL
+- Drizzle ORM
+- Drizzle Kit 0.31.1
 
-# Start production server
-pnpm start
+### Email
 
-# Lint code
-pnpm lint
+- React Email
+- Nodemailer 7.0.2
+- Resend 4.5.1
 
-# Format code
-pnpm format
-```
+## Development Setup
 
-## Dependencies
+### Environment Variables
 
-### Core Dependencies
+- NEXT_PUBLIC_API_URL
+- AUTH_SECRET
+- DATABASE_URL
+- EMAIL_PROVIDER
+- NODE_ENV
 
-- next: ^15.3.1
-- react: ^19.0.0
-- react-dom: ^19.0.0
-- next-themes: ^0.4.6
-- @radix-ui/react-\*: Various UI primitives
-- class-variance-authority: ^0.7.1
-- clsx: ^2.1.1
-- tailwind-merge: ^3.2.0
-- zod: ^3.24.4
+### Development Tools
 
-### Development Dependencies
-
-- typescript: ^5
-- eslint: ^9.26.0
-- prettier: ^3.5.3
-- tailwindcss: ^4
-- Various ESLint plugins and configurations
+- ESLint 9.26.0
+- Prettier 3.5.3
+- TypeScript 5.8.3
+- Drizzle Kit
 
 ## Technical Constraints
+
+### Authentication
+
+- Session-based auth with database storage
+- Secure cookie handling required
+- Regular auth checks (5-minute intervals)
+- CSRF protection needed
+
+### Performance
+
+- Bundle size monitoring
+- Code splitting
+- Image optimization
+- Font optimization
+
+### Security
+
+- Password hashing with bcrypt
+- Secure session management
+- Rate limiting
+- Input validation
 
 ### Browser Support
 
 - Modern browsers
-- No IE11 support
-- Progressive enhancement
+- Mobile responsiveness
+- Dark mode support
 
-### Performance Targets
+## Dependencies
 
-- Lighthouse score > 90
-- First Contentful Paint < 1.5s
-- Time to Interactive < 3.5s
-- Bundle size < 200KB (initial)
+### Core
 
-### Code Quality Standards
+```json
+{
+  "next": "15.3.1",
+  "react": "19.0.0",
+  "react-dom": "19.0.0",
+  "typescript": "5.8.3"
+}
+```
 
-- TypeScript strict mode
-- ESLint rules compliance
-- Prettier formatting
-- Import sorting
-- File structure rules
+### UI
 
-## Configuration Files
+```json
+{
+  "tailwindcss": "4",
+  "motion": "12.9.4",
+  "lucide-react": "0.507.0",
+  "@tabler/icons-react": "3.31.0"
+}
+```
 
-### Next.js Config
+### State & Forms
 
-- `next.config.js`: Next.js configuration
-- `next-env.d.ts`: Next.js TypeScript types
+```json
+{
+  "zustand": "5.0.4",
+  "react-hook-form": "7.56.2",
+  "react-hot-toast": "2.5.2"
+}
+```
 
-### TypeScript
+### Auth & Database
 
-- `tsconfig.json`: TypeScript configuration
-- Strict mode enabled
-- Path aliases configured
+```json
+{
+  "bcryptjs": "3.0.2",
+  "jsonwebtoken": "9.0.2",
+  "drizzle-orm": "0.43.1"
+}
+```
 
-### ESLint
+## Development Workflow
 
-- `eslint.config.mjs`: ESLint configuration
-- Next.js recommended rules
-- React hooks rules
-- Import sorting
-- File naming rules
+### Local Development
 
-### Prettier
+1. Environment setup
+2. Database migration
+3. Development server
+4. Hot reloading
 
-- `.prettierrc`: Prettier configuration
-- Import sorting plugin
-- Tailwind CSS plugin
+### Testing
 
-### Tailwind CSS
+1. Component testing
+2. Integration testing
+3. E2E testing (planned)
 
-- `tailwind.config.js`: Tailwind configuration
-- Custom theme settings
-- Component class sorting
-- JIT mode enabled
+### Deployment
 
-## Environment Variables
+1. Build process
+2. Environment configuration
+3. Database migration
+4. Email provider setup
 
-- `NEXT_PUBLIC_*`: Public variables
-- Type-safe using @t3-oss/env-nextjs
-- Zod validation schemas
+## Known Technical Limitations
+
+### Current
+
+- No E2E tests yet
+- Rate limiting not implemented
+- OAuth providers pending
+
+### Planned
+
+- React Query integration
+- Comprehensive testing
+- Performance monitoring
+- Analytics integration
