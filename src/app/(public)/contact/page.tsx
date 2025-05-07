@@ -1,3 +1,9 @@
+import { AppContainer } from '@/components/app-container'
+
 export default function ContactPage() {
-  return <div>ContactPage</div>
+  return (
+    <AppContainer>
+      <div>ContactPage</div>
+    </AppContainer>
+  )
 }
