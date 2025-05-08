@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { render } from '@react-email/render'
@@ -55,7 +55,21 @@ const LoginForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectUrl = searchParams.get('redirect') || '/'
+  const error = searchParams.get('error')
   const { setUser } = useAuthState()
+
+  // Show error toast if there's an error parameter
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        duration: 3000,
+      })
+      // Remove error from URL
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('error')
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [error])
 
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -139,6 +153,15 @@ const LoginForm = () => {
     }
   }
 
+  const oauthLogin = async (provider: 'google' | 'github') => {
+    try {
+      window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`
+    } catch (error) {
+      console.error(error)
+      toast.error(`Error logging in with ${provider}. Please try again.`)
+    }
+  }
+
   return (
     <>
       <FormCard
@@ -213,9 +236,7 @@ const LoginForm = () => {
             <Button
               className="flex-1 flex-row items-center gap-2"
               variant="outline"
-              onClick={() => {
-                window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/google`
-              }}
+              onClick={() => oauthLogin('google')}
             >
               <IconBrandGoogle />
               <span className="font-semibold">Google</span>
@@ -224,6 +245,7 @@ const LoginForm = () => {
             <Button
               className="flex-1 flex-row items-center gap-2"
               variant="outline"
+              onClick={() => oauthLogin('github')}
             >
               <IconBrandGithub />
               <span className="font-semibold">Github</span>
