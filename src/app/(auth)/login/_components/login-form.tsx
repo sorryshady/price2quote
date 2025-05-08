@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { render } from '@react-email/render'
@@ -53,21 +53,8 @@ const LoginForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectUrl = searchParams.get('redirect') || '/'
-  const error = searchParams.get('error')
-  const { setUser } = useAuthState()
 
-  // Show error toast if there's an error parameter
-  useEffect(() => {
-    if (error) {
-      toast.error(error, {
-        duration: 3000,
-      })
-      // Remove error from URL
-      const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete('error')
-      window.history.replaceState({}, '', newUrl)
-    }
-  }, [error])
+  const { setUser } = useAuthState()
 
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -151,15 +138,6 @@ const LoginForm = () => {
     }
   }
 
-  // const oauthLogin = async (provider: 'google' | 'github') => {
-  //   try {
-  //     window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`
-  //   } catch (error) {
-  //     console.error(error)
-  //     toast.error(`Error logging in with ${provider}. Please try again.`)
-  //   }
-  // }
-
   return (
     <>
       <FormCard
@@ -227,29 +205,6 @@ const LoginForm = () => {
               )}
             </Button>
           </form>
-          {/* <Separator />
-          <h3 className="text-muted-foreground text-center text-sm">
-            Or continue with
-          </h3>
-          <div className="flex h-7 w-full items-center space-x-4">
-            <Button
-              className="flex-1 flex-row items-center gap-2"
-              variant="outline"
-              onClick={() => oauthLogin('google')}
-            >
-              <IconBrandGoogle />
-              <span className="font-semibold">Google</span>
-            </Button>
-            <Separator orientation="vertical" />
-            <Button
-              className="flex-1 flex-row items-center gap-2"
-              variant="outline"
-              onClick={() => oauthLogin('github')}
-            >
-              <IconBrandGithub />
-              <span className="font-semibold">Github</span>
-            </Button>
-          </div> */}
         </Form>
       </FormCard>
       {showNotVerified && (

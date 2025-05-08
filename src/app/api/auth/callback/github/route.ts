@@ -29,14 +29,25 @@ export async function GET(req: NextRequest) {
 
     if (!state || !storedState || state !== storedState) {
       console.error('State mismatch:', { state, storedState })
-      return NextResponse.json(
-        { error: 'Invalid state parameter' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'State mismatch or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 
     if (!code) {
-      return NextResponse.json({ error: 'No code provided' }, { status: 400 })
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'No github code received or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
+      )
     }
 
     // Exchange code for tokens
@@ -57,9 +68,13 @@ export async function GET(req: NextRequest) {
     if (!tokenResponse.ok) {
       const error = await tokenResponse.json().catch(() => null)
       console.error('GitHub token error:', error)
-      return NextResponse.json(
-        { error: 'Failed to exchange code for tokens' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'Failed to exchange code for tokens or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 
@@ -67,9 +82,13 @@ export async function GET(req: NextRequest) {
     const accessToken = tokens.access_token
 
     if (!accessToken) {
-      return NextResponse.json(
-        { error: 'No access token received' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'No access token received or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 
@@ -84,9 +103,13 @@ export async function GET(req: NextRequest) {
     if (!userResponse.ok) {
       const error = await userResponse.json().catch(() => null)
       console.error('GitHub user info error:', error)
-      return NextResponse.json(
-        { error: 'Failed to get user info' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'Failed to get user info or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 
@@ -103,9 +126,11 @@ export async function GET(req: NextRequest) {
     if (!emailsResponse.ok) {
       const error = await emailsResponse.json().catch(() => null)
       console.error('GitHub emails error:', error)
-      return NextResponse.json(
-        { error: 'Failed to get user emails' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent('Failed to get user emails')}`,
+          req.url,
+        ),
       )
     }
 
@@ -115,9 +140,13 @@ export async function GET(req: NextRequest) {
     )?.email
 
     if (!primaryEmail) {
-      return NextResponse.json(
-        { error: 'No primary email found in GitHub account' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'No primary email found in GitHub account',
+          )}`,
+          req.url,
+        ),
       )
     }
 

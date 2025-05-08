@@ -22,14 +22,25 @@ export async function GET(req: NextRequest) {
     // Verify state parameter
     if (!state || !storedState || state !== storedState) {
       console.error('State mismatch:', { state, storedState })
-      return NextResponse.json(
-        { error: 'Invalid state parameter' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'Invalid state parameter or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 
     if (!code) {
-      return NextResponse.json({ error: 'No code provided' }, { status: 400 })
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'No google code received or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
+      )
     }
 
     // Exchange code for tokens
@@ -46,9 +57,13 @@ export async function GET(req: NextRequest) {
     })
 
     if (!tokenResponse.ok) {
-      return NextResponse.json(
-        { error: 'Failed to exchange code for tokens' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'Failed to exchange code for tokens or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 
@@ -60,9 +75,13 @@ export async function GET(req: NextRequest) {
     })
 
     if (!userResponse.ok) {
-      return NextResponse.json(
-        { error: 'Failed to get user info' },
-        { status: 400 },
+      return NextResponse.redirect(
+        new URL(
+          `/login?error=${encodeURIComponent(
+            'Failed to get user info or login attempt was cancelled',
+          )}`,
+          req.url,
+        ),
       )
     }
 

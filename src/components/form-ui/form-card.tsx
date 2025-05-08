@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 
 import { IconBrandGithub, IconBrandGoogle } from '@tabler/icons-react'
 import toast from 'react-hot-toast'
@@ -37,6 +39,22 @@ const FormCard = ({
   backHref,
   socials = false,
 }: FormCardProps) => {
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+
+  // Show error toast if there's an error parameter
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        duration: 3000,
+      })
+      // Remove error from URL
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('error')
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [error])
+
   const oauthLogin = async (provider: 'google' | 'github') => {
     try {
       window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`
