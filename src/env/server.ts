@@ -31,6 +31,9 @@ export const env = createEnv({
         { message: 'RESEND_API_KEY is required in production' },
       ),
     EMAIL_FROM: z.string(),
+    GOOGLE_CLIENT_ID: z.string(),
+    GOOGLE_CLIENT_SECRET: z.string(),
+    GOOGLE_REDIRECT_URI: z.string(),
   },
   onValidationError: (issues) => {
     console.error(

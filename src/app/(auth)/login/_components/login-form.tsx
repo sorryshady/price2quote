@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { render } from '@react-email/render'
+import { IconBrandGithub, IconBrandGoogle } from '@tabler/icons-react'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
+import { Separator } from '@/components/ui/separator'
 
 import { generateToken } from '@/app/server-actions/action'
 import { VerifyEmail } from '@/email-templates/verify-email'
@@ -203,6 +205,27 @@ const LoginForm = () => {
               )}
             </Button>
           </form>
+          <Separator />
+          <h3 className="text-muted-foreground text-center text-sm">
+            Or continue with
+          </h3>
+          <div className="flex h-7 w-full items-center space-x-4">
+            <Button
+              className="flex-1 flex-row items-center gap-2"
+              variant="outline"
+            >
+              <IconBrandGoogle />
+              <span className="font-semibold">Google</span>
+            </Button>
+            <Separator orientation="vertical" />
+            <Button
+              className="flex-1 flex-row items-center gap-2"
+              variant="outline"
+            >
+              <IconBrandGithub />
+              <span className="font-semibold">Github</span>
+            </Button>
+          </div>
         </Form>
       </FormCard>
       {showNotVerified && (
