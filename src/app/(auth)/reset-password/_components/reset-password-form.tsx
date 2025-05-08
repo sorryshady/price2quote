@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
-import FormCard from '@/components/form-card'
+import FormCard from '@/components/form-ui/form-card'
 import { Button } from '@/components/ui/button'
 import {
   Form,

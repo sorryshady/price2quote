@@ -16,9 +16,9 @@ export async function GET() {
         redirect_uri: env.GOOGLE_REDIRECT_URI,
         response_type: 'code',
         scope: 'openid email profile',
-        state,
         access_type: 'offline',
-        prompt: 'consent',
+        prompt: 'select_account',
+        state,
       })}`,
     )
 

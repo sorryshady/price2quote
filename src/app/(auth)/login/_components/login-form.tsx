@@ -6,12 +6,11 @@ import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { render } from '@react-email/render'
-import { IconBrandGithub, IconBrandGoogle } from '@tabler/icons-react'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
-import FormCard from '@/components/form-card'
+import FormCard from '@/components/form-ui/form-card'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -32,7 +31,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
-import { Separator } from '@/components/ui/separator'
 
 import { generateToken } from '@/app/server-actions/action'
 import { VerifyEmail } from '@/email-templates/verify-email'
@@ -153,14 +151,14 @@ const LoginForm = () => {
     }
   }
 
-  const oauthLogin = async (provider: 'google' | 'github') => {
-    try {
-      window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`
-    } catch (error) {
-      console.error(error)
-      toast.error(`Error logging in with ${provider}. Please try again.`)
-    }
-  }
+  // const oauthLogin = async (provider: 'google' | 'github') => {
+  //   try {
+  //     window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`
+  //   } catch (error) {
+  //     console.error(error)
+  //     toast.error(`Error logging in with ${provider}. Please try again.`)
+  //   }
+  // }
 
   return (
     <>
@@ -170,6 +168,7 @@ const LoginForm = () => {
         backPrefix="Don't have an account?"
         backLabel="Register"
         backHref="/register"
+        socials={true}
       >
         <Form {...form}>
           <form
@@ -228,7 +227,7 @@ const LoginForm = () => {
               )}
             </Button>
           </form>
-          <Separator />
+          {/* <Separator />
           <h3 className="text-muted-foreground text-center text-sm">
             Or continue with
           </h3>
@@ -250,7 +249,7 @@ const LoginForm = () => {
               <IconBrandGithub />
               <span className="font-semibold">Github</span>
             </Button>
-          </div>
+          </div> */}
         </Form>
       </FormCard>
       {showNotVerified && (

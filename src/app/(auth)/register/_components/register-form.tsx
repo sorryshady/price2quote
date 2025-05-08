@@ -5,7 +5,7 @@ import { render } from '@react-email/render'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
-import FormCard from '@/components/form-card'
+import FormCard from '@/components/form-ui/form-card'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -90,6 +90,7 @@ export function RegisterForm() {
       backPrefix="Already have an account?"
       backLabel="Login"
       backHref="/login"
+      socials={true}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-6">
