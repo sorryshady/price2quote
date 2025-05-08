@@ -1,8 +1,9 @@
+import Image from 'next/image'
 import Link from 'next/link'
+import React from 'react'
 
 import { LogOutIcon, SettingsIcon, UserIcon } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,
@@ -24,19 +25,30 @@ interface UserDropdownProps {
 }
 
 const UserDropdown = ({ user, logout }: UserDropdownProps) => {
+  const [imageError, setImageError] = React.useState(false)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="relative h-8 w-8 rounded-full border border-black"
+          className="relative h-8 w-8 rounded-full border border-black p-0"
         >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.image ?? ''} alt={user.name ?? 'User'} />
-            <AvatarFallback className="bg-primary/10 text-primary">
+          {user.image && !imageError ? (
+            <div className="relative h-full w-full">
+              <Image
+                src={user.image}
+                alt={user.name ?? 'User'}
+                fill
+                className="rounded-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            </div>
+          ) : (
+            <div className="bg-primary/10 text-primary flex h-full w-full items-center justify-center rounded-full">
               {user.name?.[0]?.toUpperCase() ?? 'U'}
-            </AvatarFallback>
-          </Avatar>
+            </div>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

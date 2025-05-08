@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
 
     // Verify state parameter
     if (!state || !storedState || state !== storedState) {
+      console.error('State mismatch:', { state, storedState })
       return NextResponse.json(
         { error: 'Invalid state parameter' },
         { status: 400 },
@@ -45,7 +46,6 @@ export async function GET(req: NextRequest) {
     })
 
     if (!tokenResponse.ok) {
-      console.error('Token exchange error:', await tokenResponse.text())
       return NextResponse.json(
         { error: 'Failed to exchange code for tokens' },
         { status: 400 },
@@ -145,6 +145,7 @@ export async function GET(req: NextRequest) {
     return response
   } catch (error) {
     console.error('Google callback error:', error)
+
     return NextResponse.json(
       { error: 'Failed to process Google callback' },
       { status: 500 },

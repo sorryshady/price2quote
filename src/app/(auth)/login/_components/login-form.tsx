@@ -213,6 +213,9 @@ const LoginForm = () => {
             <Button
               className="flex-1 flex-row items-center gap-2"
               variant="outline"
+              onClick={() => {
+                window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/google`
+              }}
             >
               <IconBrandGoogle />
               <span className="font-semibold">Google</span>
