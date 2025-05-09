@@ -250,8 +250,8 @@ This will start:
 - Database data is persisted in `./docker-data/db`
 - Connect to the database using your preferred PostgreSQL client:
   - Host: localhost
-  - Port: 5432
-  - Database: next_starter
+  - Port: your_port (from .env.local)
+  - Database: your_db_name (from .env.local)
   - Username: your_user (from .env.local)
   - Password: your_password (from .env.local)
 
