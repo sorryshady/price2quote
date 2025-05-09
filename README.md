@@ -51,23 +51,32 @@ Required environment variables:
 
 ```env
 # Database
-DB_PASSWORD=your_password
-DB_USER=your_user
-DB_NAME=next_starter
-DB_PORT=5432
+DB_HOST=localhost
+DB_USER=
+DB_PASSWORD= 
+DB_NAME=
+DB_PORT=
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
 # Email (for local development)
-EMAIL_PROVIDER=mailhog
-SMTP_HOST=localhost
-SMTP_PORT=1025
+MAILHOG_HOST=localhost
+MAILHOG_PORT=1025
+
+# Sender's email (for local and production)
+EMAIL_FROM=
 
 # Auth
 AUTH_SECRET=your_auth_secret
 
 # Google OAuth
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=${NEXT_PUBLIC_API_URL}/api/auth/callback/google
+
+# Github OAuth
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_REDIRECT_URI=${NEXT_PUBLIC_API_URL}/api/auth/callback/github
 ```
 
 4. Set up the database:
