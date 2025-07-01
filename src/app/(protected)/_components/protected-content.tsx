@@ -31,11 +31,14 @@ export function ProtectedContent({ children }: ProtectedContentProps) {
     // Don't redirect if still loading
     if (authLoading || companiesLoading) return
 
-    // If user has no companies and not on add-company page, redirect
+    // Only redirect to add-company if user has no companies and is not already there
     if (!hasCompanies && pathname !== '/add-company') {
       setIsRedirecting(true)
       router.push('/add-company')
+      return
     }
+
+    // Don't redirect users away from add-company page - let them stay if they want to add more companies
   }, [hasCompanies, pathname, authLoading, companiesLoading, router])
 
   // Show skeleton loading for initial auth check only
@@ -61,12 +64,7 @@ export function ProtectedContent({ children }: ProtectedContentProps) {
     )
   }
 
-  // If user has no companies, only show content on add-company page
-  if (!hasCompanies && pathname !== '/add-company') {
-    return null
-  }
-
-  // Show children if user has companies or is on add-company page
+  // Show children - redirects are handled above
   // Companies loading will be handled by individual components if needed
   return <>{children}</>
 }

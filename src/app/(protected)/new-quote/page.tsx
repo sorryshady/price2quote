@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { AIQuoteRecommendations } from '@/components/ui/ai-quote-recommendations'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,7 +37,10 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 
-import { createQuoteAction } from '@/app/server-actions'
+import {
+  createQuoteAction,
+  generateAIAssistedQuoteAction,
+} from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
@@ -48,6 +52,18 @@ const quoteSchema = z.object({
   projectDescription: z.string().optional(),
   clientName: z.string().optional(),
   clientEmail: z.string().email('Invalid email').optional().or(z.literal('')),
+  clientLocation: z.string().min(1, 'Client location is required'),
+  deliveryTimeline: z.enum([
+    '1_week',
+    '2_weeks',
+    '1_month',
+    '2_months',
+    '3_months',
+    'custom',
+  ]),
+  customTimeline: z.string().optional(),
+  clientBudget: z.number().min(0).optional(),
+  projectComplexity: z.enum(['simple', 'moderate', 'complex']),
   currency: z.string(),
 })
 
@@ -69,13 +85,61 @@ export default function NewQuotePage() {
     [],
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAIRecommendations, setShowAIRecommendations] = useState(false)
+  const [aiResponse, setAiResponse] = useState<{
+    marketAnalysis: {
+      locationFactor: string
+      marketConditions: string
+      competitivePosition: string
+    }
+    serviceRecommendations: Array<{
+      serviceName: string
+      currentPrice: number
+      recommendedPrice: number
+      confidenceLevel: 'high' | 'medium' | 'low'
+      reasoning: string
+      priceRange: {
+        min: number
+        max: number
+      }
+    }>
+    totalQuote: {
+      currentTotal: number
+      recommendedTotal: number
+      confidenceLevel: 'high' | 'medium' | 'low'
+      reasoning: string
+    }
+    negotiationTips: string[]
+  } | null>(null)
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
   const form = useForm<QuoteFormData>({
     resolver: zodResolver(quoteSchema),
     defaultValues: {
+      companyId: '',
+      projectTitle: '',
+      projectDescription: '',
+      clientName: '',
+      clientEmail: '',
+      clientLocation: '',
+      deliveryTimeline: '1_month',
+      customTimeline: '',
+      clientBudget: undefined,
+      projectComplexity: 'moderate',
       currency: 'USD',
     },
   })
+
+  // Auto-select company for free users
+  useEffect(() => {
+    if (
+      user?.subscriptionTier === 'free' &&
+      companies?.length === 1 &&
+      !form.getValues('companyId')
+    ) {
+      form.setValue('companyId', companies[0].id)
+    }
+  }, [companies, user?.subscriptionTier, form])
 
   const selectedCompanyId = form.watch('companyId')
   const selectedCompany = companies?.find((c) => c.id === selectedCompanyId)
@@ -126,6 +190,74 @@ export default function NewQuotePage() {
     }, 0)
   }
 
+  const handleGenerateAIQuote = async () => {
+    if (!selectedCompany || selectedServices.length === 0) return
+
+    setIsGeneratingAI(true)
+    try {
+      const formData = form.getValues()
+      const result = await generateAIAssistedQuoteAction({
+        companyId: formData.companyId,
+        projectTitle: formData.projectTitle,
+        projectDescription: formData.projectDescription,
+        complexity: formData.projectComplexity,
+        deliveryTimeline: formData.deliveryTimeline,
+        customTimeline: formData.customTimeline,
+        clientLocation: formData.clientLocation,
+        clientBudget: formData.clientBudget,
+        selectedServices: selectedServices.map((s) => ({
+          serviceId: s.serviceId,
+          serviceName: s.service.name,
+          skillLevel: s.service.skillLevel,
+          basePrice: s.service.basePrice,
+          quantity: s.quantity,
+          currentPrice: s.unitPrice,
+        })),
+      })
+
+      if (result.success && result.aiResponse) {
+        setAiResponse(result.aiResponse)
+        setShowAIRecommendations(true)
+      } else {
+        console.error('Failed to generate AI quote:', result.error)
+      }
+    } catch (error) {
+      console.error('Error generating AI quote:', error)
+    } finally {
+      setIsGeneratingAI(false)
+    }
+  }
+
+  const handleApplyAIRecommendations = (
+    recommendations: Array<{
+      serviceName: string
+      currentPrice: number
+      recommendedPrice: number
+      confidenceLevel: 'high' | 'medium' | 'low'
+      reasoning: string
+      priceRange: {
+        min: number
+        max: number
+      }
+    }>,
+  ) => {
+    setSelectedServices((prev) =>
+      prev.map((service) => {
+        const recommendation = recommendations.find(
+          (r) => r.serviceName === service.service.name,
+        )
+        if (recommendation) {
+          return {
+            ...service,
+            unitPrice: recommendation.recommendedPrice,
+          }
+        }
+        return service
+      }),
+    )
+    setShowAIRecommendations(false)
+  }
+
   const onSubmit = async (data: QuoteFormData) => {
     if (!user || !canCreate) return
 
@@ -138,6 +270,11 @@ export default function NewQuotePage() {
         projectDescription: data.projectDescription,
         clientEmail: data.clientEmail,
         clientName: data.clientName,
+        clientLocation: data.clientLocation,
+        deliveryTimeline: data.deliveryTimeline,
+        customTimeline: data.customTimeline,
+        clientBudget: data.clientBudget,
+        projectComplexity: data.projectComplexity,
         currency: data.currency,
         selectedServices: selectedServices.map((s) => ({
           serviceId: s.serviceId,
@@ -207,37 +344,48 @@ export default function NewQuotePage() {
             <CardHeader>
               <CardTitle>Company</CardTitle>
               <CardDescription>
-                Select the company to create the quote for
+                {user?.subscriptionTier === 'free' && companies?.length === 1
+                  ? 'Your company (auto-selected)'
+                  : 'Select the company to create the quote for'}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <FormField
-                control={form.control}
-                name="companyId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a company" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {companies?.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {user?.subscriptionTier === 'free' && companies?.length === 1 ? (
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="font-medium">{companies[0].name}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {companies[0].businessType} • {companies[0].country}
+                  </p>
+                </div>
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a company" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companies?.map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -281,6 +429,82 @@ export default function NewQuotePage() {
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="deliveryTimeline"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Delivery Timeline</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select timeline" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1_week">1 Week</SelectItem>
+                          <SelectItem value="2_weeks">2 Weeks</SelectItem>
+                          <SelectItem value="1_month">1 Month</SelectItem>
+                          <SelectItem value="2_months">2 Months</SelectItem>
+                          <SelectItem value="3_months">3 Months</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="projectComplexity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Complexity</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select complexity" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="simple">Simple</SelectItem>
+                          <SelectItem value="moderate">Moderate</SelectItem>
+                          <SelectItem value="complex">Complex</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {form.watch('deliveryTimeline') === 'custom' && (
+                <FormField
+                  control={form.control}
+                  name="customTimeline"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Custom Timeline</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., 6 weeks, 2 months, etc."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -315,7 +539,7 @@ export default function NewQuotePage() {
                         <Badge variant="outline">{service.skillLevel}</Badge>
                         {service.basePrice && (
                           <Badge variant="secondary">
-                            ${service.basePrice} {service.currency}
+                            {service.basePrice} {service.currency}
                           </Badge>
                         )}
                       </div>
@@ -384,7 +608,7 @@ export default function NewQuotePage() {
                       <div>
                         <Label className="text-sm">Total</Label>
                         <Input
-                          value={`$${(selectedService.quantity * selectedService.unitPrice).toFixed(2)}`}
+                          value={`${(selectedService.quantity * selectedService.unitPrice).toFixed(2)}`}
                           disabled
                           className="bg-muted"
                         />
@@ -392,9 +616,9 @@ export default function NewQuotePage() {
                     </div>
 
                     <div>
-                      <Label className="text-sm">Notes</Label>
+                      <Label className="text-sm">Description</Label>
                       <Textarea
-                        placeholder="Add any specific notes for this service..."
+                        placeholder="Describe this service for the client..."
                         value={selectedService.notes}
                         onChange={(e) =>
                           updateServiceNotes(
@@ -412,7 +636,7 @@ export default function NewQuotePage() {
 
                 <div className="flex items-center justify-between text-lg font-semibold">
                   <span>Total Amount:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
+                  <span>{calculateTotal().toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -422,43 +646,95 @@ export default function NewQuotePage() {
           <Card>
             <CardHeader>
               <CardTitle>Client Information</CardTitle>
-              <CardDescription>
-                Optional client details for the quote
-              </CardDescription>
+              <CardDescription>Client details for the quote</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="clientName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter client name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="clientName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter client name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="clientEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter client email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="clientEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter client email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="clientLocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Location *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., San Francisco, CA"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="clientBudget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Budget (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Enter budget amount"
+                          value={field.value || ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
+          {/* Submit Buttons */}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={selectedServices.length === 0 || isGeneratingAI}
+              onClick={handleGenerateAIQuote}
+            >
+              {isGeneratingAI ? 'Generating...' : 'Get AI-Assisted Quote'}
+            </Button>
             <Button
               type="submit"
               disabled={isSubmitting || selectedServices.length === 0}
@@ -468,6 +744,21 @@ export default function NewQuotePage() {
           </div>
         </form>
       </Form>
+
+      {/* AI Recommendations Modal */}
+      {showAIRecommendations && aiResponse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-background max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg">
+            <div className="p-6">
+              <AIQuoteRecommendations
+                aiResponse={aiResponse}
+                onApplyRecommendations={handleApplyAIRecommendations}
+                onClose={() => setShowAIRecommendations(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
