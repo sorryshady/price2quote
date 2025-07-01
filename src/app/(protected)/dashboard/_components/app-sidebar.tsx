@@ -6,6 +6,7 @@ import * as React from 'react'
 import { IconInnerShadowTop } from '@tabler/icons-react'
 import {
   BarChart3,
+  Briefcase,
   CirclePlusIcon,
   FileText,
   HelpCircle,
@@ -31,7 +32,16 @@ import { NavMain } from './nav-main'
 import { NavSecondary } from './nav-secondary'
 import { NavUser } from './nav-user'
 
+const initial = true
+
 const data = {
+  navInitial: [
+    {
+      title: 'Setup Company',
+      url: '/add-company',
+      icon: Briefcase,
+    },
+  ],
   navMain: [
     {
       title: 'Dashboard',
@@ -62,6 +72,11 @@ const data = {
       title: 'Analytics',
       url: '/analytics',
       icon: BarChart3,
+    },
+    {
+      title: 'Add company',
+      url: '/add-company',
+      icon: Briefcase,
     },
   ],
   navSecondary: [
@@ -100,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={initial ? data.navInitial : data.navMain} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
