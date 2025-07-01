@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { QuotesSkeleton } from '@/components/ui/loading-states'
+import { QuotePreview } from '@/components/ui/quote-preview'
 import {
   Select,
   SelectContent,
@@ -28,6 +29,30 @@ import { useAuth } from '@/hooks/use-auth'
 import { useQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 import type { QuoteStatus } from '@/types'
+
+// Type for the AI-generated quote data
+type QuoteData = {
+  quoteDocument: {
+    executiveSummary: string
+    serviceBreakdown: Array<{
+      serviceName: string
+      description: string
+      quantity: number
+      unitPrice: number
+      totalPrice: number
+      deliverables: string[]
+    }>
+    termsAndConditions: string[]
+    paymentTerms: string
+    deliveryTimeline: string
+    nextSteps: string
+  }
+  presentation: {
+    keyHighlights: string[]
+    valueProposition: string
+    competitiveAdvantages: string[]
+  }
+}
 
 function getStatusColor(status: QuoteStatus) {
   switch (status) {
@@ -362,108 +387,117 @@ export default function QuotesPage() {
       {showQuotePreview && selectedQuote && (
         <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50">
           <div className="bg-background max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Quote Preview</h2>
-              <Button variant="outline" onClick={handleClosePreview}>
-                Close
-              </Button>
-            </div>
+            {/* Show full AI-generated quote if available, otherwise show basic info */}
+            {selectedQuote.quoteData &&
+            typeof selectedQuote.quoteData === 'object' &&
+            'quoteDocument' in selectedQuote.quoteData &&
+            'presentation' in selectedQuote.quoteData ? (
+              <QuotePreview
+                quoteData={selectedQuote.quoteData as QuoteData}
+                onClose={handleClosePreview}
+              />
+            ) : (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{selectedQuote.projectTitle}</CardTitle>
+                    <CardDescription>
+                      {selectedQuote.company?.name} •{' '}
+                      {selectedQuote.company?.businessType}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {selectedQuote.projectDescription && (
+                        <div>
+                          <h4 className="mb-2 font-medium">
+                            Project Description
+                          </h4>
+                          <p className="text-muted-foreground">
+                            {selectedQuote.projectDescription}
+                          </p>
+                        </div>
+                      )}
 
-            {/* Simple quote preview - in the future this would show the full AI-generated quote */}
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{selectedQuote.projectTitle}</CardTitle>
-                  <CardDescription>
-                    {selectedQuote.company?.name} •{' '}
-                    {selectedQuote.company?.businessType}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {selectedQuote.projectDescription && (
                       <div>
-                        <h4 className="mb-2 font-medium">
-                          Project Description
-                        </h4>
-                        <p className="text-muted-foreground">
-                          {selectedQuote.projectDescription}
-                        </p>
-                      </div>
-                    )}
-
-                    <div>
-                      <h4 className="mb-2 font-medium">Quote Details</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Amount:</span>
-                          <div className="font-medium">
-                            {formatCurrency(
-                              selectedQuote.amount,
-                              selectedQuote.currency,
-                            )}
+                        <h4 className="mb-2 font-medium">Quote Details</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">
+                              Amount:
+                            </span>
+                            <div className="font-medium">
+                              {formatCurrency(
+                                selectedQuote.amount,
+                                selectedQuote.currency,
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Status:</span>
-                          <div className="font-medium">
-                            {selectedQuote.status}
+                          <div>
+                            <span className="text-muted-foreground">
+                              Status:
+                            </span>
+                            <div className="font-medium">
+                              {selectedQuote.status}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Client:</span>
-                          <div className="font-medium">
-                            {selectedQuote.clientName || 'Not specified'}
+                          <div>
+                            <span className="text-muted-foreground">
+                              Client:
+                            </span>
+                            <div className="font-medium">
+                              {selectedQuote.clientName || 'Not specified'}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">
-                            Created:
-                          </span>
-                          <div className="font-medium">
-                            {formatDate(selectedQuote.createdAt)}
+                          <div>
+                            <span className="text-muted-foreground">
+                              Created:
+                            </span>
+                            <div className="font-medium">
+                              {formatDate(selectedQuote.createdAt)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {selectedQuote.quoteServices &&
-                      selectedQuote.quoteServices.length > 0 && (
-                        <div>
-                          <h4 className="mb-2 font-medium">Services</h4>
-                          <div className="space-y-2">
-                            {selectedQuote.quoteServices.map((qs) => (
-                              <div
-                                key={qs.id}
-                                className="bg-muted flex items-center justify-between rounded p-2"
-                              >
-                                <div>
-                                  <div className="font-medium">
-                                    {qs.service?.name}
+                      {selectedQuote.quoteServices &&
+                        selectedQuote.quoteServices.length > 0 && (
+                          <div>
+                            <h4 className="mb-2 font-medium">Services</h4>
+                            <div className="space-y-2">
+                              {selectedQuote.quoteServices.map((qs) => (
+                                <div
+                                  key={qs.id}
+                                  className="bg-muted flex items-center justify-between rounded p-2"
+                                >
+                                  <div>
+                                    <div className="font-medium">
+                                      {qs.service?.name}
+                                    </div>
+                                    <div className="text-muted-foreground text-sm">
+                                      Quantity: {qs.quantity} • Unit Price:{' '}
+                                      {formatCurrency(
+                                        qs.unitPrice,
+                                        selectedQuote.currency,
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="text-muted-foreground text-sm">
-                                    Quantity: {qs.quantity} • Unit Price:{' '}
+                                  <div className="font-medium">
                                     {formatCurrency(
-                                      qs.unitPrice,
+                                      qs.totalPrice,
                                       selectedQuote.currency,
                                     )}
                                   </div>
                                 </div>
-                                <div className="font-medium">
-                                  {formatCurrency(
-                                    qs.totalPrice,
-                                    selectedQuote.currency,
-                                  )}
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                        )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
       )}

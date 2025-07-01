@@ -84,6 +84,7 @@ export async function createQuoteAction(data: CreateQuoteData) {
         currency: data.currency || 'USD',
         clientEmail: data.clientEmail,
         clientName: data.clientName,
+        quoteData: data.quoteData || null,
       })
       .returning()
 
@@ -135,6 +136,7 @@ export async function getQuotesAction(userId: string) {
         status: quotes.status,
         clientEmail: quotes.clientEmail,
         clientName: quotes.clientName,
+        quoteData: quotes.quoteData,
         sentAt: quotes.sentAt,
         createdAt: quotes.createdAt,
         updatedAt: quotes.updatedAt,

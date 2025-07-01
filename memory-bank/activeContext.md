@@ -2,6 +2,9 @@
 
 ## Current Focus
 
+- **COMPLETED: AI quote data persistence and retrieval system**
+- **COMPLETED: Enhanced quote viewing with full AI-generated content**
+- **COMPLETED: Negotiation system with proper price matching**
 - **COMPLETED: Complete quotes listing page with comprehensive features**
 - **COMPLETED: Complete quote creation system with AI integration**
 - **COMPLETED: Quote preview component with professional layout**
@@ -17,7 +20,40 @@
 
 ## Recent Changes
 
-1. **NEW: Complete Quotes Listing Page COMPLETED:**
+1. **NEW: AI Quote Data Persistence System COMPLETED:**
+
+   - **Database Schema**: Added `quoteData` JSON field to quotes table to store AI-generated content
+   - **Server Actions**: Updated `createQuoteAction` to save AI quote data and `getQuotesAction` to retrieve it
+   - **Data Structure**: Stores complete AI-generated quote including executive summary, value proposition, service breakdown, terms, payment terms, delivery timeline, and next steps
+   - **Type Safety**: Proper TypeScript interfaces for quote data structures
+   - **Benefits**: AI-generated quotes are now permanently stored and retrievable
+
+2. **NEW: Enhanced Quote Viewing System COMPLETED:**
+
+   - **Full AI Quote Display**: "View Quote" button now shows complete AI-generated quote content
+   - **QuotePreview Component**: Reused the same professional quote preview component from quote creation
+   - **Conditional Rendering**: Shows full AI content if available, falls back to basic quote info
+   - **Professional Layout**: Executive summary, value proposition, service breakdown, terms, payment, timeline, and next steps
+   - **Type Safety**: Proper type checking for quote data structure
+   - **Benefits**: Users can view the complete professional quote document from the quotes listing
+
+3. **NEW: Negotiation System Improvements COMPLETED:**
+
+   - **Price Matching Fix**: Resolved service name mismatch between AI recommendations and selected services
+   - **Flexible Matching**: Handles skill level suffixes (e.g., "Cake Baking (advanced)" matches "Cake Baking")
+   - **Manual Application**: Removed auto-apply after negotiation - users must click "Apply All Recommendations"
+   - **Enhanced Logging**: Comprehensive console logging for debugging negotiation flow
+   - **useCallback Optimization**: Fixed stale closure issues with proper dependency management
+   - **Benefits**: Reliable negotiation system with proper price updates
+
+4. **NEW: Subscription System Robustness COMPLETED:**
+
+   - **Error Handling**: Added safety checks for invalid subscription tiers
+   - **Default Fallbacks**: Gracefully handles missing or corrupted subscription data
+   - **Type Safety**: Proper validation before accessing subscription features
+   - **Benefits**: System won't crash with data inconsistencies
+
+5. **NEW: Complete Quotes Listing Page COMPLETED:**
 
    - **Comprehensive Quote Display**: Shows all quote information including project title, company, status, amount, client, services, and timestamps
    - **Status Filtering**: Filter quotes by status (draft, sent, accepted, rejected, revised, all)
@@ -31,7 +67,7 @@
    - **Error Handling**: Graceful error states and empty states
    - **Benefits**: Complete quote management interface ready for client use
 
-2. **NEW: Quote Data Fetching System COMPLETED:**
+6. **NEW: Quote Data Fetching System COMPLETED:**
 
    - **Server Action**: `getQuotesAction` fetches quotes with company and service details
    - **TanStack Query Hook**: `useQuotesQuery` for efficient caching and data fetching
@@ -39,7 +75,7 @@
    - **Type Safety**: Proper TypeScript interfaces for quote data structures
    - **Benefits**: Fast, cached quote loading with real-time updates
 
-3. **NEW: Complete Quote Creation System COMPLETED:**
+7. **NEW: Complete Quote Creation System COMPLETED:**
 
    - **Full Quote Form**: Comprehensive form with company selection, project details, services, client info, and final notes
    - **Service Management**: Dynamic service selection with quantity, pricing, and notes
@@ -51,7 +87,7 @@
    - **Dummy Data**: Test data population for birthday event scenario
    - **Benefits**: End-to-end quote creation workflow with AI assistance
 
-4. **NEW: Quote Preview Component COMPLETED:**
+8. **NEW: Quote Preview Component COMPLETED:**
 
    - **Professional Layout**: Executive summary, value proposition, service breakdown, terms, payment, timeline, and next steps
    - **Service Breakdown**: Detailed pricing with quantity, unit price, total, and deliverables
@@ -59,7 +95,7 @@
    - **Total Calculation**: Automatic total amount calculation from services
    - **Benefits**: Professional quote presentation ready for client delivery
 
-5. **NEW: AI Quote Generation with Enhanced Features COMPLETED:**
+9. **NEW: AI Quote Generation with Enhanced Features COMPLETED:**
 
    - **Market Analysis**: Location-based insights, market conditions, and competitive positioning
    - **Service Recommendations**: AI-suggested pricing with confidence levels (high/medium/low)
@@ -69,43 +105,43 @@
    - **Interactive Negotiation**: Per-service negotiation with AI assistance
    - **Benefits**: Professional AI-powered pricing with market intelligence
 
-6. **NEW: Enhanced AI Context Integration COMPLETED:**
+10. **NEW: Enhanced AI Context Integration COMPLETED:**
 
-   - **Company AI Summary**: Previously generated business summaries now included in pricing prompts
-   - **Rich Context**: AI has access to company's market position, expertise, and operational details
-   - **Better Recommendations**: More informed pricing based on actual business context
-   - **Updated Interfaces**: Type-safe integration of AI summary data
-   - **Benefits**: Significantly improved AI pricing accuracy and relevance
+    - **Company AI Summary**: Previously generated business summaries now included in pricing prompts
+    - **Rich Context**: AI has access to company's market position, expertise, and operational details
+    - **Better Recommendations**: More informed pricing based on actual business context
+    - **Updated Interfaces**: Type-safe integration of AI summary data
+    - **Benefits**: Significantly improved AI pricing accuracy and relevance
 
-7. **NEW: TypeScript Type Safety COMPLETED:**
+11. **NEW: TypeScript Type Safety COMPLETED:**
 
-   - **Proper Interfaces**: Replaced all `any` types with comprehensive type definitions
-   - **AI Response Types**: Full type safety for AI recommendation structures
-   - **Function Parameters**: Type-safe function signatures throughout
-   - **Benefits**: Better developer experience and runtime safety
+    - **Proper Interfaces**: Replaced all `any` types with comprehensive type definitions
+    - **AI Response Types**: Full type safety for AI recommendation structures
+    - **Function Parameters**: Type-safe function signatures throughout
+    - **Benefits**: Better developer experience and runtime safety
 
-8. **NEW: Subscription tracking and limit enforcement system COMPLETED:**
+12. **NEW: Subscription tracking and limit enforcement system COMPLETED:**
 
-   - **Quotes Table**: Created with proper schema and relationships
-   - **Subscription Limits**: Free tier (3 quotes/month, 1 company), Pro tier (unlimited quotes, 5 companies)
-   - **Database Functions**: Real-time usage tracking with monthly resets
-   - **Server Actions**: API endpoints for checking limits and creating quotes
-   - **UI Components**: Beautiful subscription limit cards with upgrade prompts
-   - **TanStack Query Hooks**: Efficient caching for subscription data
-   - **Header Integration**: User info and subscription status in app header
-   - **Limit Enforcement**: Prevents exceeding subscription limits
-   - **Benefits**: Complete subscription management with real-time tracking
+    - **Quotes Table**: Created with proper schema and relationships
+    - **Subscription Limits**: Free tier (3 quotes/month, 1 company), Pro tier (unlimited quotes, 5 companies)
+    - **Database Functions**: Real-time usage tracking with monthly resets
+    - **Server Actions**: API endpoints for checking limits and creating quotes
+    - **UI Components**: Beautiful subscription limit cards with upgrade prompts
+    - **TanStack Query Hooks**: Efficient caching for subscription data
+    - **Header Integration**: User info and subscription status in app header
+    - **Limit Enforcement**: Prevents exceeding subscription limits
+    - **Benefits**: Complete subscription management with real-time tracking
 
-9. **NEW: Header User Status COMPLETED:**
+13. **NEW: Header User Status COMPLETED:**
 
-   - **Quote Usage Display**: Shows current usage for free users (e.g., "Quotes: 2/3")
-   - **Subscription Tier Badge**: Clear "Free" or "Pro" indicator
-   - **User Information**: Clean display of subscription status
-   - **Error Handling**: Graceful fallback if database issues occur
-   - **Responsive Design**: Works well on all screen sizes
-   - **Benefits**: Always-visible subscription status without sidebar clutter
+    - **Quote Usage Display**: Shows current usage for free users (e.g., "Quotes: 2/3")
+    - **Subscription Tier Badge**: Clear "Free" or "Pro" indicator
+    - **User Information**: Clean display of subscription status
+    - **Error Handling**: Graceful fallback if database issues occur
+    - **Responsive Design**: Works well on all screen sizes
+    - **Benefits**: Always-visible subscription status without sidebar clutter
 
-10. **NEW: Subscription Limit Components COMPLETED:**
+14. **NEW: Subscription Limit Components COMPLETED:**
 
     - **SubscriptionLimit**: Full-featured card with usage progress and upgrade prompts
     - **Quote Usage Tracking**: Monthly quote counting with database integration
@@ -114,7 +150,7 @@
     - **Usage Indicators**: Visual progress bars and status badges
     - **Benefits**: Professional subscription management UI
 
-11. **NEW: TanStack Query Implementation COMPLETED:**
+15. **NEW: TanStack Query Implementation COMPLETED:**
 
     - Replaced custom loading states with TanStack Query for intelligent caching
     - Implemented proper skeleton loading components throughout the app
@@ -126,7 +162,7 @@
     - **NEW: useQuotesQuery hook** for quote data fetching
     - **Benefits**: No more loading flashes, intelligent caching, better UX
 
-12. **NEW: Loading State Optimizations COMPLETED:**
+16. **NEW: Loading State Optimizations COMPLETED:**
 
     - **SidebarSkeleton**: Proper skeleton for navigation loading
     - **AddCompanySkeleton**: Full page skeleton for onboarding form
@@ -137,7 +173,7 @@
     - Replaced all loading spinners with meaningful skeleton states
     - Fixed heading flash issues in onboarding form
 
-13. **NEW: Performance Improvements COMPLETED:**
+17. **NEW: Performance Improvements COMPLETED:**
 
     - **Race Condition Fixes**: Proper timing for companies data loading
     - **Caching Strategy**: 5-minute stale time, 10-minute cache time
@@ -146,14 +182,14 @@
     - **Automatic Retries**: Failed requests retry once
     - **DevTools Integration**: Built-in debugging tools
 
-14. Authentication System:
+18. Authentication System:
 
     - Complete login flow with session management
     - OAuth authentication (Google and GitHub)
     - Session persistence using cookies and database
     - Auth provider for client-side state management
 
-15. Subscription System:
+19. Subscription System:
 
     - Free tier: 3 quotes/month, 1 company
     - Pro tier: Unlimited quotes, 5 companies
@@ -163,7 +199,7 @@
     - **NEW: Database integration for usage tracking**
     - Dodo Payments integration planned
 
-16. Project Context:
+20. Project Context:
 
     - Identified as PricingGPT platform
     - AI-powered pricing recommendations
@@ -171,7 +207,7 @@
     - Gmail integration for emails
     - PDF quote generation
 
-17. Company Onboarding Implementation COMPLETED:
+21. Company Onboarding Implementation COMPLETED:
 
     - Multi-step onboarding form (Company Info, Profile, Services, Summary)
     - localStorage persistence for form data and current step
@@ -184,12 +220,13 @@
     - **NEW: Logo upload to Supabase storage**
     - **NEW: Background AI summary generation**
 
-18. Database & Storage Setup:
+22. Database & Storage Setup:
 
     - Companies and services tables created with proper relationships
     - **NEW: Quotes table with subscription tracking**
     - **NEW: Quote status enum (draft, sent, accepted, rejected, revised)**
     - **NEW: Quote services junction table for detailed service tracking**
+    - **NEW: quoteData JSON field for AI-generated content storage**
     - Supabase storage for company logos
     - Proper relationships and constraints
     - AI summary fields (aiSummary, aiSummaryStatus)
@@ -199,24 +236,16 @@
     - TypeScript types defined for all entities
     - **NEW: Database migrations completed**
 
-19. AI Integration COMPLETED:
+## Next Steps
 
-    - Gemini AI SDK installed and configured
-    - Detailed prompt engineering for company summaries (4-6 sentences)
-    - Server-side background processing implementation
-    - Error handling and status tracking
-    - **NEW: Background AI summary generation with database updates**
-    - **NEW: AI-powered quote pricing with confidence levels**
-    - **NEW: Market analysis and competitive positioning**
-    - **NEW: Enhanced context with company AI summaries**
-
-20. Server Actions Organization COMPLETED:
-    - Modular structure: auth.ts, company.ts, quote.ts, subscription.ts, index.ts
-    - Clean exports and type safety
-    - Scalable architecture for future actions
-    - **NEW: AI quote generation action with enhanced context**
-    - **NEW: Complete quote creation with database integration**
-    - **NEW: Quote fetching with company and service details**
+1. **PDF Generation**: Implement PDF export for quotes using the stored AI data
+2. **Email Integration**: Add email sending functionality for quotes
+3. **Quote Status Management**: Add ability to update quote status (send, accept, reject, revise)
+4. **Advanced Filtering**: Add date range, amount range, and client filtering to quotes page
+5. **Quote Templates**: Create customizable quote templates
+6. **Client Portal**: Build client-facing quote viewing interface
+7. **Analytics Dashboard**: Add quote performance and conversion tracking
+8. **Payment Integration**: Integrate payment processing for accepted quotes
 
 ## Active Decisions
 
@@ -260,37 +289,6 @@
 8. **Quote Approval Workflow**: For businesses with approval processes
 9. **Mobile Optimization**: Ensure quote creation and preview work well on mobile devices
 10. **Quote Editing**: Allow editing of existing quotes
-
-## Next Steps
-
-1. **PDF Export Implementation**
-
-   - Research and implement PDF generation library
-   - Create professional PDF templates
-   - Add download functionality to quote preview
-
-2. **Email Integration**
-
-   - Connect with Gmail OAuth for sending quotes
-   - Create email templates for quote delivery
-   - Add email tracking and follow-up features
-
-3. **Quote Management Enhancements**
-
-   - Add quote editing capabilities
-   - Implement quote status management (draft, sent, accepted, rejected)
-   - Add quote duplication functionality
-
-4. **Testing and Optimization**
-
-   - Comprehensive testing of quote creation and listing flow
-   - Performance optimization for large quote lists
-   - Mobile responsiveness testing
-
-5. **Documentation and Deployment**
-   - Update documentation with new features
-   - Prepare for production deployment
-   - Set up monitoring and analytics
 
 ## Known Issues
 

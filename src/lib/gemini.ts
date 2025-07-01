@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
 // Get the generative model
 export const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
+  model: 'gemini-1.5-flash',
 })
 
 // Company summary generation function
