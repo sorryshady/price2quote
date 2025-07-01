@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     // Insert user
     const [user] = await db
       .insert(users)
-      .values({ name, email, passwordHash })
+      .values({ name, email, passwordHash, subscriptionTier: 'free' })
       .returning()
 
     // Insert account (credentials type)
