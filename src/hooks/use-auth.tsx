@@ -51,6 +51,8 @@ export const useAuth = create<AuthState>()(
               <CustomToast message="Logged out successfully" type="success" />,
             )
             set({ user: null })
+            // Redirect to login page
+            window.location.href = '/login'
           } else {
             toast.custom(
               <CustomToast message="Failed to logout" type="error" />,

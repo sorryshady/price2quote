@@ -8,6 +8,7 @@ import {
 
 import { getUser } from '@/lib/auth'
 
+import { ProtectedContent } from './_components/protected-content'
 import { AppSidebar } from './dashboard/_components/app-sidebar'
 
 export default async function ProtectedLayout({
@@ -17,6 +18,7 @@ export default async function ProtectedLayout({
 }) {
   const user = await getUser()
   if (!user) redirect('/login')
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -28,7 +30,7 @@ export default async function ProtectedLayout({
             </div>
           </header>
           <div className="border-sidebar-border h-[calc(100vh-3rem)] w-full overflow-y-auto rounded-md border p-4 shadow">
-            {children}
+            <ProtectedContent>{children}</ProtectedContent>
           </div>
         </main>
       </SidebarInset>

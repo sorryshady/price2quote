@@ -11,6 +11,7 @@ import {
   FileText,
   HelpCircle,
   LayoutDashboard,
+  Loader2,
   Mail,
   MessageCircle,
   Settings,
@@ -94,12 +95,49 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
-  const { hasCompanies } = useCompanies()
-  console.log(hasCompanies)
+  const { hasCompanies, isLoading: companiesLoading } = useCompanies()
 
   if (!user) return null
 
   const { name, email, image, subscriptionTier } = user
+
+  // Show loading state while checking companies
+  if (companiesLoading) {
+    return (
+      <Sidebar collapsible="icon" variant="floating" {...props}>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className="data-[slot=sidebar-menu-button]:!p-1.5"
+              >
+                <Link href="/dashboard">
+                  <IconInnerShadowTop className="!size-5" />
+                  <span className="text-base font-semibold">Price2Quote</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+          </div>
+        </SidebarContent>
+        <SidebarFooter>
+          <NavUser
+            user={{
+              name: name || '',
+              email,
+              image: image || '',
+              subscriptionTier,
+            }}
+          />
+        </SidebarFooter>
+      </Sidebar>
+    )
+  }
 
   // Show setup nav if no companies, main nav if companies exist
   const navItems = hasCompanies ? data.navMain : data.navSetup
