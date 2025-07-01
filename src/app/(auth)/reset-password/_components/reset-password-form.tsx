@@ -1,13 +1,15 @@
-'use client';
+'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation'
 
-import FormCard from '@/components/form-ui/form-card';
-import { Button } from '@/components/ui/button';
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
+
+import FormCard from '@/components/form-ui/form-card'
+import { Button } from '@/components/ui/button'
+import { CustomToast } from '@/components/ui/custom-toast'
 import {
   Form,
   FormControl,
@@ -15,46 +17,51 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import PasswordInput from '@/components/ui/password-input';
+} from '@/components/ui/form'
+import PasswordInput from '@/components/ui/password-input'
 
-import { env } from '@/env/client';
-import { type ResetPasswordSchema, resetPasswordSchema } from '@/lib/schemas';
+import { env } from '@/env/client'
+import { type ResetPasswordSchema, resetPasswordSchema } from '@/lib/schemas'
 
 interface ResetPasswordFormProps {
-  token: string;
+  token: string
 }
 const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
-  const router = useRouter();
+  const router = useRouter()
   const form = useForm<ResetPasswordSchema>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       password: '',
       confirmPassword: '',
     },
-  });
+  })
   const submitHandler = async (data: ResetPasswordSchema) => {
     try {
-      const { password } = data;
-      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
-        method: 'POST',
-        body: JSON.stringify({ password, token }),
-      });
-      const body = await response.json();
+      const { password } = data
+      const response = await fetch(
+        `${env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ password, token }),
+        },
+      )
+      const body = await response.json()
       if (!response.ok) {
-        toast.error(body.error);
-        return;
+        toast.custom(<CustomToast message={body.error} type="error" />)
+        return
       }
-      toast.success(body.message);
-      form.reset();
+      toast.custom(<CustomToast message={body.message} type="success" />)
+      form.reset()
       setTimeout(() => {
-        router.push('/login');
-      }, 1500);
+        router.push('/login')
+      }, 1500)
     } catch (error) {
-      console.error(error);
-      toast.error('An error occurred during reset');
+      console.error(error)
+      toast.custom(
+        <CustomToast message="An error occurred during reset" type="error" />,
+      )
     }
-  };
+  }
   return (
     <FormCard
       heading="Reset Password"
@@ -73,7 +80,10 @@ const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
                 <FormLabel>Password</FormLabel>
 
                 <FormControl>
-                  <PasswordInput placeholder="Enter your new password" {...field} />
+                  <PasswordInput
+                    placeholder="Enter your new password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -87,13 +97,20 @@ const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
                 <FormLabel>Confirm Password</FormLabel>
 
                 <FormControl>
-                  <PasswordInput placeholder="Confirm your new password" {...field} />
+                  <PasswordInput
+                    placeholder="Confirm your new password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" />
@@ -106,7 +123,7 @@ const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
         </form>
       </Form>
     </FormCard>
-  );
-};
+  )
+}
 
-export default ResetPasswordForm;
+export default ResetPasswordForm

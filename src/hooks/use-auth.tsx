@@ -2,6 +2,8 @@ import toast from 'react-hot-toast'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
+import { CustomToast } from '@/components/ui/custom-toast'
+
 import { env } from '@/env/client'
 import { SubscriptionTier } from '@/types'
 
@@ -45,10 +47,14 @@ export const useAuth = create<AuthState>()(
             },
           )
           if (response.ok) {
-            toast.success('Logged out successfully')
+            toast.custom(
+              <CustomToast message="Logged out successfully" type="success" />,
+            )
             set({ user: null })
           } else {
-            toast.error('Failed to logout')
+            toast.custom(
+              <CustomToast message="Failed to logout" type="error" />,
+            )
             console.error('Logout error:', response.statusText)
           }
         } catch (error) {

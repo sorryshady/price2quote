@@ -93,7 +93,7 @@ export function OnboardingForm() {
     }
   }
 
-  const updateFormData = (step: string, data: any) => {
+  const updateFormData = (step: string, data: unknown) => {
     setFormData((prev) => ({
       ...prev,
       [step]: data,
@@ -129,7 +129,7 @@ export function OnboardingForm() {
           />
         )
       case 'summary':
-        return <StepSummary formData={formData} onPrevious={handlePrevious} />
+        return <StepSummary onPrevious={handlePrevious} />
       default:
         return null
     }
