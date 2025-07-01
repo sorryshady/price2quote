@@ -217,3 +217,220 @@ function validateConfidenceLevel(level: string): 'high' | 'medium' | 'low' {
     ? (level.toLowerCase() as 'high' | 'medium' | 'low')
     : 'medium'
 }
+
+// AI price negotiation function
+export async function negotiatePriceWithAI(data: {
+  companyData: {
+    name: string
+    description: string
+    businessType: string
+    country: string
+    currency: string
+    aiSummary?: string
+    services: Array<{
+      name: string
+      description?: string
+      skillLevel: string
+      basePrice?: string
+    }>
+  }
+  projectData: {
+    title: string
+    description?: string
+    complexity: string
+    deliveryTimeline: string
+    customTimeline?: string
+    clientLocation: string
+    clientBudget?: number
+  }
+  negotiationData: {
+    serviceName: string
+    currentRecommendedPrice: number
+    proposedPrice: number
+    userReasoning: string
+    priceRange: {
+      min: number
+      max: number
+    }
+  }
+}) {
+  try {
+    const prompt = `You are an expert pricing consultant helping with price negotiation. A user has proposed a different price for a service and wants your feedback.
+
+COMPANY CONTEXT:
+${data.companyData.name} - ${data.companyData.businessType} in ${data.companyData.country}
+${data.companyData.aiSummary ? `AI Business Summary: ${data.companyData.aiSummary}` : ''}
+Services: ${data.companyData.services.map((s) => `${s.name} (${s.skillLevel} level${s.basePrice ? `, base: ${s.basePrice}` : ''})`).join(', ')}
+
+PROJECT DETAILS:
+Title: ${data.projectData.title}
+Description: ${data.projectData.description || 'Not provided'}
+Complexity: ${data.projectData.complexity}
+Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
+Client Location: ${data.projectData.clientLocation}
+Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
+
+NEGOTIATION CONTEXT:
+Service: ${data.negotiationData.serviceName}
+AI Recommended Price: $${data.negotiationData.currentRecommendedPrice}
+User Proposed Price: $${data.negotiationData.proposedPrice}
+Price Range: $${data.negotiationData.priceRange.min} - $${data.negotiationData.priceRange.max}
+User Reasoning: ${data.negotiationData.userReasoning}
+
+TASK: Provide a structured response about the proposed price change:
+1. Analyze if the proposed price is reasonable within the market context
+2. Consider the user's reasoning and provide feedback
+3. Suggest any adjustments or alternative approaches
+4. Provide confidence level for your assessment
+
+RESPONSE FORMAT (JSON only):
+{
+  "analysis": {
+    "isReasonable": boolean,
+    "reasoning": "string explaining why the price is reasonable or not",
+    "marketContext": "string about market positioning",
+    "riskAssessment": "string about potential risks or benefits"
+  },
+  "recommendation": {
+    "suggestedPrice": number,
+    "confidenceLevel": "high|medium|low",
+    "reasoning": "string explaining the recommendation",
+    "alternativeApproaches": ["string with alternative pricing strategies"]
+  },
+  "feedback": {
+    "userReasoningAssessment": "string about the user's reasoning",
+    "suggestions": ["string with specific suggestions"],
+    "warnings": ["string with any warnings or concerns"]
+  }
+}`
+
+    const result = await geminiModel.generateContent(prompt)
+    const response = await result.response
+    const text = response.text().trim()
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error('Invalid AI response format')
+    }
+
+    const aiResponse = JSON.parse(jsonMatch[0])
+
+    // Validate confidence levels
+    const validatedResponse = {
+      ...aiResponse,
+      recommendation: {
+        ...aiResponse.recommendation,
+        confidenceLevel: validateConfidenceLevel(
+          aiResponse.recommendation.confidenceLevel,
+        ),
+      },
+    }
+
+    return validatedResponse
+  } catch (error) {
+    console.error('Error negotiating price with AI:', error)
+    throw new Error('Failed to negotiate price with AI')
+  }
+}
+
+// AI final quote generation function
+export async function generateFinalQuoteWithAI(data: {
+  companyData: {
+    name: string
+    description: string
+    businessType: string
+    country: string
+    currency: string
+    aiSummary?: string
+  }
+  projectData: {
+    title: string
+    description?: string
+    complexity: string
+    deliveryTimeline: string
+    customTimeline?: string
+    clientLocation: string
+    clientBudget?: number
+  }
+  finalData: {
+    services: Array<{
+      serviceName: string
+      finalPrice: number
+      quantity: number
+      totalPrice: number
+    }>
+    totalAmount: number
+    notes: string
+  }
+}) {
+  try {
+    const prompt = `You are an expert quote generator. Create a professional, comprehensive quote document based on the provided data.
+
+COMPANY CONTEXT:
+${data.companyData.name} - ${data.companyData.businessType} in ${data.companyData.country}
+${data.companyData.aiSummary ? `AI Business Summary: ${data.companyData.aiSummary}` : ''}
+
+PROJECT DETAILS:
+Title: ${data.projectData.title}
+Description: ${data.projectData.description || 'Not provided'}
+Complexity: ${data.projectData.complexity}
+Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
+Client Location: ${data.projectData.clientLocation}
+Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
+
+FINAL QUOTE DATA:
+Services: ${data.finalData.services.map((s) => `${s.serviceName}: ${s.quantity} units at $${s.finalPrice}/unit = $${s.totalPrice}`).join(', ')}
+Total Amount: $${data.finalData.totalAmount}
+Additional Notes: ${data.finalData.notes}
+
+TASK: Generate a professional quote document with:
+1. Executive summary
+2. Detailed service breakdown
+3. Terms and conditions
+4. Professional presentation
+
+RESPONSE FORMAT (JSON only):
+{
+  "quoteDocument": {
+    "executiveSummary": "string with project overview and value proposition",
+    "serviceBreakdown": [
+      {
+        "serviceName": "string",
+        "description": "string",
+        "quantity": number,
+        "unitPrice": number,
+        "totalPrice": number,
+        "deliverables": ["string with specific deliverables"]
+      }
+    ],
+    "termsAndConditions": [
+      "string with terms and conditions"
+    ],
+    "paymentTerms": "string with payment schedule and terms",
+    "deliveryTimeline": "string with detailed timeline",
+    "nextSteps": "string with clear next steps for the client"
+  },
+  "presentation": {
+    "keyHighlights": ["string with key selling points"],
+    "valueProposition": "string explaining the value to the client",
+    "competitiveAdvantages": ["string with competitive advantages"]
+  }
+}`
+
+    const result = await geminiModel.generateContent(prompt)
+    const response = await result.response
+    const text = response.text().trim()
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error('Invalid AI response format')
+    }
+
+    return JSON.parse(jsonMatch[0])
+  } catch (error) {
+    console.error('Error generating final quote with AI:', error)
+    throw new Error('Failed to generate final quote with AI')
+  }
+}

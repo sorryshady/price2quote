@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm'
 import db from '@/db'
 import { companies, quoteServices, quotes, services } from '@/db/schema'
 import { generateAIAssistedQuote } from '@/lib/gemini'
+import { generateFinalQuoteWithAI, negotiatePriceWithAI } from '@/lib/gemini'
 import { canUserCreateQuote } from '@/lib/subscription'
 import type { QuoteStatus } from '@/types'
 
@@ -259,5 +260,149 @@ export async function generateAIAssistedQuoteAction(data: {
       success: false,
       error: 'Failed to generate AI-assisted quote',
     }
+  }
+}
+
+// AI price negotiation action
+export async function negotiatePriceAction(data: {
+  companyId: string
+  serviceName: string
+  currentRecommendedPrice: number
+  proposedPrice: number
+  userReasoning: string
+  priceRange: {
+    min: number
+    max: number
+  }
+  projectData: {
+    title: string
+    description?: string
+    complexity: string
+    deliveryTimeline: string
+    customTimeline?: string
+    clientLocation: string
+    clientBudget?: number
+  }
+}) {
+  try {
+    // Get company data
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, data.companyId),
+    })
+
+    if (!company) {
+      return { success: false, error: 'Company not found' }
+    }
+
+    // Get company services separately
+    const companyServices = await db
+      .select({
+        id: services.id,
+        name: services.name,
+        description: services.description,
+        skillLevel: services.skillLevel,
+        basePrice: services.basePrice,
+        currency: services.currency,
+      })
+      .from(services)
+      .where(eq(services.companyId, data.companyId))
+
+    const currency = companyServices[0]?.currency || 'USD'
+
+    // Call AI negotiation
+    const aiResponse = await negotiatePriceWithAI({
+      companyData: {
+        name: company.name,
+        description: company.description || '',
+        businessType: company.businessType,
+        country: company.country,
+        currency,
+        aiSummary: company.aiSummary || undefined,
+        services: companyServices.map((service) => ({
+          name: service.name,
+          description: service.description || undefined,
+          skillLevel: service.skillLevel,
+          basePrice: service.basePrice || undefined,
+        })),
+      },
+      projectData: data.projectData,
+      negotiationData: {
+        serviceName: data.serviceName,
+        currentRecommendedPrice: data.currentRecommendedPrice,
+        proposedPrice: data.proposedPrice,
+        userReasoning: data.userReasoning,
+        priceRange: data.priceRange,
+      },
+    })
+
+    return { success: true, aiResponse }
+  } catch (error) {
+    console.error('Error in negotiatePriceAction:', error)
+    return { success: false, error: 'Failed to negotiate price' }
+  }
+}
+
+// Generate final quote action
+export async function generateFinalQuoteAction(data: {
+  companyId: string
+  projectData: {
+    title: string
+    description?: string
+    complexity: string
+    deliveryTimeline: string
+    customTimeline?: string
+    clientLocation: string
+    clientBudget?: number
+  }
+  finalData: {
+    services: Array<{
+      serviceName: string
+      finalPrice: number
+      quantity: number
+      totalPrice: number
+    }>
+    totalAmount: number
+    notes: string
+  }
+}) {
+  try {
+    // Get company data
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, data.companyId),
+    })
+
+    if (!company) {
+      return { success: false, error: 'Company not found' }
+    }
+
+    // Get currency from services or default to USD
+    const companyServices = await db
+      .select({
+        currency: services.currency,
+      })
+      .from(services)
+      .where(eq(services.companyId, data.companyId))
+      .limit(1)
+
+    const currency = companyServices[0]?.currency || 'USD'
+
+    // Call AI final quote generation
+    const aiResponse = await generateFinalQuoteWithAI({
+      companyData: {
+        name: company.name,
+        description: company.description || '',
+        businessType: company.businessType,
+        country: company.country,
+        currency,
+        aiSummary: company.aiSummary || undefined,
+      },
+      projectData: data.projectData,
+      finalData: data.finalData,
+    })
+
+    return { success: true, aiResponse }
+  } catch (error) {
+    console.error('Error in generateFinalQuoteAction:', error)
+    return { success: false, error: 'Failed to generate final quote' }
   }
 }

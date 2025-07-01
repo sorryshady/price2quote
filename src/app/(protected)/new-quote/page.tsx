@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingSpinner } from '@/components/ui/loading-states'
+import { QuotePreview } from '@/components/ui/quote-preview'
 import {
   Select,
   SelectContent,
@@ -40,6 +42,8 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   createQuoteAction,
   generateAIAssistedQuoteAction,
+  generateFinalQuoteAction,
+  negotiatePriceAction,
 } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
@@ -86,6 +90,29 @@ export default function NewQuotePage() {
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAIRecommendations, setShowAIRecommendations] = useState(false)
+  const [showQuotePreview, setShowQuotePreview] = useState(false)
+  const [finalQuoteData, setFinalQuoteData] = useState<{
+    quoteDocument: {
+      executiveSummary: string
+      serviceBreakdown: Array<{
+        serviceName: string
+        description: string
+        quantity: number
+        unitPrice: number
+        totalPrice: number
+        deliverables: string[]
+      }>
+      termsAndConditions: string[]
+      paymentTerms: string
+      deliveryTimeline: string
+      nextSteps: string
+    }
+    presentation: {
+      keyHighlights: string[]
+      valueProposition: string
+      competitiveAdvantages: string[]
+    }
+  } | null>(null)
   const [aiResponse, setAiResponse] = useState<{
     marketAnalysis: {
       locationFactor: string
@@ -130,7 +157,10 @@ export default function NewQuotePage() {
     },
   })
 
-  // Auto-select company for free users
+  const selectedCompanyId = form.watch('companyId')
+  const selectedCompany = companies?.find((c) => c.id === selectedCompanyId)
+
+  // Auto-select company for free users and update currency
   useEffect(() => {
     if (
       user?.subscriptionTier === 'free' &&
@@ -141,8 +171,12 @@ export default function NewQuotePage() {
     }
   }, [companies, user?.subscriptionTier, form])
 
-  const selectedCompanyId = form.watch('companyId')
-  const selectedCompany = companies?.find((c) => c.id === selectedCompanyId)
+  // Update currency when company changes
+  useEffect(() => {
+    if (selectedCompany?.services?.[0]?.currency) {
+      form.setValue('currency', selectedCompany.services[0].currency)
+    }
+  }, [selectedCompany, form])
 
   const handleServiceToggle = (service: Service) => {
     setSelectedServices((prev) => {
@@ -188,6 +222,14 @@ export default function NewQuotePage() {
     return selectedServices.reduce((sum, service) => {
       return sum + service.quantity * service.unitPrice
     }, 0)
+  }
+
+  // Get the current currency from selected company
+  const currentCurrency = selectedCompany?.services?.[0]?.currency || 'USD'
+
+  // Format currency display
+  const formatCurrency = (amount: number) => {
+    return `${amount.toFixed(2)} ${currentCurrency}`
   }
 
   const handleGenerateAIQuote = async () => {
@@ -241,21 +283,194 @@ export default function NewQuotePage() {
       }
     }>,
   ) => {
-    setSelectedServices((prev) =>
-      prev.map((service) => {
+    console.log('Applying recommendations:', recommendations)
+    console.log('Current selected services:', selectedServices)
+
+    setSelectedServices((prev) => {
+      const updated = prev.map((service) => {
         const recommendation = recommendations.find(
           (r) => r.serviceName === service.service.name,
         )
         if (recommendation) {
+          console.log(
+            `Updating ${service.service.name} from ${service.unitPrice} to ${recommendation.recommendedPrice}`,
+          )
           return {
             ...service,
             unitPrice: recommendation.recommendedPrice,
           }
         }
         return service
-      }),
-    )
+      })
+      console.log('Updated services:', updated)
+      return updated
+    })
     setShowAIRecommendations(false)
+  }
+
+  const handleNegotiate = async (negotiationData: {
+    serviceName: string
+    proposedPrice: number
+    reasoning: string
+  }) => {
+    if (!selectedCompany || !aiResponse) return
+
+    try {
+      const formData = form.getValues()
+      const service = aiResponse.serviceRecommendations.find(
+        (s) => s.serviceName === negotiationData.serviceName,
+      )
+
+      if (!service) return
+
+      const result = await negotiatePriceAction({
+        companyId: formData.companyId,
+        serviceName: negotiationData.serviceName,
+        currentRecommendedPrice: service.recommendedPrice,
+        proposedPrice: negotiationData.proposedPrice,
+        userReasoning: negotiationData.reasoning,
+        priceRange: service.priceRange,
+        projectData: {
+          title: formData.projectTitle,
+          description: formData.projectDescription,
+          complexity: formData.projectComplexity,
+          deliveryTimeline: formData.deliveryTimeline,
+          customTimeline: formData.customTimeline,
+          clientLocation: formData.clientLocation,
+          clientBudget: formData.clientBudget,
+        },
+      })
+
+      if (result.success && result.aiResponse) {
+        // Update the AI response with negotiation feedback
+        setAiResponse((prev) => {
+          if (!prev) return prev
+
+          return {
+            ...prev,
+            serviceRecommendations: prev.serviceRecommendations.map((s) => {
+              if (s.serviceName === negotiationData.serviceName) {
+                return {
+                  ...s,
+                  recommendedPrice:
+                    result.aiResponse.recommendation.suggestedPrice,
+                  confidenceLevel:
+                    result.aiResponse.recommendation.confidenceLevel,
+                  reasoning: result.aiResponse.recommendation.reasoning,
+                }
+              }
+              return s
+            }),
+          }
+        })
+      } else {
+        console.error('Failed to negotiate price:', result.error)
+      }
+    } catch (error) {
+      console.error('Error negotiating price:', error)
+    }
+  }
+
+  const handleGenerateFinalQuote = async (finalData: {
+    services: Array<{
+      serviceName: string
+      currentPrice: number
+      recommendedPrice: number
+      confidenceLevel: 'high' | 'medium' | 'low'
+      reasoning: string
+      priceRange: {
+        min: number
+        max: number
+      }
+    }>
+    totalAmount: number
+    notes: string
+  }) => {
+    if (!selectedCompany) return
+
+    try {
+      const formData = form.getValues()
+      const result = await generateFinalQuoteAction({
+        companyId: formData.companyId,
+        projectData: {
+          title: formData.projectTitle,
+          description: formData.projectDescription,
+          complexity: formData.projectComplexity,
+          deliveryTimeline: formData.deliveryTimeline,
+          customTimeline: formData.customTimeline,
+          clientLocation: formData.clientLocation,
+          clientBudget: formData.clientBudget,
+        },
+        finalData: {
+          services: finalData.services.map((s) => ({
+            serviceName: s.serviceName,
+            finalPrice: s.recommendedPrice,
+            quantity:
+              selectedServices.find((ss) => ss.service.name === s.serviceName)
+                ?.quantity || 1,
+            totalPrice:
+              (selectedServices.find((ss) => ss.service.name === s.serviceName)
+                ?.quantity || 1) * s.recommendedPrice,
+          })),
+          totalAmount: finalData.totalAmount,
+          notes: finalData.notes,
+        },
+      })
+
+      if (result.success && result.aiResponse) {
+        setFinalQuoteData(result.aiResponse)
+        setShowQuotePreview(true)
+        setShowAIRecommendations(false)
+      } else {
+        console.error('Failed to generate final quote:', result.error)
+      }
+    } catch (error) {
+      console.error('Error generating final quote:', error)
+    }
+  }
+
+  const handleSaveQuote = async () => {
+    if (!user || !finalQuoteData) return
+
+    setIsSubmitting(true)
+    try {
+      const formData = form.getValues()
+      const result = await createQuoteAction({
+        userId: user.id,
+        companyId: formData.companyId,
+        projectTitle: formData.projectTitle,
+        projectDescription: formData.projectDescription,
+        clientEmail: formData.clientEmail,
+        clientName: formData.clientName,
+        clientLocation: formData.clientLocation,
+        deliveryTimeline: formData.deliveryTimeline,
+        customTimeline: formData.customTimeline,
+        clientBudget: formData.clientBudget,
+        projectComplexity: formData.projectComplexity,
+        currency: formData.currency,
+        selectedServices: selectedServices.map((s) => ({
+          serviceId: s.serviceId,
+          quantity: s.quantity,
+          unitPrice: s.unitPrice,
+          notes: s.notes,
+        })),
+      })
+
+      if (result.success) {
+        // Reset form and close preview
+        form.reset()
+        setSelectedServices([])
+        setShowQuotePreview(false)
+        setFinalQuoteData(null)
+        // TODO: Redirect to quotes page or show success message
+      } else {
+        console.error('Failed to create quote:', result.error)
+      }
+    } catch (error) {
+      console.error('Error creating quote:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const onSubmit = async (data: QuoteFormData) => {
@@ -339,6 +554,17 @@ export default function NewQuotePage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* AI Generation Loading Overlay */}
+          {isGeneratingAI && (
+            <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50">
+              <div className="bg-background rounded-lg p-8 text-center">
+                <LoadingSpinner
+                  size="lg"
+                  text="Generating AI quote, please wait..."
+                />
+              </div>
+            </div>
+          )}
           {/* Company Selection */}
           <Card>
             <CardHeader>
@@ -525,6 +751,7 @@ export default function NewQuotePage() {
                         (s) => s.serviceId === service.id,
                       )}
                       onCheckedChange={() => handleServiceToggle(service)}
+                      disabled={isGeneratingAI}
                     />
                     <div className="flex-1">
                       <Label className="text-sm font-medium">
@@ -539,7 +766,7 @@ export default function NewQuotePage() {
                         <Badge variant="outline">{service.skillLevel}</Badge>
                         {service.basePrice && (
                           <Badge variant="secondary">
-                            {service.basePrice} {service.currency}
+                            {formatCurrency(parseFloat(service.basePrice))}
                           </Badge>
                         )}
                       </div>
@@ -588,6 +815,7 @@ export default function NewQuotePage() {
                               parseFloat(e.target.value) || 1,
                             )
                           }
+                          disabled={isGeneratingAI}
                         />
                       </div>
                       <div>
@@ -603,12 +831,16 @@ export default function NewQuotePage() {
                               parseFloat(e.target.value) || 0,
                             )
                           }
+                          disabled={isGeneratingAI}
                         />
                       </div>
                       <div>
                         <Label className="text-sm">Total</Label>
                         <Input
-                          value={`${(selectedService.quantity * selectedService.unitPrice).toFixed(2)}`}
+                          value={formatCurrency(
+                            selectedService.quantity *
+                              selectedService.unitPrice,
+                          )}
                           disabled
                           className="bg-muted"
                         />
@@ -627,6 +859,7 @@ export default function NewQuotePage() {
                           )
                         }
                         className="min-h-[60px]"
+                        disabled={isGeneratingAI}
                       />
                     </div>
                   </div>
@@ -636,7 +869,7 @@ export default function NewQuotePage() {
 
                 <div className="flex items-center justify-between text-lg font-semibold">
                   <span>Total Amount:</span>
-                  <span>{calculateTotal().toFixed(2)}</span>
+                  <span>{formatCurrency(calculateTotal())}</span>
                 </div>
               </CardContent>
             </Card>
@@ -657,7 +890,11 @@ export default function NewQuotePage() {
                     <FormItem>
                       <FormLabel>Client Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter client name" {...field} />
+                        <Input
+                          placeholder="Enter client name"
+                          {...field}
+                          disabled={isGeneratingAI}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -671,7 +908,11 @@ export default function NewQuotePage() {
                     <FormItem>
                       <FormLabel>Client Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter client email" {...field} />
+                        <Input
+                          placeholder="Enter client email"
+                          {...field}
+                          disabled={isGeneratingAI}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -690,6 +931,7 @@ export default function NewQuotePage() {
                         <Input
                           placeholder="e.g., San Francisco, CA"
                           {...field}
+                          disabled={isGeneratingAI}
                         />
                       </FormControl>
                       <FormMessage />
@@ -715,6 +957,7 @@ export default function NewQuotePage() {
                                 : undefined,
                             )
                           }
+                          disabled={isGeneratingAI}
                         />
                       </FormControl>
                       <FormMessage />
@@ -754,6 +997,26 @@ export default function NewQuotePage() {
                 aiResponse={aiResponse}
                 onApplyRecommendations={handleApplyAIRecommendations}
                 onClose={() => setShowAIRecommendations(false)}
+                onNegotiate={handleNegotiate}
+                onGenerateFinalQuote={handleGenerateFinalQuote}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quote Preview Modal */}
+      {showQuotePreview && finalQuoteData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-background max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-lg">
+            <div className="p-6">
+              <QuotePreview
+                quoteData={finalQuoteData}
+                onClose={() => {
+                  setShowQuotePreview(false)
+                  setFinalQuoteData(null)
+                }}
+                onSave={handleSaveQuote}
               />
             </div>
           </div>
