@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 
-import { generateToken } from '@/app/server-actions/action'
+import { generateToken } from '@/app/server-actions'
 import ForgotPassword from '@/email-templates/forgot-password'
 import { env } from '@/env/client'
 import { type ForgotPasswordSchema, forgotPasswordSchema } from '@/lib/schemas'

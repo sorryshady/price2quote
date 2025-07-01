@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 
-import { generateCompanySummaryAction } from '@/app/server-actions/action'
+import { generateCompanySummaryAction } from '@/app/server-actions'
 
 import { STORAGE_KEY } from './step-company-info'
 

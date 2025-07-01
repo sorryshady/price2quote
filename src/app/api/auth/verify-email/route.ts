@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { verifyEmailToken } from '@/app/server-actions/action'
+import { verifyEmailToken } from '@/app/server-actions'
 
 export const POST = async (req: NextRequest) => {
   const body = await req.json()

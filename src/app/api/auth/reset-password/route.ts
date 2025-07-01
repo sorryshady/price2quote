@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { verifyForgotPasswordToken } from '@/app/server-actions/action'
+import { verifyForgotPasswordToken } from '@/app/server-actions'
 import db from '@/db'
 import { users } from '@/db/schema'
 import { env } from '@/env/server'

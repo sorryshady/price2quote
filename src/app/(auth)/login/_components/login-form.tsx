@@ -33,7 +33,7 @@ import {
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
 
-import { generateToken } from '@/app/server-actions/action'
+import { generateToken } from '@/app/server-actions'
 import { VerifyEmail } from '@/email-templates/verify-email'
 import { env } from '@/env/client'
 import { useAuthState } from '@/hooks/use-auth'

@@ -30,7 +30,7 @@ The summary should include:
 - Geographic location and market context
 - Service offerings with expertise levels and pricing structure
 - Business type and operational model
-- Currency preferences for financial operations
+- Primary/preferred currency for financial operations (note: this is their preferred currency, not necessarily exclusive)
 - Any unique characteristics or specializations
 
 Make the summary rich in business context, professional, and comprehensive enough for AI systems to understand the company's full operational scope and market positioning.

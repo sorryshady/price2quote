@@ -3,11 +3,9 @@
 import { eq } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
 
-
 import db from '@/db'
 import { users } from '@/db/schema'
 import { env } from '@/env/server'
-import { generateCompanySummary } from '@/lib/gemini'
 
 export async function generateToken(
   email: string,
@@ -170,26 +168,4 @@ export async function verifyForgotPasswordToken(
       error: 'Invalid or malformed token',
     }
   }
-}
-
-export async function generateCompanySummaryAction(data: {
-  name: string
-  description: string
-  businessType: string
-  country: string
-  currency: string
-  services: Array<{
-    name: string
-    description?: string
-    skillLevel: string
-    basePrice?: string
-  }>
-}) {
-  try {
-    const summary = await generateCompanySummary(data)
-    return { success: true, summary }
-  } catch (error) {
-    console.error('Error generating company summary:', error)
-    return { success: false, error: 'Failed to generate summary' }
-  }
-}
+} 
