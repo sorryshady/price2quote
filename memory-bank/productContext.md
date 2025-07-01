@@ -2,83 +2,97 @@
 
 ## Problem Statement
 
-Development teams need a solid foundation when starting new Next.js projects. Setting up configurations, tooling, and best practices from scratch is time-consuming and prone to inconsistencies.
+Freelancers and businesses struggle to:
+
+- Determine competitive pricing for their services
+- Generate professional quotes quickly
+- Track pricing performance and business growth
+- Manage client communications effectively
+- Handle multi-currency requirements
 
 ## Solution
 
-This starter template provides a pre-configured, production-ready Next.js foundation that follows modern best practices and includes essential tooling out of the box.
+PricingGPT is an AI-powered platform that helps users:
+
+- Generate intelligent pricing recommendations using Gemini AI
+- Create professional quotes with PDF export
+- Send emails directly through Gmail integration
+- Track analytics and business performance
+- Manage company profiles and branding
+- Handle multiple currencies seamlessly
 
 ## User Experience Goals
 
+### Freelancer Experience
+
+- Quick pricing recommendations based on industry and project details
+- Professional quote generation in minutes
+- Easy email integration for client communication
+- Multi-currency support for international clients
+- Simple subscription management (Free/Pro)
+
+### Business Experience
+
+- AI-powered pricing insights for competitive advantage
+- Bulk quote generation capabilities
+- Professional branding in quotes and emails
+- Analytics dashboard for business growth tracking
+- Team collaboration features (future)
+
 ### Developer Experience
 
-- Quick project initialization
-- Clear project structure
-- Type-safe development
-- Automated code formatting and linting
-- Hot reload development
-- Modern component patterns
-
-### End User Experience
-
-- Fast page loads
-- Responsive design
-- Accessible components
-- Theme customization
-- Smooth animations
-- SEO optimization
-
-## Registration & Email Verification Experience
-
-- End users now experience a seamless registration flow:
-  - Instant feedback on registration and email verification status
-  - Secure, time-limited verification links (15 min expiry)
-  - Clear, branded email templates
-- Developers benefit from provider-agnostic email delivery:
-  - Local testing with Mailhog
-  - Production-ready with Resend
-  - No code changes required to switch providers
+- Modern Next.js architecture
+- Type-safe development with TypeScript
+- Component-based UI with Tailwind CSS
+- AI integration with Gemini
+- Email integration with Gmail OAuth
 
 ## Key Features
 
-1. **Modern Stack**
+1. **AI-Powered Pricing**
 
-   - Next.js 15.3 with App Router
-   - React 19
-   - TypeScript
-   - Tailwind CSS
+   - Gemini AI integration for intelligent recommendations
+   - Industry-specific pricing insights
+   - Project complexity analysis
 
-2. **Development Tools**
+2. **Quote Management**
 
-   - ESLint with Next.js configuration
-   - Prettier code formatting
-   - Import sorting
-   - File structure linting
+   - Professional quote generation
+   - PDF export functionality
+   - Quote history and tracking
+   - Multi-currency support
 
-3. **UI Foundation**
+3. **Email Integration**
 
-   - Radix UI primitives
-   - Dark mode support
-   - CSS animations
-   - Responsive layouts
+   - Gmail OAuth integration
+   - Direct email sending from platform
+   - Email threading for follow-ups
+   - PDF attachment support
 
-4. **Best Practices**
-   - Type safety
-   - Code organization
-   - Performance optimization
-   - Accessibility standards
+4. **Subscription Model**
+
+   - Free tier: 3 quotes/month, 1 company
+   - Pro tier: Unlimited quotes, 5 companies
+   - Dodo Payments integration
+
+5. **Analytics Dashboard**
+   - Pricing performance tracking
+   - Quote conversion rates
+   - Revenue analytics
+   - Business growth insights
 
 ## Target Users
 
-- Frontend developers
-- Full-stack developers
-- Development teams
-- Individual developers
+- Freelancers (designers, developers, consultants)
+- Small businesses
+- Service-based companies
+- International businesses requiring multi-currency support
 
 ## Success Metrics
 
-1. Development speed
-2. Code quality
-3. Bundle size
-4. Type coverage
-5. Developer satisfaction
+1. Quote generation speed
+2. User engagement and retention
+3. Subscription conversion rates
+4. Email integration usage
+5. Multi-currency adoption
+6. User satisfaction scores

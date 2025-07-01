@@ -1,49 +1,57 @@
-# Next.js Starter Template Project Brief
+# PricingGPT - AI-Powered Pricing Platform Project Brief
 
 ## Project Overview
 
-A modern, opinionated Next.js starter template designed to accelerate project bootstrapping with best practices and essential tooling pre-configured.
+PricingGPT is a modern web application that helps freelancers and businesses generate AI-powered pricing recommendations and professional quotes using Google's Gemini AI.
 
 ## Core Requirements
 
-1. Provide a robust foundation for Next.js applications
-2. Include modern development tooling and configurations
-3. Implement best practices for performance and developer experience
-4. Maintain clean, maintainable code structure
+1. AI-powered pricing recommendations using Gemini AI
+2. Professional quote generation with PDF export
+3. Multi-currency support (30+ currencies)
+4. Gmail integration for email sending
+5. Subscription-based model (Free/Pro tiers)
+6. Company profile management
+7. Analytics dashboard for pricing performance
 
 ## Technical Goals
 
 - Modern Next.js setup (App Router)
 - TypeScript for type safety
 - Tailwind CSS for styling
-- ESLint and Prettier for code quality
-- Component architecture best practices
-- Dark mode support via next-themes
-- Radix UI primitives for accessible components
+- AI integration with Gemini
+- Email integration with Gmail OAuth
+- PDF generation capabilities
+- Multi-currency support
+- Subscription management with Dodo Payments
+- Mobile-responsive design
 
 ## Project Scope
 
 ### In Scope
 
-- Application shell and layout structure
-- Basic component architecture
-- Theme switching functionality
-- Type-safe environment variables
-- Code quality tooling
-- Modern styling setup
+- User authentication and company onboarding
+- AI-powered pricing recommendations
+- Quote generation and management
+- PDF export functionality
+- Email integration with Gmail
+- Subscription management (Free/Pro)
+- Multi-currency support
+- Analytics dashboard
+- Company profile management
 
 ### Out of Scope
 
-- Business logic implementation
-- Complex feature development
-- Authentication system
-- API integrations
-- Database setup
+- Complex CRM features
+- Advanced project management
+- Team collaboration features
+- Advanced reporting
 
 ## Success Criteria
 
-1. Clean, maintainable code structure
-2. Fast development startup time
-3. Modern development experience
-4. Type-safe development environment
-5. Accessible component foundations
+1. Seamless AI-powered pricing recommendations
+2. Professional quote generation and export
+3. Reliable email integration
+4. Smooth subscription management
+5. Multi-currency support
+6. Mobile-responsive experience

@@ -2,127 +2,93 @@
 
 ## Current Focus
 
-- Authentication system implementation
-- UI/UX improvements and fixes
-- Session management and persistence
-- OAuth Authentication Implementation (Google and GitHub)
-- User Authentication Flow
+- Comprehensive company onboarding flow implementation
+- Database schema updates for companies with extended fields
+- Supabase storage integration for company logos
+- Services and skill level management (20 services limit)
+- AI summary generation for company context
+- Subscription-based feature access
 
 ## Recent Changes
 
 1. Authentication System:
 
-   - Implemented complete login flow with session management
-   - Added session persistence using cookies and database
-   - Created auth provider for client-side state management
-   - Implemented secure logout functionality
-   - Added middleware for route protection
+   - Complete login flow with session management
+   - OAuth authentication (Google and GitHub)
+   - Session persistence using cookies and database
+   - Auth provider for client-side state management
 
-2. Session Management:
+2. Subscription System:
 
-   - Database-backed sessions with expiration
-   - Secure cookie handling (httpOnly, sameSite)
-   - Session validation and automatic checks
-   - IP and user agent tracking for security
+   - Free tier: 3 quotes/month, 1 company
+   - Pro tier: Unlimited quotes, 5 companies
+   - Subscription feature checking utilities
+   - Dodo Payments integration planned
 
-3. UI/UX Improvements:
+3. Project Context:
 
-   - Fixed navbar animation system using window scroll events
-   - Improved mobile responsiveness
-   - Added loading states and error handling
-   - Implemented toast notifications for user feedback
+   - Identified as PricingGPT platform
+   - AI-powered pricing recommendations
+   - Multi-currency support
+   - Gmail integration for emails
+   - PDF quote generation
 
-4. Security Enhancements:
-
-   - Password hashing with bcrypt and pepper
-   - CSRF protection
-   - Rate limiting preparation
-   - Secure session handling
-
-5. OAuth Authentication Implementation:
-
-   - Implemented OAuth authentication with both Google and GitHub
-   - Added provider-specific routes and callbacks
-   - Implemented secure state parameter handling
-   - Added provider conflict prevention
-   - Implemented error handling with user-friendly redirects
-
-6. OAuth Implementation Details:
-
-   - Google OAuth:
-     - Uses refresh tokens for future API access
-     - Implements `prompt: 'select_account'` for better UX
-     - Stores both access and refresh tokens
-     - Handles token expiration
-   - GitHub OAuth:
-     - Uses non-expiring access tokens
-     - Simpler implementation (no refresh tokens)
-     - Direct login after first authentication
-
-7. Security Features:
-
-   - State parameter validation
-   - Provider conflict prevention
-   - Secure cookie handling
-   - Error handling with redirects
-   - Session management
+4. Company Setup Requirements:
+   - Company name, country, business type
+   - Logo upload via Supabase storage
+   - Services offered by the company (max 20)
+   - Skill levels per service (beginner, intermediate, advanced)
+   - Company description
+   - Base pricing per service (optional)
+   - AI-generated company summary for quote context
 
 ## Active Decisions
 
-1. Using database-backed sessions instead of JWT
-2. Implementing periodic auth checks (every 5 minutes)
-3. Using window scroll events for reliable animations
-4. Maintaining sticky positioning for navbar
-5. Using Zustand for auth state management
-6. Implementing provider-agnostic email system
-7. Keeping refresh token functionality for Google OAuth for future API integration
-8. Using redirect-based error handling for better UX
-9. Preventing multiple provider accounts with the same email
-10. Using `prompt: 'select_account'` for Google OAuth to improve user experience
+1. Company setup is mandatory for quote generation
+2. One-to-one relationship between users and companies initially
+3. Progressive onboarding flow after login
+4. Subscription-based feature access
+5. AI integration with Gemini for pricing recommendations
+6. Supabase storage for company logos
+7. AI summary generation for company context in quotes
+8. Service limit: 20 services per company
+9. Skill levels: Per-service granularity
+10. Base pricing: Store per service (optional)
+11. AI summary updates: On-demand with smart triggers
 
 ## Current Considerations
 
-1. Session security and management
-2. Performance optimization for auth checks
-3. Mobile responsiveness and animations
-4. Error handling and user feedback
-5. Security best practices implementation
-6. Future Google API integration possibilities
-7. OAuth provider selection strategy
-8. Session management optimization
-9. Error handling improvements
+1. Comprehensive company onboarding flow design
+2. Database schema for companies with extended fields
+3. Services and skill levels data structure (20 services limit)
+4. Supabase storage bucket setup and configuration
+5. AI summary generation implementation with smart triggers
+6. Base pricing storage and currency handling
+7. Subscription tier enforcement
+8. Multi-currency support implementation
 
 ## Next Steps
 
-1. Implement rate limiting for auth endpoints
-2. Add comprehensive error handling
-3. Implement OAuth providers
-4. Add session analytics and monitoring
-5. Optimize auth check intervals
-6. Add comprehensive testing
-7. Consider implementing refresh token flow for Google API access
-8. Add more OAuth providers if needed
-9. Implement token refresh mechanism for Google API calls
-10. Add rate limiting for OAuth attempts
+1. Design comprehensive company onboarding flow
+2. Update database schema for companies with all required fields
+3. Set up Supabase storage bucket for logos
+4. Create services and skill levels schema (20 services limit)
+5. Implement onboarding middleware
+6. Create company setup forms with all fields
+7. Plan AI summary generation architecture with smart triggers
+8. Add subscription validation
+9. Implement base pricing storage per service
 
 ## Known Issues
 
-- None currently - recent changes have improved system stability
-
-## Recent Insights
-
-1. Window scroll events provide more reliable animation triggers
-2. Database sessions offer better security and control
-3. Regular auth checks improve session reliability
-4. Provider pattern simplifies auth state management
-5. Secure cookie handling is crucial for session security
+- None currently - focusing on comprehensive onboarding flow design
 
 ## Active Questions
 
-1. Password hashing algorithm selection (bcrypt/argon2)
-2. JWT vs DB session management
-3. OAuth provider library choice (next-auth vs custom)
+1. Should companies be one-to-one with users initially?
+2. Multi-currency implementation approach?
+3. AI summary generation frequency optimization?
 
 ## Current State
 
-Registration and email verification are fully functional and visually polished. The system is ready for login, session, and OAuth work.
+Authentication system is complete. Ready to implement comprehensive company onboarding flow with extended company profile, services (20 limit), skill levels per service, base pricing, and AI summary generation for the PricingGPT platform.
