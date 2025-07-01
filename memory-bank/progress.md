@@ -54,9 +54,46 @@
 
 - PostgreSQL database with Drizzle ORM
 - User, company, and service tables
+- **NEW: Quotes table with subscription tracking**
+- **NEW: Quote status enum (draft, sent, accepted, rejected)**
 - Supabase storage for company logos
 - Proper relationships and constraints
 - AI summary fields (aiSummary, aiSummaryStatus)
+
+### ✅ **NEW: Subscription Tracking System**
+
+- **Complete subscription management:**
+
+  - Free tier: 3 quotes/month, 1 company
+  - Pro tier: Unlimited quotes, 5 companies
+  - Real-time usage tracking with monthly resets
+  - Database integration for accurate monitoring
+
+- **Subscription limit enforcement:**
+
+  - Prevents exceeding quote limits
+  - Prevents adding more companies than allowed
+  - Graceful upgrade prompts when limits reached
+
+- **UI Components:**
+
+  - SubscriptionLimit card with usage progress
+  - Header integration for always-visible status
+  - Quote usage badges and indicators
+  - Professional upgrade messaging
+
+- **Server Actions:**
+
+  - checkQuoteLimitAction for quote usage
+  - checkCompanyLimitAction for company limits
+  - createQuoteAction with limit enforcement
+  - updateQuoteStatusAction for quote management
+
+- **TanStack Query Hooks:**
+  - useQuoteLimit for quote usage tracking
+  - useCompanyLimit for company limit checking
+  - Efficient caching with 2-5 minute stale times
+  - Real-time updates and background refetching
 
 ### ✅ Company Onboarding System
 
@@ -78,7 +115,7 @@
 
 ### ✅ Server Actions Architecture
 
-- Modular organization (auth.ts, company.ts, index.ts)
+- Modular organization (auth.ts, company.ts, quote.ts, subscription.ts, index.ts)
 - Clean exports and type safety
 - Scalable structure for future actions
 
@@ -89,7 +126,7 @@
 - Data persistence across page reloads
 - Smooth navigation between steps
 
-### ✅ **NEW: TanStack Query & Loading Optimizations**
+### ✅ **TanStack Query & Loading Optimizations**
 
 - **TanStack Query Implementation:**
 
@@ -117,12 +154,18 @@
 
 ## In Progress 🚧
 
-### Authentication System
+### Quote Creation System
 
-- Login and session management (JWT or DB sessions)
-- OAuth provider integration (Google, GitHub)
-- Security best practices (password hashing, CSRF, rate limiting)
-- UI and API integration for login/auth flows
+- Quote creation form and UI
+- Integration with subscription limits
+- Quote status management
+- PDF generation and email sending
+
+### Company Profile Page
+
+- AI summary status display
+- Company information management
+- Retry mechanism for failed AI generation
 
 ### Testing
 
@@ -145,43 +188,53 @@
 - Deployment workflow
 - Environment configuration
 
-### Features
-
-- Authentication system (in progress)
-- API routes
-- Database integration
-- Error handling
-
 ## To Do 📝
+
+### Quote System
+
+- [ ] Quote creation form with company selection
+- [ ] Quote template system
+- [ ] PDF generation for quotes
+- [ ] Email integration for sending quotes
+- [ ] Quote status tracking and updates
+- [ ] Quote history and management
+
+### Company Management
+
+- [ ] Company profile page with AI summary display
+- [ ] Retry mechanism for failed AI generation
+- [ ] Company editing and management
+- [ ] Multi-company support for Pro tier
 
 ### Authentication
 
-- [ ] Update DB schema for credentials and social login
+- [x] Update DB schema for credentials and social login
 - [x] Build UI forms for login/register (register form complete)
 - [x] Implement registration endpoint logic (user creation, password hashing, error handling, email verification)
 - [x] Implement polished email verification page (loader, success/error, redirect)
-- [ ] Implement login endpoint and session management
+- [x] Implement login endpoint and session management
 - [ ] Add tests for registration and verification flow
 - [ ] Harden registration security (rate limiting, CSRF, etc.)
-- [ ] Integrate OAuth providers (Google, GitHub)
+- [x] Integrate OAuth providers (Google, GitHub)
 - [ ] Add security hardening (rate limiting, CSRF)
 - [ ] Write tests for auth flows
 
 ### Components
 
-- [ ] Form components
-- [ ] Data display components
-- [ ] Navigation components
-- [ ] Modal system
-- [ ] Toast notifications
+- [x] Form components
+- [x] Data display components
+- [x] Navigation components
+- [x] Modal system
+- [x] Toast notifications
 
 ### Features
 
-- [ ] Authentication
-- [ ] API integration
-- [ ] Data fetching
-- [ ] Error boundaries
-- [ ] Loading states
+- [x] Authentication
+- [x] API integration
+- [x] Data fetching
+- [x] Error boundaries
+- [x] Loading states
+- [x] Subscription tracking and limits
 
 ### Testing
 
@@ -198,6 +251,13 @@
 - [ ] Component examples
 - [ ] Best practices guide
 - [ ] Contributing guide
+
+### Subscription & Payments
+
+- [ ] Payment integration (Dodo Payments)
+- [ ] Subscription upgrade flow
+- [ ] Billing management
+- [ ] Usage analytics and reporting
 
 ## Known Issues 🐛
 

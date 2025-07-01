@@ -17,6 +17,7 @@
 - Form components with validation and error handling
 - Toast notifications for user feedback
 - **NEW: Skeleton loading states for better UX**
+- **NEW: Subscription limit components with upgrade prompts**
 
 ### State Management
 
@@ -58,6 +59,15 @@
 - No flashing content or race conditions
 - Progressive loading with meaningful placeholders
 
+### **NEW: Subscription Tracking Patterns**
+
+- Real-time usage monitoring with database integration
+- Monthly quote usage tracking with automatic resets
+- Company limit enforcement for free users
+- Subscription tier-based feature access
+- Upgrade prompts when limits are reached
+- Header-based status display for always-visible information
+
 ## Component Relationships
 
 ### Auth Flow
@@ -83,6 +93,22 @@ graph TD
     B --> F[Loading States]
     B --> G[Error Handling]
     C --> H[Background Refetch]
+```
+
+### **NEW: Subscription Tracking Flow**
+
+```mermaid
+graph TD
+    A[useQuoteLimit] --> B[checkQuoteLimitAction]
+    A --> C[useCompanyLimit]
+    C --> D[checkCompanyLimitAction]
+    B --> E[Database Query]
+    D --> E
+    E --> F[Usage Count]
+    F --> G[Limit Check]
+    G --> H[UI Update]
+    H --> I[Header Display]
+    H --> J[Limit Enforcement]
 ```
 
 ### Session Management
@@ -112,6 +138,8 @@ graph TD
 - useAuth for authentication
 - useTheme for theme management
 - **NEW: useCompaniesQuery for optimized data fetching**
+- **NEW: useQuoteLimit for subscription tracking**
+- **NEW: useCompanyLimit for company limits**
 - Custom hooks for reusable logic
 
 ### Middleware Pattern
@@ -127,6 +155,14 @@ graph TD
 - Smooth transitions without flashing
 - Progressive content reveal
 
+### **NEW: Subscription Pattern**
+
+- Usage tracking with database integration
+- Limit enforcement with graceful degradation
+- Upgrade prompts with contextual messaging
+- Header-based status display
+- Real-time updates with TanStack Query
+
 ## Technical Decisions
 
 ### Database
@@ -134,6 +170,8 @@ graph TD
 - PostgreSQL with Drizzle ORM
 - Session storage in database
 - User and account management
+- **NEW: Quotes table with subscription tracking**
+- **NEW: Quote status enum for workflow management**
 
 ### Authentication
 
@@ -148,6 +186,7 @@ graph TD
 - Animation system
 - **NEW: Skeleton loading states**
 - **NEW: TanStack Query for smooth data fetching**
+- **NEW: Subscription limit components**
 
 ### **NEW: Data Fetching**
 
@@ -155,6 +194,14 @@ graph TD
 - Background refetching for fresh data
 - Proper error handling and retries
 - Dev tools for debugging
+
+### **NEW: Subscription Management**
+
+- Database-driven usage tracking
+- Monthly reset cycles for quote limits
+- Real-time limit enforcement
+- Professional upgrade messaging
+- Header integration for status visibility
 
 ## Implementation Notes
 
@@ -165,6 +212,7 @@ graph TD
 - Code is modular and maintainable
 - **NEW: Loading states are meaningful and non-jarring**
 - **NEW: Data fetching is optimized and cached**
+- **NEW: Subscription limits are enforced gracefully**
 
 ## **NEW: TanStack Query Patterns**
 
@@ -192,6 +240,46 @@ const {
 })
 ```
 
+### **NEW: Subscription Query Patterns**
+
+```typescript
+// Quote limit tracking
+const {
+  canCreate,
+  currentQuotes,
+  upgradeMessage,
+  isLoading,
+  error,
+  refetch,
+} = useQuery({
+  queryKey: ['quote-limit', user?.id],
+  queryFn: async () => {
+    if (!user) return null
+    return await checkQuoteLimitAction(user.id, user.subscriptionTier)
+  },
+  enabled: !!user,
+  staleTime: 2 * 60 * 1000, // 2 minutes
+})
+
+// Company limit tracking
+const {
+  canCreate,
+  currentCompanies,
+  upgradeMessage,
+  isLoading,
+  error,
+  refetch,
+} = useQuery({
+  queryKey: ['company-limit', user?.id],
+  queryFn: async () => {
+    if (!user) return null
+    return await checkCompanyLimitAction(user.id, user.subscriptionTier)
+  },
+  enabled: !!user,
+  staleTime: 5 * 60 * 1000, // 5 minutes
+})
+```
+
 ### Query Provider Setup
 
 ```typescript
@@ -203,176 +291,128 @@ const [queryClient] = useState(
           staleTime: 5 * 60 * 1000, // 5 minutes
           gcTime: 10 * 60 * 1000, // 10 minutes
           retry: 1,
-          refetchOnWindowFocus: false,
         },
       },
     }),
 )
 ```
 
-### Skeleton Loading Pattern
+## **NEW: Subscription Management Patterns**
+
+### Database Functions
 
 ```typescript
-// Component-specific skeleton
-export function DashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <Skeleton className="h-8 w-48" />
-      <div className="rounded-lg border p-4">
-        <Skeleton className="mb-2 h-6 w-32" />
-        <div className="space-y-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
-      </div>
-    </div>
-  )
+// Get current month quotes
+export async function getCurrentMonthQuotes(userId: string): Promise<number> {
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
+
+  const result = await db
+    .select({ count: quotes.id })
+    .from(quotes)
+    .where(and(eq(quotes.userId, userId), gte(quotes.createdAt, startOfMonth)))
+
+  return result.length
 }
 
-// Usage in component
-if (isLoading) {
-  return <DashboardSkeleton />
+// Check if user can create quote
+export async function canUserCreateQuote(
+  userId: string,
+  userTier: SubscriptionTier,
+): Promise<boolean> {
+  const currentQuotes = await getCurrentMonthQuotes(userId)
+  return canCreateQuote(userTier, currentQuotes)
 }
 ```
 
-## Authentication Patterns
+### Server Actions
 
-### OAuth Implementation
+```typescript
+// Check quote limits
+export async function checkQuoteLimitAction(
+  userId: string,
+  userTier: 'free' | 'pro',
+) {
+  try {
+    const canCreate = await canUserCreateQuote(userId, userTier)
+    const currentQuotes = await getCurrentMonthQuotes(userId)
+    const upgradeMessage = getUpgradeMessage('quotes', userTier)
 
-1. Provider-Specific Routes:
+    return {
+      success: true,
+      canCreate,
+      currentQuotes,
+      upgradeMessage,
+    }
+  } catch (error) {
+    console.error('Error checking quote limit:', error)
+    return {
+      success: false,
+      error: 'Failed to check quote limit',
+    }
+  }
+}
+```
 
-   ```typescript
-   /api/auth/[provider]/route.ts         // Initial OAuth redirect
-   /api/auth/callback/[provider]/route.ts // OAuth callback handling
-   ```
+### UI Components
 
-2. State Parameter Flow:
+```typescript
+// Subscription limit card
+export function SubscriptionLimit({
+  title,
+  description,
+  currentUsage,
+  maxUsage,
+  upgradeMessage,
+  onUpgrade,
+}: SubscriptionLimitProps) {
+  const isUnlimited = maxUsage === -1 || maxUsage === 'Unlimited'
+  const usagePercentage = isUnlimited ? 0 : (currentUsage / (maxUsage as number)) * 100
 
-   - Generate UUID for state
-   - Store in secure cookie
-   - Verify in callback
-   - Prevent CSRF attacks
+  return (
+    <Card className="border-dashed">
+      <CardHeader className="text-center">
+        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <Lock className="h-6 w-6 text-muted-foreground" />
+        </div>
+        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Usage display and progress bar */}
+        {/* Upgrade messaging */}
+        {/* Upgrade button */}
+      </CardContent>
+    </Card>
+  )
+}
+```
 
-3. Token Management:
+## **NEW: Header Integration Pattern**
 
-   - Google:
-     - Access token (short-lived)
-     - Refresh token (long-lived)
-     - Token expiration tracking
-   - GitHub:
-     - Non-expiring access token
-     - No refresh token needed
+### Layout Integration
 
-4. Provider Conflict Prevention:
+```typitten
+// Server-side quote usage fetching
+let quoteUsage = null
+try {
+  if (user.subscriptionTier === 'free') {
+    const currentQuotes = await getCurrentMonthQuotes(user.id)
+    quoteUsage = { current: currentQuotes, max: 3 }
+  }
+} catch (error) {
+  console.error('Error fetching quote usage:', error)
+  quoteUsage = { current: 0, max: 3 }
+}
 
-   ```typescript
-   // Check for existing provider account
-   const [existingAccount] = await db
-     .select()
-     .from(accounts)
-     .where(and(eq(accounts.userId, user.id), eq(accounts.provider, provider)))
-
-   // Check for other provider accounts
-   const [otherProviderAccount] = await db
-     .select()
-     .from(accounts)
-     .where(eq(accounts.userId, user.id))
-   ```
-
-5. Error Handling Pattern:
-   ```typescript
-   // Redirect with error message
-   return NextResponse.redirect(
-     new URL(
-       `/login?error=${encodeURIComponent(errorMessage)}`,
-       req.url,
-     ),
-   )
-   ```
-
-### Session Management
-
-1. Session Creation:
-
-   ```typescript
-   const sessionToken = crypto.randomUUID()
-   const expiresAt = new Date(
-     now.getTime() + SESSION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
-   )
-   ```
-
-2. Cookie Security:
-   ```typescript
-   response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
-     httpOnly: true,
-     secure: env.NODE_ENV === 'production',
-     sameSite: 'lax',
-     path: '/',
-     expires: expiresAt,
-   })
-   ```
-
-## Database Patterns
-
-### Account Linking
-
-1. User-Provider Relationship:
-
-   ```typescript
-   // One user can have multiple provider accounts
-   // But one email can only be associated with one provider
-   accounts {
-     userId: string
-     provider: string
-     providerAccountId: string
-     accessToken: string
-     refreshToken: string | null
-     expiresAt: Date
-   }
-   ```
-
-2. Provider-Specific Data:
-   - Google: Stores refresh token for future API access
-   - GitHub: Uses non-expiring access token
-
-## Error Handling Patterns
-
-### OAuth Error Flow
-
-1. Validation Errors:
-
-   - State mismatch
-   - Missing code
-   - Provider conflicts
-
-2. API Errors:
-
-   - Token exchange failures
-   - User info fetch failures
-   - Database operation failures
-
-3. User Feedback:
-   - Redirect-based error display
-   - Toast notifications
-   - Clear error messages
-
-## Security Patterns
-
-### OAuth Security
-
-1. State Parameter:
-
-   - CSRF protection
-   - Request validation
-   - Secure cookie storage
-
-2. Token Security:
-
-   - Secure storage
-   - Proper expiration
-   - Refresh token handling
-
-3. Provider Conflict Prevention:
-   - Email uniqueness
-   - Provider exclusivity
-   - Clear user feedback
+// Header display
+{quoteUsage && (
+  <div className="flex items-center gap-2 text-sm">
+    <span className="text-muted-foreground">Quotes:</span>
+    <Badge variant="outline" className="text-xs">
+      {quoteUsage.current}/{quoteUsage.max}
+    </Badge>
+  </div>
+)}
+```

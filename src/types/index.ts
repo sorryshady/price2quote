@@ -2,6 +2,7 @@ export type SubscriptionTier = 'free' | 'pro'
 export type BusinessType = 'freelancer' | 'company'
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced'
 export type AISummaryStatus = 'pending' | 'generating' | 'completed' | 'failed'
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'revised'
 
 export interface User {
   id: string
@@ -46,6 +47,36 @@ export interface CompanyWithServices extends Company {
   services: Service[]
 }
 
+export interface QuoteService {
+  id: string
+  quoteId: string
+  serviceId: string
+  quantity: string
+  unitPrice?: string
+  totalPrice?: string
+  notes?: string
+  createdAt: Date
+  service?: Service // Include the full service details
+}
+
+export interface Quote {
+  id: string
+  userId: string
+  companyId: string
+  projectTitle: string
+  projectDescription?: string
+  amount?: string
+  currency: string
+  status: QuoteStatus
+  clientEmail?: string
+  clientName?: string
+  sentAt?: Date
+  createdAt: Date
+  updatedAt: Date
+  company?: Company // Include the full company details
+  quoteServices?: QuoteService[] // Include the selected services
+}
+
 export interface SubscriptionFeatures {
   free: {
     maxQuotesPerMonth: number
@@ -57,4 +88,4 @@ export interface SubscriptionFeatures {
     maxCompanies: number
     features: string[]
   }
-} 
+}

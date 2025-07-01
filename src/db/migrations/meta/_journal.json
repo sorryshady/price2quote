@@ -43,6 +43,13 @@
       "when": 1751400000000,
       "tag": "0005_create_quotes_table",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1751402014524,
+      "tag": "0006_dark_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }

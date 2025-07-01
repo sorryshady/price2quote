@@ -9,6 +9,7 @@ import {
 } from 'drizzle-orm/pg-core'
 
 import companies from './companies'
+import services from './services'
 import users from './users'
 
 // Define quote status enum
@@ -17,6 +18,7 @@ export const quoteStatusEnum = pgEnum('quote_status', [
   'sent',
   'accepted',
   'rejected',
+  'revised',
 ])
 
 const quotes = pgTable('quotes', {
@@ -27,8 +29,8 @@ const quotes = pgTable('quotes', {
   companyId: uuid('company_id')
     .notNull()
     .references(() => companies.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description'),
+  projectTitle: varchar('project_title', { length: 255 }).notNull(),
+  projectDescription: text('project_description'),
   amount: decimal('amount', { precision: 10, scale: 2 }),
   currency: varchar('currency', { length: 3 }).default('USD').notNull(),
   status: quoteStatusEnum('status').default('draft').notNull(),
@@ -39,4 +41,23 @@ const quotes = pgTable('quotes', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
+// Quote services junction table
+const quoteServices = pgTable('quote_services', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  quoteId: uuid('quote_id')
+    .notNull()
+    .references(() => quotes.id, { onDelete: 'cascade' }),
+  serviceId: uuid('service_id')
+    .notNull()
+    .references(() => services.id, { onDelete: 'cascade' }),
+  quantity: decimal('quantity', { precision: 5, scale: 2 })
+    .default('1')
+    .notNull(),
+  unitPrice: decimal('unit_price', { precision: 10, scale: 2 }),
+  totalPrice: decimal('total_price', { precision: 10, scale: 2 }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 export default quotes
+export { quoteServices }

@@ -5,18 +5,25 @@ import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 
 import db from '@/db'
-import { quotes } from '@/db/schema'
+import { quoteServices, quotes } from '@/db/schema'
 import { canUserCreateQuote } from '@/lib/subscription'
+import type { QuoteStatus } from '@/types'
 
 interface CreateQuoteData {
   userId: string
   companyId: string
-  title: string
-  description?: string
+  projectTitle: string
+  projectDescription?: string
   amount?: number
   currency?: string
   clientEmail?: string
   clientName?: string
+  selectedServices: Array<{
+    serviceId: string
+    quantity: number
+    unitPrice?: number
+    notes?: string
+  }>
 }
 
 export async function createQuoteAction(data: CreateQuoteData) {
@@ -31,21 +38,46 @@ export async function createQuoteAction(data: CreateQuoteData) {
       }
     }
 
+    // Calculate total amount from services
+    const totalAmount = data.selectedServices.reduce((sum, service) => {
+      const quantity = service.quantity || 1
+      const unitPrice = service.unitPrice || 0
+      return sum + quantity * unitPrice
+    }, 0)
+
     const [quote] = await db
       .insert(quotes)
       .values({
         userId: data.userId,
         companyId: data.companyId,
-        title: data.title,
-        description: data.description,
-        amount: data.amount ? data.amount.toString() : null,
+        projectTitle: data.projectTitle,
+        projectDescription: data.projectDescription,
+        amount:
+          totalAmount > 0 ? totalAmount.toString() : data.amount?.toString(),
         currency: data.currency || 'USD',
         clientEmail: data.clientEmail,
         clientName: data.clientName,
       })
       .returning()
 
+    // Insert quote services
+    if (data.selectedServices.length > 0) {
+      const quoteServiceData = data.selectedServices.map((service) => ({
+        quoteId: quote.id,
+        serviceId: service.serviceId,
+        quantity: service.quantity.toString(),
+        unitPrice: service.unitPrice?.toString(),
+        totalPrice: service.unitPrice
+          ? (service.quantity * service.unitPrice).toString()
+          : undefined,
+        notes: service.notes,
+      }))
+
+      await db.insert(quoteServices).values(quoteServiceData)
+    }
+
     revalidatePath('/dashboard')
+    revalidatePath('/quotes')
     revalidatePath('/new-quote')
 
     return {
@@ -63,7 +95,7 @@ export async function createQuoteAction(data: CreateQuoteData) {
 
 export async function updateQuoteStatusAction(
   quoteId: string,
-  status: 'draft' | 'sent' | 'accepted' | 'rejected',
+  status: QuoteStatus,
 ) {
   try {
     const [quote] = await db
@@ -77,6 +109,7 @@ export async function updateQuoteStatusAction(
       .returning()
 
     revalidatePath('/dashboard')
+    revalidatePath('/quotes')
 
     return {
       success: true,
@@ -87,6 +120,47 @@ export async function updateQuoteStatusAction(
     return {
       success: false,
       error: 'Failed to update quote status',
+    }
+  }
+}
+
+export async function getQuoteWithServicesAction(quoteId: string) {
+  try {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId))
+
+    if (!quote) {
+      return {
+        success: false,
+        error: 'Quote not found',
+      }
+    }
+
+    const quoteServicesData = await db
+      .select({
+        id: quoteServices.id,
+        quoteId: quoteServices.quoteId,
+        serviceId: quoteServices.serviceId,
+        quantity: quoteServices.quantity,
+        unitPrice: quoteServices.unitPrice,
+        totalPrice: quoteServices.totalPrice,
+        notes: quoteServices.notes,
+        createdAt: quoteServices.createdAt,
+      })
+      .from(quoteServices)
+      .where(eq(quoteServices.quoteId, quoteId))
+
+    return {
+      success: true,
+      quote: {
+        ...quote,
+        quoteServices: quoteServicesData,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching quote:', error)
+    return {
+      success: false,
+      error: 'Failed to fetch quote',
     }
   }
 }
