@@ -38,7 +38,7 @@ interface AIQuoteResponse {
 
 interface AIQuoteRecommendationsProps {
   aiResponse: AIQuoteResponse
-  onApplyRecommendations: (recommendations: ServiceRecommendation[]) => void
+  onApplyRecommendations: () => void
   onClose: () => void
   onNegotiate: (negotiationData: {
     serviceName: string
@@ -87,7 +87,7 @@ export function AIQuoteRecommendations({
       'Applying all recommendations:',
       aiResponse.serviceRecommendations,
     )
-    onApplyRecommendations(aiResponse.serviceRecommendations)
+    onApplyRecommendations()
   }
 
   const handleStartNegotiation = (service: ServiceRecommendation) => {

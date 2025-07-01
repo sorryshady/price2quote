@@ -33,14 +33,9 @@ interface QuotePreviewProps {
     }
   }
   onClose: () => void
-  onSave: () => void
 }
 
-export function QuotePreview({
-  quoteData,
-  onClose,
-  onSave,
-}: QuotePreviewProps) {
+export function QuotePreview({ quoteData, onClose }: QuotePreviewProps) {
   const totalAmount = quoteData.quoteDocument.serviceBreakdown.reduce(
     (sum, service) => sum + service.totalPrice,
     0,
@@ -60,7 +55,6 @@ export function QuotePreview({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={onSave}>Save Quote</Button>
         </div>
       </div>
 

@@ -267,25 +267,18 @@ export default function NewQuotePage() {
     }
   }
 
-  const handleApplyAIRecommendations = (
-    recommendations: Array<{
-      serviceName: string
-      currentPrice: number
-      recommendedPrice: number
-      confidenceLevel: 'high' | 'medium' | 'low'
-      reasoning: string
-      priceRange: {
-        min: number
-        max: number
-      }
-    }>,
-  ) => {
-    console.log('Applying recommendations:', recommendations)
+  const handleApplyAIRecommendations = () => {
+    if (!aiResponse) return
+
+    console.log(
+      'Applying current AI recommendations:',
+      aiResponse.serviceRecommendations,
+    )
     console.log('Current selected services:', selectedServices)
 
     setSelectedServices((prev) => {
       const updated = prev.map((service) => {
-        const recommendation = recommendations.find(
+        const recommendation = aiResponse.serviceRecommendations.find(
           (r) => r.serviceName === service.service.name,
         )
         if (recommendation) {
