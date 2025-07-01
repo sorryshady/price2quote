@@ -2,11 +2,10 @@
 
 ## Current Focus
 
-- Comprehensive company onboarding flow implementation
-- Database schema updates for companies with extended fields
-- Supabase storage integration for company logos
-- Services and skill level management (20 services limit)
-- AI summary generation for company context
+- Company onboarding UI implementation
+- Multi-step onboarding form with logo upload
+- Services management interface
+- AI summary generation integration
 - Subscription-based feature access
 
 ## Recent Changes
@@ -34,6 +33,7 @@
    - PDF quote generation
 
 4. Company Setup Requirements:
+
    - Company name, country, business type
    - Logo upload via Supabase storage
    - Services offered by the company (max 20)
@@ -41,6 +41,13 @@
    - Company description
    - Base pricing per service (optional)
    - AI-generated company summary for quote context
+
+5. Database & Storage Setup:
+   - Companies and services tables created with proper relationships
+   - Supabase storage bucket 'company-logos' configured
+   - Storage policies set for public access with API route control
+   - Logo upload utility function implemented using DRY storage helpers
+   - TypeScript types defined for Company and Service interfaces
 
 ## Active Decisions
 
@@ -55,33 +62,31 @@
 9. Skill levels: Per-service granularity
 10. Base pricing: Store per service (optional)
 11. AI summary updates: On-demand with smart triggers
+12. Storage access controlled through API routes (not Supabase auth)
 
 ## Current Considerations
 
-1. Comprehensive company onboarding flow design
-2. Database schema for companies with extended fields
-3. Services and skill levels data structure (20 services limit)
-4. Supabase storage bucket setup and configuration
-5. AI summary generation implementation with smart triggers
-6. Base pricing storage and currency handling
-7. Subscription tier enforcement
-8. Multi-currency support implementation
+1. Multi-step onboarding UI design and implementation
+2. Logo upload component integration
+3. Services management interface (add/edit/delete services)
+4. AI summary generation on company save
+5. Onboarding middleware and route protection
+6. Subscription validation during onboarding
+7. Error handling and user feedback
 
 ## Next Steps
 
-1. Design comprehensive company onboarding flow
-2. Update database schema for companies with all required fields
-3. Set up Supabase storage bucket for logos
-4. Create services and skill levels schema (20 services limit)
-5. Implement onboarding middleware
-6. Create company setup forms with all fields
-7. Plan AI summary generation architecture with smart triggers
-8. Add subscription validation
-9. Implement base pricing storage per service
+1. Create onboarding route and layout
+2. Implement multi-step onboarding form
+3. Add logo upload component
+4. Create services management interface
+5. Integrate AI summary generation
+6. Add onboarding middleware
+7. Implement subscription validation
 
 ## Known Issues
 
-- None currently - focusing on comprehensive onboarding flow design
+- None currently - database and storage setup complete
 
 ## Active Questions
 
@@ -91,4 +96,4 @@
 
 ## Current State
 
-Authentication system is complete. Ready to implement comprehensive company onboarding flow with extended company profile, services (20 limit), skill levels per service, base pricing, and AI summary generation for the PricingGPT platform.
+Database schema and Supabase storage setup are complete. Ready to implement the comprehensive company onboarding UI with multi-step form, logo upload, services management, and AI summary generation for the PricingGPT platform.
