@@ -2,6 +2,7 @@
 
 ## Current Focus
 
+- **COMPLETED: Complete quotes listing page with comprehensive features**
 - **COMPLETED: Complete quote creation system with AI integration**
 - **COMPLETED: Quote preview component with professional layout**
 - **COMPLETED: AI-assisted quote generation with pricing recommendations**
@@ -12,11 +13,33 @@
 - AI integration with Gemini for company summary generation COMPLETED
 - Database save functionality with background AI processing COMPLETED
 - Company profile management with AI summary status COMPLETED
-- Ready for Phase 4: Quote management and PDF export
+- Ready for Phase 4: PDF export and email integration
 
 ## Recent Changes
 
-1. **NEW: Complete Quote Creation System COMPLETED:**
+1. **NEW: Complete Quotes Listing Page COMPLETED:**
+
+   - **Comprehensive Quote Display**: Shows all quote information including project title, company, status, amount, client, services, and timestamps
+   - **Status Filtering**: Filter quotes by status (draft, sent, accepted, rejected, revised, all)
+   - **Quote Preview Modal**: Click "View Quote" to see detailed quote information in a modal
+   - **Download Functionality**: "Download PDF" button ready for PDF generation implementation
+   - **Subscription Integration**: Shows usage limits for free users with progress bar
+   - **Professional UI**: Clean card-based layout with status badges, icons, and hover effects
+   - **Service Summary**: Displays selected services with quantities and pricing
+   - **Responsive Design**: Works well on all screen sizes
+   - **Loading States**: Proper skeleton loading while fetching quotes
+   - **Error Handling**: Graceful error states and empty states
+   - **Benefits**: Complete quote management interface ready for client use
+
+2. **NEW: Quote Data Fetching System COMPLETED:**
+
+   - **Server Action**: `getQuotesAction` fetches quotes with company and service details
+   - **TanStack Query Hook**: `useQuotesQuery` for efficient caching and data fetching
+   - **Database Integration**: Fetches quotes with related company and quote services data
+   - **Type Safety**: Proper TypeScript interfaces for quote data structures
+   - **Benefits**: Fast, cached quote loading with real-time updates
+
+3. **NEW: Complete Quote Creation System COMPLETED:**
 
    - **Full Quote Form**: Comprehensive form with company selection, project details, services, client info, and final notes
    - **Service Management**: Dynamic service selection with quantity, pricing, and notes
@@ -28,7 +51,7 @@
    - **Dummy Data**: Test data population for birthday event scenario
    - **Benefits**: End-to-end quote creation workflow with AI assistance
 
-2. **NEW: Quote Preview Component COMPLETED:**
+4. **NEW: Quote Preview Component COMPLETED:**
 
    - **Professional Layout**: Executive summary, value proposition, service breakdown, terms, payment, timeline, and next steps
    - **Service Breakdown**: Detailed pricing with quantity, unit price, total, and deliverables
@@ -36,7 +59,7 @@
    - **Total Calculation**: Automatic total amount calculation from services
    - **Benefits**: Professional quote presentation ready for client delivery
 
-3. **NEW: AI Quote Generation with Enhanced Features COMPLETED:**
+5. **NEW: AI Quote Generation with Enhanced Features COMPLETED:**
 
    - **Market Analysis**: Location-based insights, market conditions, and competitive positioning
    - **Service Recommendations**: AI-suggested pricing with confidence levels (high/medium/low)
@@ -46,7 +69,7 @@
    - **Interactive Negotiation**: Per-service negotiation with AI assistance
    - **Benefits**: Professional AI-powered pricing with market intelligence
 
-4. **NEW: Enhanced AI Context Integration COMPLETED:**
+6. **NEW: Enhanced AI Context Integration COMPLETED:**
 
    - **Company AI Summary**: Previously generated business summaries now included in pricing prompts
    - **Rich Context**: AI has access to company's market position, expertise, and operational details
@@ -54,14 +77,14 @@
    - **Updated Interfaces**: Type-safe integration of AI summary data
    - **Benefits**: Significantly improved AI pricing accuracy and relevance
 
-5. **NEW: TypeScript Type Safety COMPLETED:**
+7. **NEW: TypeScript Type Safety COMPLETED:**
 
    - **Proper Interfaces**: Replaced all `any` types with comprehensive type definitions
    - **AI Response Types**: Full type safety for AI recommendation structures
    - **Function Parameters**: Type-safe function signatures throughout
    - **Benefits**: Better developer experience and runtime safety
 
-6. **NEW: Subscription tracking and limit enforcement system COMPLETED:**
+8. **NEW: Subscription tracking and limit enforcement system COMPLETED:**
 
    - **Quotes Table**: Created with proper schema and relationships
    - **Subscription Limits**: Free tier (3 quotes/month, 1 company), Pro tier (unlimited quotes, 5 companies)
@@ -73,7 +96,7 @@
    - **Limit Enforcement**: Prevents exceeding subscription limits
    - **Benefits**: Complete subscription management with real-time tracking
 
-7. **NEW: Header User Status COMPLETED:**
+9. **NEW: Header User Status COMPLETED:**
 
    - **Quote Usage Display**: Shows current usage for free users (e.g., "Quotes: 2/3")
    - **Subscription Tier Badge**: Clear "Free" or "Pro" indicator
@@ -82,37 +105,39 @@
    - **Responsive Design**: Works well on all screen sizes
    - **Benefits**: Always-visible subscription status without sidebar clutter
 
-8. **NEW: Subscription Limit Components COMPLETED:**
+10. **NEW: Subscription Limit Components COMPLETED:**
 
-   - **SubscriptionLimit**: Full-featured card with usage progress and upgrade prompts
-   - **Quote Usage Tracking**: Monthly quote counting with database integration
-   - **Company Limit Enforcement**: Prevents adding more companies than allowed
-   - **Upgrade Messaging**: Contextual prompts for subscription upgrades
-   - **Usage Indicators**: Visual progress bars and status badges
-   - **Benefits**: Professional subscription management UI
+    - **SubscriptionLimit**: Full-featured card with usage progress and upgrade prompts
+    - **Quote Usage Tracking**: Monthly quote counting with database integration
+    - **Company Limit Enforcement**: Prevents adding more companies than allowed
+    - **Upgrade Messaging**: Contextual prompts for subscription upgrades
+    - **Usage Indicators**: Visual progress bars and status badges
+    - **Benefits**: Professional subscription management UI
 
-9. **NEW: TanStack Query Implementation COMPLETED:**
+11. **NEW: TanStack Query Implementation COMPLETED:**
 
-   - Replaced custom loading states with TanStack Query for intelligent caching
-   - Implemented proper skeleton loading components throughout the app
-   - Fixed race conditions and premature redirects
-   - Eliminated resource-intensive re-fetching with 5-minute stale time
-   - Added QueryProvider to root layout with dev tools
-   - Created `useCompaniesQuery` hook for optimized data fetching
-   - **NEW: useQuoteLimit and useCompanyLimit hooks** for subscription tracking
-   - **Benefits**: No more loading flashes, intelligent caching, better UX
+    - Replaced custom loading states with TanStack Query for intelligent caching
+    - Implemented proper skeleton loading components throughout the app
+    - Fixed race conditions and premature redirects
+    - Eliminated resource-intensive re-fetching with 5-minute stale time
+    - Added QueryProvider to root layout with dev tools
+    - Created `useCompaniesQuery` hook for optimized data fetching
+    - **NEW: useQuoteLimit and useCompanyLimit hooks** for subscription tracking
+    - **NEW: useQuotesQuery hook** for quote data fetching
+    - **Benefits**: No more loading flashes, intelligent caching, better UX
 
-10. **NEW: Loading State Optimizations COMPLETED:**
+12. **NEW: Loading State Optimizations COMPLETED:**
 
     - **SidebarSkeleton**: Proper skeleton for navigation loading
     - **AddCompanySkeleton**: Full page skeleton for onboarding form
     - **DashboardSkeleton**: Content-specific skeleton for dashboard
+    - **QuotesSkeleton**: Quote listing skeleton with proper structure
     - **LoadingSpinner**: Reusable spinner component with size variants
     - **SkeletonLoader**: Generic skeleton for any content
     - Replaced all loading spinners with meaningful skeleton states
     - Fixed heading flash issues in onboarding form
 
-11. **NEW: Performance Improvements COMPLETED:**
+13. **NEW: Performance Improvements COMPLETED:**
 
     - **Race Condition Fixes**: Proper timing for companies data loading
     - **Caching Strategy**: 5-minute stale time, 10-minute cache time
@@ -121,14 +146,14 @@
     - **Automatic Retries**: Failed requests retry once
     - **DevTools Integration**: Built-in debugging tools
 
-12. Authentication System:
+14. Authentication System:
 
     - Complete login flow with session management
     - OAuth authentication (Google and GitHub)
     - Session persistence using cookies and database
     - Auth provider for client-side state management
 
-13. Subscription System:
+15. Subscription System:
 
     - Free tier: 3 quotes/month, 1 company
     - Pro tier: Unlimited quotes, 5 companies
@@ -138,7 +163,7 @@
     - **NEW: Database integration for usage tracking**
     - Dodo Payments integration planned
 
-14. Project Context:
+16. Project Context:
 
     - Identified as PricingGPT platform
     - AI-powered pricing recommendations
@@ -146,7 +171,7 @@
     - Gmail integration for emails
     - PDF quote generation
 
-15. Company Onboarding Implementation COMPLETED:
+17. Company Onboarding Implementation COMPLETED:
 
     - Multi-step onboarding form (Company Info, Profile, Services, Summary)
     - localStorage persistence for form data and current step
@@ -159,20 +184,22 @@
     - **NEW: Logo upload to Supabase storage**
     - **NEW: Background AI summary generation**
 
-16. Database & Storage Setup:
+18. Database & Storage Setup:
 
     - Companies and services tables created with proper relationships
     - **NEW: Quotes table with subscription tracking**
-    - **NEW: Quote status enum (draft, sent, accepted, rejected)**
+    - **NEW: Quote status enum (draft, sent, accepted, rejected, revised)**
     - **NEW: Quote services junction table for detailed service tracking**
+    - Supabase storage for company logos
+    - Proper relationships and constraints
+    - AI summary fields (aiSummary, aiSummaryStatus)
     - Supabase storage bucket 'company-logos' configured
     - Storage policies set for public access with API route control
-    - Logo upload utility function implemented using DRY storage helpers
-    - TypeScript types defined for Company and Service interfaces
-    - **NEW: AI summary fields added (aiSummary, aiSummaryStatus)**
-    - **NEW: Database migration completed**
+    - Logo upload utility function implemented
+    - TypeScript types defined for all entities
+    - **NEW: Database migrations completed**
 
-17. AI Integration COMPLETED:
+19. AI Integration COMPLETED:
 
     - Gemini AI SDK installed and configured
     - Detailed prompt engineering for company summaries (4-6 sentences)
@@ -183,12 +210,13 @@
     - **NEW: Market analysis and competitive positioning**
     - **NEW: Enhanced context with company AI summaries**
 
-18. Server Actions Organization COMPLETED:
+20. Server Actions Organization COMPLETED:
     - Modular structure: auth.ts, company.ts, quote.ts, subscription.ts, index.ts
     - Clean exports and type safety
     - Scalable architecture for future actions
     - **NEW: AI quote generation action with enhanced context**
     - **NEW: Complete quote creation with database integration**
+    - **NEW: Quote fetching with company and service details**
 
 ## Active Decisions
 
@@ -218,45 +246,45 @@
 24. **NEW: Complete quote creation workflow** - End-to-end quote generation with AI assistance
 25. **NEW: Professional quote preview** - Ready for client delivery with comprehensive layout
 26. **NEW: Interactive AI recommendations** - One-click application and negotiation support
+27. **NEW: Complete quote management system** - Listing, filtering, and preview functionality
 
 ## Current Considerations
 
-1. **Quote Management System**: Need to implement quote listing, editing, and status management
-2. **PDF Export**: Implement PDF generation for quotes using libraries like react-pdf or jsPDF
-3. **Email Integration**: Connect quotes with Gmail integration for sending to clients
-4. **Quote Templates**: Create customizable quote templates for different business types
-5. **Quote Analytics**: Track quote performance, conversion rates, and business insights
-6. **Multi-currency Support**: Implement currency conversion and display
-7. **Quote History**: Maintain complete history of all quotes with status tracking
-8. **Client Management**: Build client database and relationship management
-9. **Quote Approval Workflow**: For businesses with approval processes
-10. **Mobile Optimization**: Ensure quote creation and preview work well on mobile devices
+1. **PDF Export**: Implement PDF generation for quotes using libraries like react-pdf or jsPDF
+2. **Email Integration**: Connect quotes with Gmail integration for sending to clients
+3. **Quote Templates**: Create customizable quote templates for different business types
+4. **Quote Analytics**: Track quote performance, conversion rates, and business insights
+5. **Multi-currency Support**: Implement currency conversion and display
+6. **Quote History**: Maintain complete history of all quotes with status tracking
+7. **Client Management**: Build client database and relationship management
+8. **Quote Approval Workflow**: For businesses with approval processes
+9. **Mobile Optimization**: Ensure quote creation and preview work well on mobile devices
+10. **Quote Editing**: Allow editing of existing quotes
 
 ## Next Steps
 
-1. **Phase 4: Quote Management System**
-
-   - Implement quote listing page with filters and search
-   - Add quote editing capabilities
-   - Create quote status management (draft, sent, accepted, rejected)
-   - Build quote history and analytics
-
-2. **PDF Export Implementation**
+1. **PDF Export Implementation**
 
    - Research and implement PDF generation library
    - Create professional PDF templates
    - Add download functionality to quote preview
 
-3. **Email Integration**
+2. **Email Integration**
 
    - Connect with Gmail OAuth for sending quotes
    - Create email templates for quote delivery
    - Add email tracking and follow-up features
 
+3. **Quote Management Enhancements**
+
+   - Add quote editing capabilities
+   - Implement quote status management (draft, sent, accepted, rejected)
+   - Add quote duplication functionality
+
 4. **Testing and Optimization**
 
-   - Comprehensive testing of quote creation flow
-   - Performance optimization for large quotes
+   - Comprehensive testing of quote creation and listing flow
+   - Performance optimization for large quote lists
    - Mobile responsiveness testing
 
 5. **Documentation and Deployment**

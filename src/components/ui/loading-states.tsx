@@ -50,13 +50,15 @@ export function SkeletonLoader({
 export function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-8 w-48" />
-      <div className="rounded-lg border p-4">
-        <Skeleton className="mb-2 h-6 w-32" />
-        <div className="space-y-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
+      <div className="space-y-2">
+        <div className="bg-muted h-8 w-48 animate-pulse rounded" />
+        <div className="bg-muted h-5 w-64 animate-pulse rounded" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-muted h-32 animate-pulse rounded" />
+        <div className="bg-muted h-32 animate-pulse rounded" />
+        <div className="bg-muted h-32 animate-pulse rounded" />
       </div>
     </div>
   )
@@ -64,15 +66,16 @@ export function DashboardSkeleton() {
 
 export function SidebarSkeleton() {
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
+      <div className="bg-muted h-8 animate-pulse rounded" />
       <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-4 w-28" />
+        <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
+        <div className="bg-muted h-4 w-1/2 animate-pulse rounded" />
+        <div className="bg-muted h-4 w-2/3 animate-pulse rounded" />
       </div>
       <div className="space-y-2">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-16" />
+        <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
+        <div className="bg-muted h-4 w-1/2 animate-pulse rounded" />
       </div>
     </div>
   )
@@ -81,34 +84,46 @@ export function SidebarSkeleton() {
 export function AddCompanySkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <Skeleton className="mx-auto h-9 w-64" />
-        <Skeleton className="mx-auto h-5 w-80" />
+      <div className="space-y-2">
+        <div className="bg-muted h-8 w-48 animate-pulse rounded" />
+        <div className="bg-muted h-5 w-64 animate-pulse rounded" />
       </div>
-      <div className="space-y-6">
-        <div className="mx-auto flex w-full max-w-xl items-center justify-center">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              {i < 3 && <Skeleton className="ml-2 h-0.5 w-8" />}
-            </div>
-          ))}
-        </div>
-        <div className="text-center">
-          <Skeleton className="mx-auto h-8 w-48" />
-          <Skeleton className="mx-auto mt-2 h-5 w-64" />
-        </div>
-        <div className="mx-auto max-w-5xl rounded-lg border p-6">
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-10 w-full" />
+
+      <div className="space-y-4">
+        <div className="bg-muted h-32 animate-pulse rounded" />
+        <div className="bg-muted h-32 animate-pulse rounded" />
+        <div className="bg-muted h-32 animate-pulse rounded" />
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <div className="bg-muted h-10 w-24 animate-pulse rounded" />
+        <div className="bg-muted h-10 w-32 animate-pulse rounded" />
+      </div>
+    </div>
+  )
+}
+
+export function QuotesSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="space-y-3 rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div className="bg-muted h-6 w-48 animate-pulse rounded" />
+            <div className="bg-muted h-6 w-20 animate-pulse rounded" />
+          </div>
+          <div className="bg-muted h-4 w-64 animate-pulse rounded" />
+          <div className="flex items-center gap-4">
+            <div className="bg-muted h-4 w-24 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-32 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-20 animate-pulse rounded" />
+          </div>
+          <div className="flex gap-2">
+            <div className="bg-muted h-8 w-20 animate-pulse rounded" />
+            <div className="bg-muted h-8 w-24 animate-pulse rounded" />
           </div>
         </div>
-      </div>
+      ))}
     </div>
   )
 }

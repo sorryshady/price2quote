@@ -1,5 +1,6 @@
 import {
   decimal,
+  json,
   pgEnum,
   pgTable,
   text,
@@ -36,6 +37,7 @@ const quotes = pgTable('quotes', {
   status: quoteStatusEnum('status').default('draft').notNull(),
   clientEmail: varchar('client_email', { length: 255 }),
   clientName: varchar('client_name', { length: 255 }),
+  quoteData: json('quote_data'),
   sentAt: timestamp('sent_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

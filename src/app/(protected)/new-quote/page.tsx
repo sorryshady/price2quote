@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, File, Plus } from 'lucide-react'
+import { Eye, FileDown, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -268,36 +268,62 @@ export default function NewQuotePage() {
     }
   }
 
-  const handleApplyAIRecommendations = () => {
+  const handleApplyAIRecommendations = useCallback(() => {
     if (!aiResponse) return
 
-    console.log(
-      'Applying current AI recommendations:',
-      aiResponse.serviceRecommendations,
-    )
-    console.log('Current selected services:', selectedServices)
+    console.log('=== APPLYING AI RECOMMENDATIONS ===')
+    console.log('AI Response service recommendations:')
+    aiResponse.serviceRecommendations.forEach((rec, index) => {
+      console.log(
+        `${index}: ${rec.serviceName} - Current: ${rec.currentPrice}, Recommended: ${rec.recommendedPrice}`,
+      )
+    })
+
+    console.log('Current selected services:')
+    selectedServices.forEach((service, index) => {
+      console.log(
+        `${index}: ${service.service.name} - Price: ${service.unitPrice}`,
+      )
+    })
 
     setSelectedServices((prev) => {
       const updated = prev.map((service) => {
-        const recommendation = aiResponse.serviceRecommendations.find(
-          (r) => r.serviceName === service.service.name,
-        )
+        const recommendation = aiResponse.serviceRecommendations.find((r) => {
+          // Try exact match first
+          if (r.serviceName === service.service.name) return true
+          // Try matching without skill level suffix (e.g., "Cake Baking (advanced)" matches "Cake Baking")
+          const serviceNameWithoutSuffix = service.service.name
+          const recommendationNameWithoutSuffix = r.serviceName.replace(
+            /\s*\([^)]+\)$/,
+            '',
+          )
+          return serviceNameWithoutSuffix === recommendationNameWithoutSuffix
+        })
         if (recommendation) {
           console.log(
-            `Updating ${service.service.name} from ${service.unitPrice} to ${recommendation.recommendedPrice}`,
+            `✅ MATCH FOUND: Updating ${service.service.name} from ${service.unitPrice} to ${recommendation.recommendedPrice}`,
           )
           return {
             ...service,
             unitPrice: recommendation.recommendedPrice,
           }
+        } else {
+          console.log(
+            `❌ NO MATCH: ${service.service.name} not found in AI recommendations`,
+          )
         }
         return service
       })
-      console.log('Updated services:', updated)
+      console.log('Final updated services:')
+      updated.forEach((service, index) => {
+        console.log(
+          `${index}: ${service.service.name} - Price: ${service.unitPrice}`,
+        )
+      })
       return updated
     })
     setShowAIRecommendations(false)
-  }
+  }, [aiResponse, selectedServices])
 
   const handleNegotiate = async (negotiationData: {
     serviceName: string
@@ -308,20 +334,26 @@ export default function NewQuotePage() {
 
     try {
       const formData = form.getValues()
-      const service = aiResponse.serviceRecommendations.find(
-        (s) => s.serviceName === negotiationData.serviceName,
-      )
+      const service = aiResponse.serviceRecommendations.find((s) => {
+        // Try exact match first
+        if (s.serviceName === negotiationData.serviceName) return true
+        // Try matching without skill level suffix
+        const serviceNameWithoutSuffix = negotiationData.serviceName
+        const recommendationNameWithoutSuffix = s.serviceName.replace(
+          /\s*\([^)]+\)$/,
+          '',
+        )
+        return serviceNameWithoutSuffix === recommendationNameWithoutSuffix
+      })
 
       if (!service) return
 
       const result = await negotiatePriceAction({
         companyId: formData.companyId,
         serviceName: negotiationData.serviceName,
-        currentRecommendedPrice: service.recommendedPrice,
         proposedPrice: negotiationData.proposedPrice,
-        userReasoning: negotiationData.reasoning,
-        priceRange: service.priceRange,
-        projectData: {
+        reasoning: negotiationData.reasoning,
+        projectContext: JSON.stringify({
           title: formData.projectTitle,
           description: formData.projectDescription,
           complexity: formData.projectComplexity,
@@ -329,18 +361,30 @@ export default function NewQuotePage() {
           customTimeline: formData.customTimeline,
           clientLocation: formData.clientLocation,
           clientBudget: formData.clientBudget,
-        },
+          currentRecommendedPrice: service.recommendedPrice,
+          priceRange: service.priceRange,
+        }),
       })
 
       if (result.success && result.aiResponse) {
+        console.log('=== NEGOTIATION SUCCESS ===')
+        console.log(`Service: ${negotiationData.serviceName}`)
+        console.log(`Old recommended price: ${service.recommendedPrice}`)
+        console.log(
+          `New suggested price: ${result.aiResponse.recommendation.suggestedPrice}`,
+        )
+
         // Update the AI response with negotiation feedback
         setAiResponse((prev) => {
           if (!prev) return prev
 
-          return {
+          const updated = {
             ...prev,
             serviceRecommendations: prev.serviceRecommendations.map((s) => {
               if (s.serviceName === negotiationData.serviceName) {
+                console.log(
+                  `✅ UPDATING AI RESPONSE: ${s.serviceName} from ${s.recommendedPrice} to ${result.aiResponse.recommendation.suggestedPrice}`,
+                )
                 return {
                   ...s,
                   recommendedPrice:
@@ -353,6 +397,15 @@ export default function NewQuotePage() {
               return s
             }),
           }
+
+          console.log('Updated AI response service recommendations:')
+          updated.serviceRecommendations.forEach((rec, index) => {
+            console.log(
+              `${index}: ${rec.serviceName} - Recommended: ${rec.recommendedPrice}`,
+            )
+          })
+
+          return updated
         })
       } else {
         console.error('Failed to negotiate price:', result.error)
@@ -1039,7 +1092,7 @@ export default function NewQuotePage() {
                 <Eye className="h-4 w-4" /> View Quote
               </Button>
               <Button onClick={handleDownloadQuote} variant="outline">
-                <File className="h-4 w-4" /> Download PDF
+                <FileDown className="h-4 w-4" /> Download PDF
               </Button>
               <Button onClick={handleResetForm} variant="secondary">
                 <Plus className="h-4 w-4" /> Create New Quote

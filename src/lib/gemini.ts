@@ -133,6 +133,7 @@ TASK: Provide a structured analysis with:
 2. Pricing recommendations for each service with confidence levels
 3. Total quote amount with confidence level
 4. Reasoning for each recommendation
+5. If in person delivery is required, spread the delivery charge over the services. Do not generate separate delivery charges.
 
 RESPONSE FORMAT (JSON only):
 {

@@ -13,9 +13,11 @@ export async function checkQuoteLimitAction(
   userTier: 'free' | 'pro',
 ) {
   try {
-    const canCreate = await canUserCreateQuote(userId, userTier)
+    // Default to 'free' if userTier is invalid
+    const tier = userTier === 'free' || userTier === 'pro' ? userTier : 'free'
+    const canCreate = await canUserCreateQuote(userId, tier)
     const currentQuotes = await getCurrentMonthQuotes(userId)
-    const upgradeMessage = getUpgradeMessage('quotes', userTier)
+    const upgradeMessage = getUpgradeMessage('quotes', tier)
 
     return {
       success: true,
@@ -37,9 +39,11 @@ export async function checkCompanyLimitAction(
   userTier: 'free' | 'pro',
 ) {
   try {
-    const canCreate = await canUserCreateCompany(userId, userTier)
+    // Default to 'free' if userTier is invalid
+    const tier = userTier === 'free' || userTier === 'pro' ? userTier : 'free'
+    const canCreate = await canUserCreateCompany(userId, tier)
     const currentCompanies = await getCurrentCompanies(userId)
-    const upgradeMessage = getUpgradeMessage('companies', userTier)
+    const upgradeMessage = getUpgradeMessage('companies', tier)
 
     return {
       success: true,

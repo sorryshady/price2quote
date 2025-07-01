@@ -106,6 +106,7 @@ export function AIQuoteRecommendations({
         proposedPrice,
         reasoning: negotiationReasoning,
       })
+
       setNegotiatingService(null)
       setProposedPrice(0)
       setNegotiationReasoning('')

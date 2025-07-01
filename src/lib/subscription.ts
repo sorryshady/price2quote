@@ -21,7 +21,9 @@ export function canCreateQuote(
   userTier: SubscriptionTier,
   currentQuotesThisMonth: number,
 ): boolean {
-  const maxQuotes = subscriptionFeatures[userTier].maxQuotesPerMonth
+  // Default to 'free' if userTier is invalid
+  const tier = userTier && subscriptionFeatures[userTier] ? userTier : 'free'
+  const maxQuotes = subscriptionFeatures[tier].maxQuotesPerMonth
   return maxQuotes === -1 || currentQuotesThisMonth < maxQuotes
 }
 
@@ -29,12 +31,16 @@ export function canCreateCompany(
   userTier: SubscriptionTier,
   currentCompanies: number,
 ): boolean {
-  const maxCompanies = subscriptionFeatures[userTier].maxCompanies
+  // Default to 'free' if userTier is invalid
+  const tier = userTier && subscriptionFeatures[userTier] ? userTier : 'free'
+  const maxCompanies = subscriptionFeatures[tier].maxCompanies
   return maxCompanies === -1 || currentCompanies < maxCompanies
 }
 
 export function getSubscriptionFeatures(tier: SubscriptionTier) {
-  return subscriptionFeatures[tier]
+  // Default to 'free' if tier is invalid
+  const validTier = tier && subscriptionFeatures[tier] ? tier : 'free'
+  return subscriptionFeatures[validTier]
 }
 
 // Database functions for checking limits
