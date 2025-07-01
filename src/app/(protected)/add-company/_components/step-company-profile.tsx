@@ -62,8 +62,10 @@ export function StepCompanyProfile({
         const parsed = JSON.parse(saved)
         if (parsed.companyProfile) {
           form.reset(parsed.companyProfile)
-          if (parsed.companyProfile.logo)
+          if (parsed.companyProfile.logo) {
             setLogoPreview(parsed.companyProfile.logo)
+            form.setValue('logo', parsed.companyProfile.logo)
+          }
         }
       } catch {}
     }
@@ -84,6 +86,13 @@ export function StepCompanyProfile({
       const base64 = reader.result as string
       setLogoPreview(base64)
       form.setValue('logo', base64)
+      // Immediately update localStorage with new logo
+      const formData = form.getValues()
+      formData.logo = base64
+      const draft = localStorage.getItem(STORAGE_KEY)
+      const parsed = draft ? JSON.parse(draft) : {}
+      parsed.companyProfile = formData
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
     }
     reader.readAsDataURL(file)
   }
@@ -147,13 +156,14 @@ export function StepCompanyProfile({
                 onChange={handleLogoChange}
               />
             </label>
-            {logoPreview && (
+            {hydrated && logoPreview && (
               <Image
                 src={logoPreview}
                 alt="Logo preview"
                 className="h-16 w-20 rounded border object-cover"
                 width={64}
                 height={48}
+                unoptimized
               />
             )}
           </div>
