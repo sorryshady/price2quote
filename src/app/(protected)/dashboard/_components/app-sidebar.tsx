@@ -1,5 +1,6 @@
 'use client'
 
+import { redirect } from 'next/navigation'
 import * as React from 'react'
 
 import {
@@ -29,6 +30,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+
+import { useAuth } from '@/hooks/use-auth'
 
 import { NavDocuments } from './nav-documents'
 import { NavMain } from './nav-main'
@@ -153,6 +156,9 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth()
+  if (!user) redirect('/login')
+  const { name, email, image } = user
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -176,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={{ name: name || '', email, image: image || '' }} />
       </SidebarFooter>
     </Sidebar>
   )
