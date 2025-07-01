@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, File, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -1035,13 +1036,13 @@ export default function NewQuotePage() {
           <CardContent className="space-y-4">
             <div className="flex gap-3">
               <Button onClick={handleViewQuote} variant="outline">
-                👁️ View Quote
+                <Eye className="h-4 w-4" /> View Quote
               </Button>
               <Button onClick={handleDownloadQuote} variant="outline">
-                📄 Download PDF
+                <File className="h-4 w-4" /> Download PDF
               </Button>
               <Button onClick={handleResetForm} variant="secondary">
-                🆕 Create New Quote
+                <Plus className="h-4 w-4" /> Create New Quote
               </Button>
             </div>
 
@@ -1050,7 +1051,6 @@ export default function NewQuotePage() {
                 <QuotePreview
                   quoteData={finalQuoteData}
                   onClose={() => setShowViewQuote(false)}
-                  onSave={() => {}} // Already saved, no action needed
                 />
               </div>
             )}

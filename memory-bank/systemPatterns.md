@@ -14,7 +14,109 @@ The application follows a modern Next.js 14 architecture with App Router, featur
 
 ## Key Design Patterns
 
-### 1. **AI Integration Pattern**
+### 1. **Quote Creation Pattern**
+
+**Comprehensive Form Management:**
+
+```typescript
+// Multi-section form with dynamic service selection
+const form = useForm<QuoteFormData>({
+  resolver: zodResolver(quoteSchema),
+  defaultValues: {
+    companyId: '',
+    projectTitle: '',
+    // ... other fields
+  },
+})
+
+// Dynamic service management with local state
+const [selectedServices, setSelectedServices] = useState<SelectedService[]>([])
+```
+
+**Service Selection and Pricing:**
+
+```typescript
+// Service toggle with quantity and pricing
+const handleServiceToggle = (service: Service) => {
+  setSelectedServices((prev) => {
+    const existing = prev.find((s) => s.serviceId === service.id)
+    if (existing) {
+      return prev.filter((s) => s.serviceId !== service.id)
+    } else {
+      return [
+        ...prev,
+        {
+          serviceId: service.id,
+          service,
+          quantity: 1,
+          unitPrice: parseFloat(service.basePrice || '0'),
+          notes: '',
+        },
+      ]
+    }
+  })
+}
+```
+
+**AI Integration with Quote Generation:**
+
+```typescript
+// AI-assisted quote generation with enhanced context
+const result = await generateAIAssistedQuoteAction({
+  companyId: formData.companyId,
+  projectData: {
+    title: formData.projectTitle,
+    description: formData.projectDescription,
+    complexity: formData.projectComplexity,
+    // ... other project data
+  },
+  selectedServices: selectedServices.map((s) => ({
+    serviceId: s.serviceId,
+    serviceName: s.service.name,
+    skillLevel: s.service.skillLevel,
+    basePrice: s.service.basePrice,
+    quantity: s.quantity,
+    currentPrice: s.unitPrice,
+  })),
+})
+```
+
+### 2. **Quote Preview Pattern**
+
+**Professional Layout Structure:**
+
+```typescript
+// Modular quote sections with consistent styling
+<Card>
+  <CardHeader>
+    <CardTitle>Executive Summary</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p className="text-muted-foreground">
+      {quoteData.quoteDocument.executiveSummary}
+    </p>
+  </CardContent>
+</Card>
+```
+
+**Service Breakdown with Calculations:**
+
+```typescript
+// Dynamic service rendering with totals
+{quoteData.quoteDocument.serviceBreakdown.map((service, index) => (
+  <div key={index} className="space-y-3">
+    <div className="flex items-center justify-between">
+      <h4 className="font-medium">{service.serviceName}</h4>
+      <Badge variant="outline">
+        ${service.totalPrice.toFixed(2)}
+      </Badge>
+    </div>
+    {/* Service details */}
+  </div>
+))}
+```
+
+### 3. **AI Integration Pattern**
 
 **Company Summary Generation:**
 
@@ -48,7 +150,29 @@ const validatedResponse = validateConfidenceLevels(aiResponse)
 - Confidence levels (high/medium/low) with visual indicators
 - Price range validation with min/max thresholds
 
-### 2. **Subscription Management Pattern**
+**AI Recommendations with Interactive Features:**
+
+```typescript
+// AI response structure with market analysis
+interface AIQuoteResponse {
+  marketAnalysis: {
+    locationFactor: string
+    marketConditions: string
+    competitivePosition: string
+  }
+  serviceRecommendations: Array<{
+    serviceName: string
+    currentPrice: number
+    recommendedPrice: number
+    confidenceLevel: 'high' | 'medium' | 'low'
+    reasoning: string
+    priceRange: { min: number; max: number }
+  }>
+  negotiationTips: string[]
+}
+```
+
+### 4. **Subscription Management Pattern**
 
 **Real-time Usage Tracking:**
 
@@ -77,7 +201,7 @@ if (!canCreate) {
 - TanStack Query hooks for efficient caching
 - Real-time updates with background refetching
 
-### 3. **Data Fetching Pattern (TanStack Query)**
+### 5. **Data Fetching Pattern (TanStack Query)**
 
 **Optimized Caching Strategy:**
 
@@ -103,7 +227,7 @@ if (error) return <ErrorState />
 - No loading flashes or user interruption
 - Automatic retries for failed requests
 
-### 4. **Form Management Pattern**
+### 6. **Form Management Pattern**
 
 **Multi-step Forms with Persistence:**
 
@@ -127,7 +251,7 @@ const form = useForm<FormData>({
 })
 ```
 
-### 5. **File Upload Pattern**
+### 7. **File Upload Pattern**
 
 **Supabase Storage Integration:**
 
@@ -148,7 +272,7 @@ const preview = await fileToBase64(file)
 setLogoPreview(preview)
 ```
 
-### 6. **Server Actions Pattern**
+### 8. **Server Actions Pattern**
 
 **Modular Organization:**
 
@@ -176,7 +300,37 @@ export async function createQuoteAction(data: CreateQuoteData) {
 }
 ```
 
-### 7. **Component Architecture Pattern**
+**Quote Creation with AI Integration:**
+
+```typescript
+// Complete quote creation workflow
+export async function createQuoteAction(data: CreateQuoteData) {
+  // Check subscription limits
+  const canCreate = await canUserCreateQuote(data.userId, 'free')
+
+  // Generate AI quote document
+  const finalQuoteResult = await generateFinalQuoteAction({
+    companyId: data.companyId,
+    projectData: data.projectData,
+    finalData: data.finalData,
+  })
+
+  // Save to database with all data
+  const [quote] = await db
+    .insert(quotes)
+    .values({
+      userId: data.userId,
+      companyId: data.companyId,
+      // ... other fields
+    })
+    .returning()
+
+  // Insert quote services
+  await db.insert(quoteServices).values(quoteServiceData)
+}
+```
+
+### 9. **Component Architecture Pattern**
 
 **Atomic Design with Feature Organization:**
 
@@ -202,180 +356,206 @@ export function SidebarSkeleton() {
 }
 ```
 
-### 8. **Error Handling Pattern**
-
-**Graceful Degradation:**
+**Quote Preview Component Pattern:**
 
 ```typescript
-// Error boundaries and fallbacks
-try {
-  const result = await action()
-  if (!result.success) {
-    // Handle specific errors
-  }
-} catch (error) {
-  // Fallback UI
-  console.error('Error:', error)
+// Modular quote sections with consistent styling
+export function QuotePreview({ quoteData, onClose }: QuotePreviewProps) {
+  const totalAmount = quoteData.quoteDocument.serviceBreakdown.reduce(
+    (sum, service) => sum + service.totalPrice,
+    0,
+  )
+
+  return (
+    <div className="space-y-6">
+      {/* Executive Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Executive Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            {quoteData.quoteDocument.executiveSummary}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Service Breakdown */}
+      <Card>
+        {/* Service details with pricing */}
+      </Card>
+
+      {/* Terms and other sections */}
+    </div>
+  )
 }
 ```
 
-**User-friendly Error Messages:**
+### 10. **Database Schema Pattern**
 
-- Contextual error messages
-- Retry mechanisms for failed operations
-- Fallback states for missing data
+**Quote Management Schema:**
 
-### 9. **Performance Optimization Pattern**
+```sql
+-- Quotes table with comprehensive fields
+CREATE TABLE quotes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  project_title VARCHAR(255) NOT NULL,
+  project_description TEXT,
+  amount DECIMAL(10,2),
+  currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
+  status quote_status DEFAULT 'draft' NOT NULL,
+  client_email VARCHAR(255),
+  client_name VARCHAR(255),
+  sent_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
 
-**Intelligent Caching:**
+-- Quote services junction table
+CREATE TABLE quote_services (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  quote_id UUID NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+  service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  quantity DECIMAL(5,2) DEFAULT '1' NOT NULL,
+  unit_price DECIMAL(10,2),
+  total_price DECIMAL(10,2),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+```
 
-- TanStack Query for server state
-- localStorage for form persistence
-- React.memo for expensive components
-- Lazy loading for heavy features
+### 11. **Error Handling Pattern**
 
-**Race Condition Prevention:**
+**Graceful Error Handling:**
 
 ```typescript
-// Proper loading state management
-const { data, isLoading, error } = useQuery({
-  queryKey: ['companies'],
-  enabled: !!user, // Only fetch when user is available
+// Server action error handling
+export async function createQuoteAction(data: CreateQuoteData) {
+  try {
+    // Implementation
+    return { success: true, quote }
+  } catch (error) {
+    console.error('Error creating quote:', error)
+    return {
+      success: false,
+      error: 'Failed to create quote',
+    }
+  }
+}
+```
+
+**User-Friendly Error Messages:**
+
+```typescript
+// Form validation with clear error messages
+const quoteSchema = z.object({
+  companyId: z.string().min(1, 'Please select a company'),
+  projectTitle: z.string().min(1, 'Project title is required'),
+  clientLocation: z.string().min(1, 'Client location is required'),
+  // ... other validations
 })
 ```
 
-### 10. **Type Safety Pattern**
+### 12. **Performance Optimization Pattern**
 
-**Comprehensive TypeScript Usage:**
+**Intelligent Caching:**
 
 ```typescript
-// Proper interfaces for all data structures
-interface CompanyWithServices {
-  id: string
-  name: string
-  services: Service[]
-  // ... other fields
-}
-
-// Type-safe function signatures
-function handleApplyAIRecommendations(
-  recommendations: ServiceRecommendation[],
-) {
-  // Implementation
-}
+// TanStack Query with optimized settings
+const { data: companies } = useCompaniesQuery({
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 10 * 60 * 1000, // 10 minutes
+  refetchOnWindowFocus: false,
+  retry: 1,
+})
 ```
 
-**Database Schema Types:**
+**Background Processing:**
 
-- Drizzle schema definitions
-- Generated TypeScript types
-- Runtime type validation
+```typescript
+// AI generation in background without blocking UI
+const generateCompanySummary = async (companyId: string) => {
+  // Update status to generating
+  await db
+    .update(companies)
+    .set({ aiSummaryStatus: 'generating' })
+    .where(eq(companies.id, companyId))
+
+  try {
+    // Generate AI summary
+    const summary = await generateAISummary(companyData)
+
+    // Update with result
+    await db
+      .update(companies)
+      .set({
+        aiSummary: summary,
+        aiSummaryStatus: 'completed',
+      })
+      .where(eq(companies.id, companyId))
+  } catch (error) {
+    // Handle error
+    await db
+      .update(companies)
+      .set({ aiSummaryStatus: 'failed' })
+      .where(eq(companies.id, companyId))
+  }
+}
+```
 
 ## Component Relationships
 
-### **Quote Creation Flow:**
+### Quote Creation Flow
 
-```
-NewQuotePage
-├── Company Selection (auto-selected for free users)
-├── Project Details Form
-├── Services Selection (from company services)
-├── Quote Details (pricing configuration)
-├── Client Information
-├── AI Quote Generation (with confidence levels)
-└── Quote Creation (with subscription limits)
-```
-
-### **AI Integration Flow:**
-
-```
-Company Creation
-├── Save Company Data
-├── Trigger AI Summary Generation (background)
-├── Update AI Summary Status
-└── Store AI Summary for Quote Context
-
-Quote Creation
-├── Gather Project Data
-├── Include Company AI Summary in Context
-├── Generate AI Pricing Recommendations
-├── Display Confidence Levels and Reasoning
-└── Apply Recommendations to Quote
+```mermaid
+graph TD
+    A[New Quote Page] --> B[Company Selection]
+    B --> C[Project Details]
+    C --> D[Service Selection]
+    D --> E[Client Information]
+    E --> F[Final Notes]
+    F --> G[AI Generation]
+    G --> H[Quote Preview]
+    H --> I[Save Quote]
+    I --> J[Database]
 ```
 
-### **Subscription Management Flow:**
+### AI Integration Flow
 
-```
-User Action
-├── Check Subscription Limits (server-side)
-├── Validate Operation (quotes/companies)
-├── Execute Action if Allowed
-├── Update Usage Counters
-└── Display Updated Status (header/sidebar)
-```
-
-## Database Relationships
-
-### **Core Entities:**
-
-```
-users (1) ── (many) companies
-companies (1) ── (many) services
-users (1) ── (many) quotes
-quotes (1) ── (many) quote_services
-services (1) ── (many) quote_services
+```mermaid
+graph TD
+    A[User Input] --> B[AI Prompt Generation]
+    B --> C[Gemini AI]
+    C --> D[AI Response]
+    D --> E[Validation]
+    E --> F[UI Display]
+    F --> G[User Action]
+    G --> H[Apply Changes]
+    H --> I[Form Update]
 ```
 
-### **Subscription Tracking:**
+### Data Flow Architecture
 
-- Monthly quote counting with database functions
-- Real-time usage monitoring
-- Limit enforcement at database level
+```mermaid
+graph TD
+    A[React Components] --> B[TanStack Query]
+    B --> C[Server Actions]
+    C --> D[Database]
+    D --> E[AI Services]
+    E --> F[External APIs]
+```
 
-## Security Patterns
+## Best Practices
 
-### **Authentication:**
-
-- NextAuth.js with OAuth providers
-- Session-based authentication
-- Protected routes with middleware
-- Server-side session validation
-
-### **File Upload Security:**
-
-- API route-controlled uploads
-- File type and size validation
-- Secure storage policies
-- Public access with controlled URLs
-
-### **Data Access:**
-
-- User-scoped data access
-- Server-side validation for all operations
-- Subscription limit enforcement
-- Proper error handling without data leakage
-
-## Performance Patterns
-
-### **Caching Strategy:**
-
-- TanStack Query for intelligent caching
-- 5-minute stale time for fresh data
-- Background refetching for updates
-- localStorage for form persistence
-
-### **Loading States:**
-
-- Skeleton loading over spinners
-- Content-specific loading states
-- Progressive enhancement
-- No loading flashes or race conditions
-
-### **Bundle Optimization:**
-
-- Dynamic imports for heavy components
-- Tree shaking for unused code
-- Image optimization with Next.js
-- Efficient component splitting
+1. **Type Safety**: Use TypeScript interfaces for all data structures
+2. **Error Handling**: Implement graceful error handling at all levels
+3. **Performance**: Use TanStack Query for intelligent caching
+4. **UX**: Provide meaningful loading states and feedback
+5. **Security**: Validate all inputs and implement proper authentication
+6. **Scalability**: Use modular architecture for easy expansion
+7. **Testing**: Write comprehensive tests for all critical paths
+8. **Documentation**: Maintain clear documentation for all patterns
 
 This architecture provides a solid foundation for the PricingGPT platform with AI-powered features, robust subscription management, and excellent user experience.
