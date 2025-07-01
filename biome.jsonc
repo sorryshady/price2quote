@@ -88,12 +88,12 @@
             }
         }
     ],
-    // "assist": {
-    //     "enabled": true,
-    //     "actions": {
-    //         "source": {
-    //             "organizeImports": "on"
-    //         }
-    //     }
-    // }
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    }
 }

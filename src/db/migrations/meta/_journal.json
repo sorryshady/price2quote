@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1746468188202,
-      "tag": "0000_youthful_elektra",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1746506379696,
-      "tag": "0001_lonely_scarlet_witch",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1746680735246,
-      "tag": "0002_violet_crystal",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1746682026676,
-      "tag": "0003_adorable_killraven",
+      "when": 1751373455123,
+      "tag": "0000_handy_shiva",
       "breakpoints": true
     }
   ]
