@@ -29,6 +29,32 @@ export async function generateCompanySummaryAction(data: {
   }
 }
 
+export async function getUserCompaniesAction(userId: string) {
+  try {
+    const userCompanies = await db.query.companies.findMany({
+      where: eq(companies.userId, userId),
+    })
+    
+    // Get services for each company separately to avoid relationship issues
+    const companiesWithServices = await Promise.all(
+      userCompanies.map(async (company) => {
+        const companyServices = await db.query.services.findMany({
+          where: eq(services.companyId, company.id),
+        })
+        return {
+          ...company,
+          services: companyServices,
+        }
+      })
+    )
+    
+    return { success: true, companies: companiesWithServices }
+  } catch (error) {
+    console.error('Error fetching user companies:', error)
+    return { success: false, error: 'Failed to fetch companies' }
+  }
+}
+
 export async function saveCompanyAction(data: {
   userId: string
   companyInfo: {

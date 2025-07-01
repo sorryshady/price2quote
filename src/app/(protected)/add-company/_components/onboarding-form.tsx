@@ -4,6 +4,8 @@ import { Fragment, useState } from 'react'
 
 import { Card, CardContent } from '@/components/ui/card'
 
+import { useCompanies } from '@/hooks/use-companies'
+
 import { STORAGE_KEY } from './step-company-info'
 import { StepCompanyInfo } from './step-company-info'
 import { StepCompanyProfile } from './step-company-profile'
@@ -40,6 +42,7 @@ const steps: { id: OnboardingStep; title: string; description: string }[] = [
 ]
 
 export function OnboardingForm() {
+  const { hasCompanies } = useCompanies()
   // On mount, read currentStep from localStorage
   const getInitialStep = () => {
     if (typeof window !== 'undefined') {
@@ -136,46 +139,57 @@ export function OnboardingForm() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Progress indicator */}
-      <div className="mx-auto flex w-full max-w-xl items-center justify-center">
-        {steps.map((step, index) => (
-          <Fragment key={step.id}>
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium ${
-                index <= currentStepIndex
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-muted-foreground text-muted-foreground'
-              }`}
-            >
-              {index + 1}
-            </div>
-            {index < steps.length - 1 && (
-              <div
-                key={`line-${index}`}
-                className={`h-0.5 flex-1 ${
-                  index < currentStepIndex ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-            )}
-          </Fragment>
-        ))}
-      </div>
-
-      {/* Step titles */}
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold">
-          {steps[currentStepIndex].title}
-        </h2>
+    <>
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">
+          {hasCompanies ? 'Add Company' : 'Welcome to PricingGPT'}
+        </h1>
         <p className="text-muted-foreground">
-          {steps[currentStepIndex].description}
+          {hasCompanies &&
+            "Let's set up your company profile to get started with AI-powered pricing"}
         </p>
       </div>
+      <div className="space-y-6">
+        {/* Progress indicator */}
+        <div className="mx-auto flex w-full max-w-xl items-center justify-center">
+          {steps.map((step, index) => (
+            <Fragment key={step.id}>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium ${
+                  index <= currentStepIndex
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-muted-foreground text-muted-foreground'
+                }`}
+              >
+                {index + 1}
+              </div>
+              {index < steps.length - 1 && (
+                <div
+                  key={`line-${index}`}
+                  className={`h-0.5 flex-1 ${
+                    index < currentStepIndex ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              )}
+            </Fragment>
+          ))}
+        </div>
 
-      {/* Step content */}
-      <Card className="mx-auto max-w-5xl">
-        <CardContent className="pt-6">{renderCurrentStep()}</CardContent>
-      </Card>
-    </div>
+        {/* Step titles */}
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold">
+            {steps[currentStepIndex].title}
+          </h2>
+          <p className="text-muted-foreground">
+            {steps[currentStepIndex].description}
+          </p>
+        </div>
+
+        {/* Step content */}
+        <Card className="mx-auto max-w-5xl">
+          <CardContent className="pt-6">{renderCurrentStep()}</CardContent>
+        </Card>
+      </div>
+    </>
   )
 }

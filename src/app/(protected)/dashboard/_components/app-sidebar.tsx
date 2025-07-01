@@ -27,15 +27,14 @@ import {
 } from '@/components/ui/sidebar'
 
 import { useAuth } from '@/hooks/use-auth'
+import { useCompanies } from '@/hooks/use-companies'
 
 import { NavMain } from './nav-main'
 import { NavSecondary } from './nav-secondary'
 import { NavUser } from './nav-user'
 
-const initial = true
-
 const data = {
-  navInitial: [
+  navSetup: [
     {
       title: 'Setup Company',
       url: '/add-company',
@@ -74,7 +73,7 @@ const data = {
       icon: BarChart3,
     },
     {
-      title: 'Add company',
+      title: 'Add Company',
       url: '/add-company',
       icon: Briefcase,
     },
@@ -95,8 +94,16 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
+  const { hasCompanies } = useCompanies()
+  console.log(hasCompanies)
+
   if (!user) return null
+
   const { name, email, image, subscriptionTier } = user
+
+  // Show setup nav if no companies, main nav if companies exist
+  const navItems = hasCompanies ? data.navMain : data.navSetup
+
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
@@ -115,7 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={initial ? data.navInitial : data.navMain} />
+        <NavMain items={navItems} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
