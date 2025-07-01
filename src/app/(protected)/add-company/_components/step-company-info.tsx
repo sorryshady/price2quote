@@ -19,10 +19,22 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+const currencies = [
+  { code: 'USD', name: 'US Dollar' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'INR', name: 'Indian Rupee' },
+  { code: 'GBP', name: 'British Pound' },
+  { code: 'AUD', name: 'Australian Dollar' },
+  { code: 'CAD', name: 'Canadian Dollar' },
+  { code: 'JPY', name: 'Japanese Yen' },
+  // Add more as needed
+]
+
 const companyInfoSchema = z.object({
   name: z.string().min(1, 'Company name is required'),
   country: z.string().min(1, 'Country is required'),
   businessType: z.enum(['freelancer', 'company'] as const),
+  currency: z.string().min(1, 'Preferred currency is required'),
 })
 
 type CompanyInfoForm = z.infer<typeof companyInfoSchema>
@@ -61,6 +73,7 @@ export function StepCompanyInfo({
       name: data.name || '',
       country: data.country || '',
       businessType: data.businessType || 'freelancer',
+      currency: data.currency || 'USD',
     },
   })
 
@@ -109,11 +122,14 @@ export function StepCompanyInfo({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Company Name</Label>
+          <Label htmlFor="name" className="mb-1">
+            Company Name
+          </Label>
           <Input
             id="name"
             placeholder="Enter your company name"
             {...form.register('name')}
+            className="mt-1"
           />
           {form.formState.errors.name && (
             <p className="text-destructive text-sm">
@@ -123,13 +139,15 @@ export function StepCompanyInfo({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
+          <Label htmlFor="country" className="mb-1">
+            Country
+          </Label>
           <Controller
             control={form.control}
             name="country"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,13 +168,15 @@ export function StepCompanyInfo({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="businessType">Business Type</Label>
+          <Label htmlFor="businessType" className="mb-1">
+            Business Type
+          </Label>
           <Controller
             control={form.control}
             name="businessType"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Select business type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,6 +189,35 @@ export function StepCompanyInfo({
           {form.formState.errors.businessType && (
             <p className="text-destructive text-sm">
               {form.formState.errors.businessType.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="currency" className="mb-1">
+            Preferred Currency
+          </Label>
+          <Controller
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      {currency.name} ({currency.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {form.formState.errors.currency && (
+            <p className="text-destructive text-sm">
+              {form.formState.errors.currency.message}
             </p>
           )}
         </div>
