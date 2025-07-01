@@ -69,6 +69,7 @@ const quoteSchema = z.object({
   clientBudget: z.number().min(0).optional(),
   projectComplexity: z.enum(['simple', 'moderate', 'complex']),
   currency: z.string(),
+  finalNotes: z.string().optional(),
 })
 
 type QuoteFormData = z.infer<typeof quoteSchema>
@@ -90,7 +91,6 @@ export default function NewQuotePage() {
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAIRecommendations, setShowAIRecommendations] = useState(false)
-  const [showQuotePreview, setShowQuotePreview] = useState(false)
   const [finalQuoteData, setFinalQuoteData] = useState<{
     quoteDocument: {
       executiveSummary: string
@@ -113,6 +113,8 @@ export default function NewQuotePage() {
       competitiveAdvantages: string[]
     }
   } | null>(null)
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null)
+  const [showViewQuote, setShowViewQuote] = useState(false)
   const [aiResponse, setAiResponse] = useState<{
     marketAnalysis: {
       locationFactor: string
@@ -130,12 +132,6 @@ export default function NewQuotePage() {
         max: number
       }
     }>
-    totalQuote: {
-      currentTotal: number
-      recommendedTotal: number
-      confidenceLevel: 'high' | 'medium' | 'low'
-      reasoning: string
-    }
     negotiationTips: string[]
   } | null>(null)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
@@ -154,6 +150,7 @@ export default function NewQuotePage() {
       clientBudget: undefined,
       projectComplexity: 'moderate',
       currency: 'USD',
+      finalNotes: '',
     },
   })
 
@@ -371,113 +368,41 @@ export default function NewQuotePage() {
     }
   }
 
-  const handleGenerateFinalQuote = async (finalData: {
-    services: Array<{
-      serviceName: string
-      currentPrice: number
-      recommendedPrice: number
-      confidenceLevel: 'high' | 'medium' | 'low'
-      reasoning: string
-      priceRange: {
-        min: number
-        max: number
-      }
-    }>
-    totalAmount: number
-    notes: string
-  }) => {
-    if (!selectedCompany) return
-
-    try {
-      const formData = form.getValues()
-      const result = await generateFinalQuoteAction({
-        companyId: formData.companyId,
-        projectData: {
-          title: formData.projectTitle,
-          description: formData.projectDescription,
-          complexity: formData.projectComplexity,
-          deliveryTimeline: formData.deliveryTimeline,
-          customTimeline: formData.customTimeline,
-          clientLocation: formData.clientLocation,
-          clientBudget: formData.clientBudget,
-        },
-        finalData: {
-          services: finalData.services.map((s) => ({
-            serviceName: s.serviceName,
-            finalPrice: s.recommendedPrice,
-            quantity:
-              selectedServices.find((ss) => ss.service.name === s.serviceName)
-                ?.quantity || 1,
-            totalPrice:
-              (selectedServices.find((ss) => ss.service.name === s.serviceName)
-                ?.quantity || 1) * s.recommendedPrice,
-          })),
-          totalAmount: finalData.totalAmount,
-          notes: finalData.notes,
-        },
-      })
-
-      if (result.success && result.aiResponse) {
-        setFinalQuoteData(result.aiResponse)
-        setShowQuotePreview(true)
-        setShowAIRecommendations(false)
-      } else {
-        console.error('Failed to generate final quote:', result.error)
-      }
-    } catch (error) {
-      console.error('Error generating final quote:', error)
-    }
-  }
-
-  const handleSaveQuote = async () => {
-    if (!user || !finalQuoteData) return
-
-    setIsSubmitting(true)
-    try {
-      const formData = form.getValues()
-      const result = await createQuoteAction({
-        userId: user.id,
-        companyId: formData.companyId,
-        projectTitle: formData.projectTitle,
-        projectDescription: formData.projectDescription,
-        clientEmail: formData.clientEmail,
-        clientName: formData.clientName,
-        clientLocation: formData.clientLocation,
-        deliveryTimeline: formData.deliveryTimeline,
-        customTimeline: formData.customTimeline,
-        clientBudget: formData.clientBudget,
-        projectComplexity: formData.projectComplexity,
-        currency: formData.currency,
-        selectedServices: selectedServices.map((s) => ({
-          serviceId: s.serviceId,
-          quantity: s.quantity,
-          unitPrice: s.unitPrice,
-          notes: s.notes,
-        })),
-      })
-
-      if (result.success) {
-        // Reset form and close preview
-        form.reset()
-        setSelectedServices([])
-        setShowQuotePreview(false)
-        setFinalQuoteData(null)
-        // TODO: Redirect to quotes page or show success message
-      } else {
-        console.error('Failed to create quote:', result.error)
-      }
-    } catch (error) {
-      console.error('Error creating quote:', error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const onSubmit = async (data: QuoteFormData) => {
     if (!user || !canCreate) return
 
     setIsSubmitting(true)
     try {
+      // Always generate the final quote document
+      const finalQuoteResult = await generateFinalQuoteAction({
+        companyId: data.companyId,
+        projectData: {
+          title: data.projectTitle,
+          description: data.projectDescription,
+          complexity: data.projectComplexity,
+          deliveryTimeline: data.deliveryTimeline,
+          customTimeline: data.customTimeline,
+          clientLocation: data.clientLocation,
+          clientBudget: data.clientBudget,
+        },
+        finalData: {
+          services: selectedServices.map((s) => ({
+            serviceName: s.service.name,
+            finalPrice: s.unitPrice,
+            quantity: s.quantity,
+            totalPrice: s.quantity * s.unitPrice,
+          })),
+          totalAmount: calculateTotal(),
+          notes: data.finalNotes || '',
+        },
+      })
+
+      let finalQuoteData = null
+      if (finalQuoteResult.success && finalQuoteResult.aiResponse) {
+        finalQuoteData = finalQuoteResult.aiResponse
+      }
+
+      // Create the quote in database with all data
       const result = await createQuoteAction({
         userId: user.id,
         companyId: data.companyId,
@@ -497,21 +422,103 @@ export default function NewQuotePage() {
           unitPrice: s.unitPrice,
           notes: s.notes,
         })),
+        quoteData: finalQuoteData,
       })
 
-      if (result.success) {
-        // Reset form and redirect
-        form.reset()
-        setSelectedServices([])
-        // TODO: Redirect to quotes page or show success message
+      if (result.success && result.quote) {
+        setSavedQuoteId(result.quote.id)
+        setFinalQuoteData(finalQuoteData)
+        // Don't reset form yet - let user view the quote first
       } else {
-        // TODO: Show error message
         console.error('Failed to create quote:', result.error)
       }
     } catch (error) {
       console.error('Error creating quote:', error)
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleViewQuote = () => {
+    setShowViewQuote(true)
+  }
+
+  const handleDownloadQuote = () => {
+    // TODO: Implement PDF download
+    console.log('Download quote as PDF')
+  }
+
+  const handleResetForm = () => {
+    form.reset()
+    setSelectedServices([])
+    setFinalQuoteData(null)
+    setSavedQuoteId(null)
+    setShowViewQuote(false)
+  }
+
+  const handleFillDummyValues = () => {
+    // Fill form with dummy values for birthday event
+    form.setValue('projectTitle', "Sarah's 30th Birthday Celebration")
+    form.setValue(
+      'projectDescription',
+      'Custom birthday cake and assorted pastries for a 40-guest celebration. Theme: Elegant garden party with pastel colors. Need delivery to event venue.',
+    )
+    form.setValue('clientName', 'Jennifer Martinez')
+    form.setValue('clientEmail', 'jennifer.martinez@email.com')
+    form.setValue('clientLocation', 'San Francisco, CA')
+    form.setValue('deliveryTimeline', '1_week')
+    form.setValue('projectComplexity', 'moderate')
+    form.setValue('clientBudget', 800)
+    form.setValue(
+      'finalNotes',
+      'Please ensure all items are nut-free due to guest allergies. Delivery needed 2 hours before event start time. Include cake stand and serving utensils.',
+    )
+
+    // Auto-select services if they exist
+    if (selectedCompany?.services) {
+      const cakeService = selectedCompany.services.find(
+        (s) =>
+          s.name.toLowerCase().includes('cake') ||
+          s.name.toLowerCase().includes('pastry') ||
+          s.name.toLowerCase().includes('custom'),
+      )
+
+      if (cakeService) {
+        // Add cake service
+        setSelectedServices([
+          {
+            serviceId: cakeService.id,
+            service: cakeService,
+            quantity: 1,
+            unitPrice: parseFloat(cakeService.basePrice || '150'),
+            notes:
+              '3-tier custom birthday cake with garden theme, pastel colors, personalized decoration',
+          },
+        ])
+
+        // Add pastry service if available
+        const pastryService = selectedCompany.services.find(
+          (s) =>
+            s.id !== cakeService.id &&
+            (s.name.toLowerCase().includes('pastries') ||
+              s.name.toLowerCase().includes('dessert') ||
+              s.name.toLowerCase().includes('assorted')),
+        )
+
+        if (pastryService) {
+          setSelectedServices((prev) => [
+            ...prev,
+            {
+              serviceId: pastryService.id,
+              service: pastryService,
+              quantity: 1,
+              unitPrice: parseFloat(pastryService.basePrice || '8'),
+              notes:
+                'Assorted mini pastries (macarons, cupcakes, petit fours) - 1 per guest',
+            },
+          ])
+        }
+      }
     }
   }
 
@@ -968,6 +975,36 @@ export default function NewQuotePage() {
             </CardContent>
           </Card>
 
+          {/* Final Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Final Notes</CardTitle>
+              <CardDescription>
+                Additional notes, terms, or special conditions for the quote
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="finalNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add any final notes, terms, or special conditions for this quote..."
+                        className="min-h-[100px]"
+                        {...field}
+                        disabled={isGeneratingAI}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
           {/* Submit Buttons */}
           <div className="flex justify-end gap-3">
             <Button
@@ -988,6 +1025,61 @@ export default function NewQuotePage() {
         </form>
       </Form>
 
+      {/* Generated Quote Section */}
+      {savedQuoteId && finalQuoteData && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>Generated Quote</span>
+              <Badge variant="outline" className="text-green-600">
+                ✓ Saved
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Your professional quote has been created and saved successfully.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-3">
+              <Button onClick={handleViewQuote} variant="outline">
+                👁️ View Quote
+              </Button>
+              <Button onClick={handleDownloadQuote} variant="outline">
+                📄 Download PDF
+              </Button>
+              <Button onClick={handleResetForm} variant="secondary">
+                🆕 Create New Quote
+              </Button>
+            </div>
+
+            {showViewQuote && (
+              <div className="mt-6 border-t pt-6">
+                <QuotePreview
+                  quoteData={finalQuoteData}
+                  onClose={() => setShowViewQuote(false)}
+                  onSave={() => {}} // Already saved, no action needed
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dummy Data Button */}
+      <div className="mt-8 border-t pt-6">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={handleFillDummyValues}
+          className="w-full"
+        >
+          🎂 Fill with Dummy Values (Birthday Event)
+        </Button>
+        <p className="text-muted-foreground mt-2 text-center text-xs">
+          Populates form with realistic data for testing AI quote generation
+        </p>
+      </div>
+
       {/* AI Recommendations Modal */}
       {showAIRecommendations && aiResponse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -998,25 +1090,6 @@ export default function NewQuotePage() {
                 onApplyRecommendations={handleApplyAIRecommendations}
                 onClose={() => setShowAIRecommendations(false)}
                 onNegotiate={handleNegotiate}
-                onGenerateFinalQuote={handleGenerateFinalQuote}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quote Preview Modal */}
-      {showQuotePreview && finalQuoteData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-background max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-lg">
-            <div className="p-6">
-              <QuotePreview
-                quoteData={finalQuoteData}
-                onClose={() => {
-                  setShowQuotePreview(false)
-                  setFinalQuoteData(null)
-                }}
-                onSave={handleSaveQuote}
               />
             </div>
           </div>

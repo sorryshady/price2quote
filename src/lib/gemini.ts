@@ -73,12 +73,6 @@ interface AIQuoteResponse {
     competitivePosition: string
   }
   serviceRecommendations: ServiceRecommendation[]
-  totalQuote: {
-    currentTotal: number
-    recommendedTotal: number
-    confidenceLevel: 'high' | 'medium' | 'low'
-    reasoning: string
-  }
   negotiationTips: string[]
 }
 
@@ -143,9 +137,9 @@ TASK: Provide a structured analysis with:
 RESPONSE FORMAT (JSON only):
 {
   "marketAnalysis": {
-    "locationFactor": "string explaining location impact",
-    "marketConditions": "string about local market rates",
-    "competitivePosition": "string about competitive advantage"
+    "locationFactor": "string explaining how location affects pricing",
+    "marketConditions": "string about current market conditions",
+    "competitivePosition": "string about competitive positioning"
   },
   "serviceRecommendations": [
     {
@@ -160,14 +154,8 @@ RESPONSE FORMAT (JSON only):
       }
     }
   ],
-  "totalQuote": {
-    "currentTotal": number,
-    "recommendedTotal": number,
-    "confidenceLevel": "high|medium|low",
-    "reasoning": "string explaining total recommendation"
-  },
   "negotiationTips": [
-    "string with negotiation advice"
+    "string with negotiation strategy"
   ]
 }`
 
@@ -196,12 +184,6 @@ RESPONSE FORMAT (JSON only):
           },
         }),
       ),
-      totalQuote: {
-        ...aiResponse.totalQuote,
-        confidenceLevel: validateConfidenceLevel(
-          aiResponse.totalQuote.confidenceLevel,
-        ),
-      },
     }
 
     return validatedResponse

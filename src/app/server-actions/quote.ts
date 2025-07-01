@@ -30,6 +30,28 @@ interface CreateQuoteData {
     unitPrice?: number
     notes?: string
   }>
+  quoteData?: {
+    quoteDocument: {
+      executiveSummary: string
+      serviceBreakdown: Array<{
+        serviceName: string
+        description: string
+        quantity: number
+        unitPrice: number
+        totalPrice: number
+        deliverables: string[]
+      }>
+      termsAndConditions: string[]
+      paymentTerms: string
+      deliveryTimeline: string
+      nextSteps: string
+    }
+    presentation: {
+      keyHighlights: string[]
+      valueProposition: string
+      competitiveAdvantages: string[]
+    }
+  } // Rich quote document data from AI
 }
 
 export async function createQuoteAction(data: CreateQuoteData) {

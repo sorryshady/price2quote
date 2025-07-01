@@ -33,12 +33,6 @@ interface AIQuoteResponse {
     competitivePosition: string
   }
   serviceRecommendations: ServiceRecommendation[]
-  totalQuote: {
-    currentTotal: number
-    recommendedTotal: number
-    confidenceLevel: 'high' | 'medium' | 'low'
-    reasoning: string
-  }
   negotiationTips: string[]
 }
 
@@ -50,11 +44,6 @@ interface AIQuoteRecommendationsProps {
     serviceName: string
     proposedPrice: number
     reasoning: string
-  }) => Promise<void>
-  onGenerateFinalQuote: (finalData: {
-    services: ServiceRecommendation[]
-    totalAmount: number
-    notes: string
   }) => Promise<void>
 }
 
@@ -85,7 +74,6 @@ export function AIQuoteRecommendations({
   onApplyRecommendations,
   onClose,
   onNegotiate,
-  onGenerateFinalQuote,
 }: AIQuoteRecommendationsProps) {
   const [negotiatingService, setNegotiatingService] = useState<string | null>(
     null,
@@ -93,11 +81,12 @@ export function AIQuoteRecommendations({
   const [proposedPrice, setProposedPrice] = useState<number>(0)
   const [negotiationReasoning, setNegotiationReasoning] = useState('')
   const [isNegotiating, setIsNegotiating] = useState(false)
-  const [isGeneratingFinal, setIsGeneratingFinal] = useState(false)
-  const [finalNotes, setFinalNotes] = useState('')
-  const [showFinalQuoteForm, setShowFinalQuoteForm] = useState(false)
 
   const handleApplyAll = () => {
+    console.log(
+      'Applying all recommendations:',
+      aiResponse.serviceRecommendations,
+    )
     onApplyRecommendations(aiResponse.serviceRecommendations)
   }
 
@@ -124,21 +113,6 @@ export function AIQuoteRecommendations({
       console.error('Negotiation failed:', error)
     } finally {
       setIsNegotiating(false)
-    }
-  }
-
-  const handleGenerateFinalQuote = async () => {
-    setIsGeneratingFinal(true)
-    try {
-      await onGenerateFinalQuote({
-        services: aiResponse.serviceRecommendations,
-        totalAmount: aiResponse.totalQuote.recommendedTotal,
-        notes: finalNotes,
-      })
-    } catch (error) {
-      console.error('Final quote generation failed:', error)
-    } finally {
-      setIsGeneratingFinal(false)
     }
   }
 
@@ -245,6 +219,7 @@ export function AIQuoteRecommendations({
                           setProposedPrice(parseFloat(e.target.value) || 0)
                         }
                         placeholder="Enter your proposed price"
+                        disabled={isNegotiating}
                       />
                     </div>
                     <div>
@@ -261,6 +236,7 @@ export function AIQuoteRecommendations({
                       onChange={(e) => setNegotiationReasoning(e.target.value)}
                       placeholder="Explain why you want to adjust this price..."
                       className="min-h-[60px]"
+                      disabled={isNegotiating}
                     />
                   </div>
                   <div className="flex gap-2">
@@ -275,6 +251,7 @@ export function AIQuoteRecommendations({
                       size="sm"
                       variant="outline"
                       onClick={() => setNegotiatingService(null)}
+                      disabled={isNegotiating}
                     >
                       Cancel
                     </Button>
@@ -286,6 +263,7 @@ export function AIQuoteRecommendations({
                     size="sm"
                     variant="outline"
                     onClick={() => handleStartNegotiation(service)}
+                    disabled={isNegotiating}
                   >
                     Negotiate Price
                   </Button>
@@ -297,49 +275,6 @@ export function AIQuoteRecommendations({
               )}
             </div>
           ))}
-        </CardContent>
-      </Card>
-
-      {/* Total Quote Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span>Total Quote Summary</span>
-            <Badge
-              variant="outline"
-              className={getConfidenceColor(
-                aiResponse.totalQuote.confidenceLevel,
-              )}
-            >
-              {getConfidenceIcon(aiResponse.totalQuote.confidenceLevel)}{' '}
-              {aiResponse.totalQuote.confidenceLevel} confidence
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="text-muted-foreground text-sm">
-                Current Total:
-              </span>
-              <div className="text-lg font-semibold">
-                ${aiResponse.totalQuote.currentTotal.toFixed(2)}
-              </div>
-            </div>
-            <div>
-              <span className="text-muted-foreground text-sm">
-                Recommended Total:
-              </span>
-              <div className="text-lg font-semibold text-green-600">
-                ${aiResponse.totalQuote.recommendedTotal.toFixed(2)}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-muted-foreground text-sm">AI Reasoning:</span>
-            <p className="mt-1 text-sm">{aiResponse.totalQuote.reasoning}</p>
-          </div>
         </CardContent>
       </Card>
 
@@ -365,54 +300,12 @@ export function AIQuoteRecommendations({
         </Card>
       )}
 
-      {/* Final Quote Generation */}
-      {showFinalQuoteForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Generate Final Quote</CardTitle>
-            <CardDescription>
-              Add final notes and generate the complete quote
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm">Final Notes</Label>
-              <Textarea
-                value={finalNotes}
-                onChange={(e) => setFinalNotes(e.target.value)}
-                placeholder="Add any final notes, terms, or special conditions for this quote..."
-                className="min-h-[100px]"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleGenerateFinalQuote}
-                disabled={isGeneratingFinal}
-              >
-                {isGeneratingFinal ? 'Generating...' : 'Generate Final Quote'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowFinalQuoteForm(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Action Buttons */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={onClose}>
           Close
         </Button>
-        <Button variant="outline" onClick={handleApplyAll}>
-          Apply All Recommendations
-        </Button>
-        <Button onClick={() => setShowFinalQuoteForm(true)}>
-          Generate Final Quote
-        </Button>
+        <Button onClick={handleApplyAll}>Apply All Recommendations</Button>
       </div>
     </div>
   )
