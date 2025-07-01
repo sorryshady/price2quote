@@ -1,12 +1,13 @@
-import type React from 'react';
-import { cn } from '@/lib/utils';
+import type React from 'react'
+
+import { cn } from '@/lib/utils'
 
 export const AppContainer = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }) => {
-  return <div className={cn('container mx-auto p-8 pt-32', className)}>{children}</div>;
-};
+  return <div className={cn('container mx-auto', className)}>{children}</div>
+}

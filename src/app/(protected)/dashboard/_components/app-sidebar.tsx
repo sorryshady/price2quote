@@ -1,25 +1,19 @@
 'use client'
 
-import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import * as React from 'react'
 
+import { IconInnerShadowTop } from '@tabler/icons-react'
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from '@tabler/icons-react'
+  BarChart3,
+  CirclePlusIcon,
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  Mail,
+  MessageCircle,
+  Settings,
+} from 'lucide-react'
 
 import {
   Sidebar,
@@ -33,134 +27,63 @@ import {
 
 import { useAuth } from '@/hooks/use-auth'
 
-import { NavDocuments } from './nav-documents'
 import { NavMain } from './nav-main'
 import { NavSecondary } from './nav-secondary'
 import { NavUser } from './nav-user'
 
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
   navMain: [
     {
       title: 'Dashboard',
-      url: '#',
-      icon: IconDashboard,
+      url: '/dashboard',
+      icon: LayoutDashboard,
     },
     {
-      title: 'Lifecycle',
-      url: '#',
-      icon: IconListDetails,
+      title: 'New Quote',
+      url: '/new-quote',
+      icon: CirclePlusIcon,
+    },
+    {
+      title: 'My Quotes',
+      url: '/quotes',
+      icon: FileText,
+    },
+    {
+      title: 'Send Email',
+      url: '/send-email',
+      icon: Mail,
+    },
+    {
+      title: 'Conversations',
+      url: '/conversations',
+      icon: MessageCircle,
     },
     {
       title: 'Analytics',
-      url: '#',
-      icon: IconChartBar,
-    },
-    {
-      title: 'Projects',
-      url: '#',
-      icon: IconFolder,
-    },
-    {
-      title: 'Team',
-      url: '#',
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: 'Capture',
-      icon: IconCamera,
-      isActive: true,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Proposal',
-      icon: IconFileDescription,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Prompts',
-      icon: IconFileAi,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
+      url: '/analytics',
+      icon: BarChart3,
     },
   ],
   navSecondary: [
     {
       title: 'Settings',
-      url: '#',
-      icon: IconSettings,
+      url: '/settings',
+      icon: Settings,
     },
     {
       title: 'Get Help',
-      url: '#',
-      icon: IconHelp,
-    },
-    {
-      title: 'Search',
-      url: '#',
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: 'Data Library',
-      url: '#',
-      icon: IconDatabase,
-    },
-    {
-      name: 'Reports',
-      url: '#',
-      icon: IconReport,
-    },
-    {
-      name: 'Word Assistant',
-      url: '#',
-      icon: IconFileWord,
+      url: '/help',
+      icon: HelpCircle,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
-  if (!user) redirect('/login')
+  if (!user) return null
   const { name, email, image } = user
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -168,17 +91,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <Link href="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+                <span className="text-base font-semibold">Price2Quote</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
