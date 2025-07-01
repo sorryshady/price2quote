@@ -1,5 +1,5 @@
 // Export all server actions
-export { generateCompanySummaryAction } from './company'
+export { generateCompanySummaryAction, saveCompanyAction } from './company'
 export { 
   generateToken, 
   verifyEmailToken, 

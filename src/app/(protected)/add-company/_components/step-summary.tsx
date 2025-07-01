@@ -4,10 +4,13 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 import { Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 import { Button } from '@/components/ui/button'
+import { CustomToast } from '@/components/ui/custom-toast'
 
-import { generateCompanySummaryAction } from '@/app/server-actions'
+import { saveCompanyAction } from '@/app/server-actions'
+import { useAuth } from '@/hooks/use-auth'
 
 import { STORAGE_KEY } from './step-company-info'
 
@@ -48,6 +51,7 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
   const [hydrated, setHydrated] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [summary, setSummary] = useState<Summary | null>(null)
+  const { user } = useAuth()
 
   // Hydrate all data from localStorage
   useEffect(() => {
@@ -61,34 +65,73 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
   }, [])
 
   const handleComplete = async () => {
+    if (!user) {
+      toast.custom(
+        <CustomToast message="User not authenticated" type="error" />,
+      )
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      const result = await generateCompanySummaryAction({
-        name: summary?.companyInfo.name || '',
-        description: summary?.companyProfile.description || '',
-        businessType: summary?.companyInfo.businessType || '',
-        country: summary?.companyInfo.country || '',
-        currency: summary?.companyInfo.currency || '',
+      const result = await saveCompanyAction({
+        userId: user.id,
+        companyInfo: {
+          name: summary?.companyInfo.name || '',
+          country: summary?.companyInfo.country || '',
+          businessType: summary?.companyInfo.businessType as
+            | 'freelancer'
+            | 'company',
+          currency: summary?.companyInfo.currency || '',
+        },
+        companyProfile: {
+          description: summary?.companyProfile.description || '',
+          logo: summary?.companyProfile.logo,
+          address: summary?.companyProfile.address,
+          phone: summary?.companyProfile.phone,
+          website: summary?.companyProfile.website,
+        },
         services:
           summary?.services.map((service) => ({
             name: service.name,
             description: service.description,
-            skillLevel: service.skillLevel,
+            skillLevel: service.skillLevel as
+              | 'beginner'
+              | 'intermediate'
+              | 'advanced',
             basePrice: service.basePrice,
           })) || [],
       })
 
       if (result.success) {
-        console.log('Generated AI Summary:', result.summary)
-        alert('AI Summary generated! Check console for results.')
+        console.log('Company saved successfully!', result.companyId)
+        toast.custom(
+          <CustomToast
+            message="Company setup complete! AI summary is being generated in the background."
+            type="success"
+          />,
+        )
+        // Clear localStorage and redirect to dashboard
+        localStorage.removeItem(STORAGE_KEY)
+        window.location.href = '/dashboard'
       } else {
-        console.error('Failed to generate summary:', result.error)
-        alert('Failed to generate AI summary. Check console for details.')
+        console.error('Failed to save company:', result.error)
+        toast.custom(
+          <CustomToast
+            message="Failed to save company. Please try again."
+            type="error"
+          />,
+        )
       }
     } catch (error) {
-      console.error('Error generating summary:', error)
-      alert('Error generating AI summary. Check console for details.')
+      console.error('Error saving company:', error)
+      toast.custom(
+        <CustomToast
+          message="Error saving company. Please try again."
+          type="error"
+        />,
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -200,7 +243,7 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
           {isSubmitting ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : null}
-          {isSubmitting ? 'Generating Summary...' : 'Generate AI Summary'}
+          {isSubmitting ? 'Saving Company...' : 'Complete Setup'}
         </Button>
       </div>
     </div>
