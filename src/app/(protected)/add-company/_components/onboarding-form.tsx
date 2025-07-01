@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -140,9 +140,8 @@ export function OnboardingForm() {
       {/* Progress indicator */}
       <div className="mx-auto flex w-full max-w-xl items-center justify-center">
         {steps.map((step, index) => (
-          <>
+          <Fragment key={step.id}>
             <div
-              key={step.id}
               className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium ${
                 index <= currentStepIndex
                   ? 'border-primary bg-primary text-primary-foreground'
@@ -159,7 +158,7 @@ export function OnboardingForm() {
                 }`}
               />
             )}
-          </>
+          </Fragment>
         ))}
       </div>
 

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 import { Loader2 } from 'lucide-react'
-import { Controller } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,16 +57,27 @@ export function StepServices({
   })
   const [error, setError] = useState<string | null>(null)
 
-  // Hydrate from localStorage on mount
-  useEffect(() => {
+  // Helper to get preferred currency from localStorage
+  const getPreferredCurrency = () => {
     const saved = localStorage.getItem(STORAGE_KEY)
-    let preferredCurrency = 'USD'
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
         if (parsed.companyInfo && parsed.companyInfo.currency) {
-          preferredCurrency = parsed.companyInfo.currency
+          return parsed.companyInfo.currency
         }
+      } catch {}
+    }
+    return 'USD'
+  }
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    const preferredCurrency = getPreferredCurrency()
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
         if (parsed.services) {
           setServices(parsed.services)
         } else if (data) {
@@ -95,26 +105,35 @@ export function StepServices({
       setError('Skill level is required')
       return
     }
+    let updatedServices: Service[]
     if (editingIndex !== null) {
       const updated = [...services]
       updated[editingIndex] = { ...form, currency: form.currency }
       setServices(updated)
+      updatedServices = updated
       setEditingIndex(null)
     } else {
       if (services.length >= 20) {
         setError('You can add up to 20 services only')
         return
       }
-      setServices([...services, { ...form, currency: form.currency }])
+      updatedServices = [...services, { ...form, currency: form.currency }]
+      setServices(updatedServices)
     }
+    // Always reset to preferred currency
     setForm((f) => ({
       ...f,
       name: '',
       description: '',
       skillLevel: '',
       basePrice: '',
-      currency: form.currency,
+      currency: getPreferredCurrency(),
     }))
+    // Save to localStorage after add/edit
+    const draft = localStorage.getItem(STORAGE_KEY)
+    const parsed = draft ? JSON.parse(draft) : {}
+    parsed.services = updatedServices
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
   }
 
   // Edit service
@@ -125,15 +144,21 @@ export function StepServices({
 
   // Remove service
   const handleRemove = (idx: number) => {
-    setServices(services.filter((_, i) => i !== idx))
+    const updated = services.filter((_, i) => i !== idx)
+    setServices(updated)
     setEditingIndex(null)
     setForm({
       name: '',
       description: '',
       skillLevel: '',
       basePrice: '',
-      currency: 'USD',
+      currency: getPreferredCurrency(),
     })
+    // Save to localStorage after remove
+    const draft = localStorage.getItem(STORAGE_KEY)
+    const parsed = draft ? JSON.parse(draft) : {}
+    parsed.services = updated
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
   }
 
   // Save to localStorage and go to next step
@@ -306,7 +331,7 @@ export function StepServices({
                     description: '',
                     skillLevel: '',
                     basePrice: '',
-                    currency: 'USD',
+                    currency: getPreferredCurrency(),
                   })
                 }}
               >
