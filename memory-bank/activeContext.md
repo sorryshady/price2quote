@@ -2,6 +2,7 @@
 
 ## Current Focus
 
+- **COMPLETED: Loading state optimizations and TanStack Query implementation**
 - Company onboarding form implementation COMPLETED
 - AI integration with Gemini for company summary generation COMPLETED
 - Database save functionality with background AI processing COMPLETED
@@ -10,21 +11,50 @@
 
 ## Recent Changes
 
-1. Authentication System:
+1. **NEW: TanStack Query Implementation COMPLETED:**
+
+   - Replaced custom loading states with TanStack Query for intelligent caching
+   - Implemented proper skeleton loading components throughout the app
+   - Fixed race conditions and premature redirects
+   - Eliminated resource-intensive re-fetching with 5-minute stale time
+   - Added QueryProvider to root layout with dev tools
+   - Created `useCompaniesQuery` hook for optimized data fetching
+   - **Benefits**: No more loading flashes, intelligent caching, better UX
+
+2. **NEW: Loading State Optimizations COMPLETED:**
+
+   - **SidebarSkeleton**: Proper skeleton for navigation loading
+   - **AddCompanySkeleton**: Full page skeleton for add-company form
+   - **DashboardSkeleton**: Content-specific skeleton for dashboard
+   - **LoadingSpinner**: Reusable spinner component with size variants
+   - **SkeletonLoader**: Generic skeleton for any content
+   - Replaced all loading spinners with meaningful skeleton states
+   - Fixed heading flash issues in onboarding form
+
+3. **NEW: Performance Improvements COMPLETED:**
+
+   - **Race Condition Fixes**: Proper timing for companies data loading
+   - **Caching Strategy**: 5-minute stale time, 10-minute cache time
+   - **Background Refetching**: Fresh data fetched in background
+   - **No Duplicate Requests**: Same data shared across components
+   - **Automatic Retries**: Failed requests retry once
+   - **DevTools Integration**: Built-in debugging tools
+
+4. Authentication System:
 
    - Complete login flow with session management
    - OAuth authentication (Google and GitHub)
    - Session persistence using cookies and database
    - Auth provider for client-side state management
 
-2. Subscription System:
+5. Subscription System:
 
    - Free tier: 3 quotes/month, 1 company
    - Pro tier: Unlimited quotes, 5 companies
    - Subscription feature checking utilities
    - Dodo Payments integration planned
 
-3. Project Context:
+6. Project Context:
 
    - Identified as PricingGPT platform
    - AI-powered pricing recommendations
@@ -32,7 +62,7 @@
    - Gmail integration for emails
    - PDF quote generation
 
-4. Company Onboarding Implementation COMPLETED:
+7. Company Onboarding Implementation COMPLETED:
 
    - Multi-step onboarding form (Company Info, Profile, Services, Summary)
    - localStorage persistence for form data and current step
@@ -45,7 +75,7 @@
    - **NEW: Logo upload to Supabase storage**
    - **NEW: Background AI summary generation**
 
-5. Database & Storage Setup:
+8. Database & Storage Setup:
 
    - Companies and services tables created with proper relationships
    - Supabase storage bucket 'company-logos' configured
@@ -55,7 +85,7 @@
    - **NEW: AI summary fields added (aiSummary, aiSummaryStatus)**
    - **NEW: Database migration completed**
 
-6. AI Integration COMPLETED:
+9. AI Integration COMPLETED:
 
    - Gemini AI SDK installed and configured
    - Detailed prompt engineering for company summaries (4-6 sentences)
@@ -63,10 +93,10 @@
    - Error handling and status tracking
    - **NEW: Background AI summary generation with database updates**
 
-7. Server Actions Organization COMPLETED:
-   - Modular structure: auth.ts, company.ts, index.ts
-   - Clean exports and type safety
-   - Scalable architecture for future actions
+10. Server Actions Organization COMPLETED:
+    - Modular structure: auth.ts, company.ts, index.ts
+    - Clean exports and type safety
+    - Scalable architecture for future actions
 
 ## Active Decisions
 
@@ -85,6 +115,9 @@
 13. **COMPLETED: Server-side background AI processing** - Save company immediately, trigger AI generation in background
 14. **COMPLETED: AI summary status tracking** - pending/generating/completed/failed states in database
 15. **COMPLETED: Immediate user feedback** - User gets success message while AI processes in background
+16. **NEW: TanStack Query for data fetching** - Intelligent caching with 5-minute stale time
+17. **NEW: Skeleton loading over spinners** - Better UX with meaningful loading states
+18. **NEW: Proper race condition handling** - No more premature redirects or flashing content
 
 ## Current Considerations
 
@@ -106,7 +139,10 @@
 
 ## Known Issues
 
-- None currently - all core functionality working flawlessly
+- **RESOLVED: Loading state race conditions** - Fixed with TanStack Query
+- **RESOLVED: Resource-intensive re-fetching** - Fixed with intelligent caching
+- **RESOLVED: Sidebar flashing** - Fixed with skeleton loading
+- **RESOLVED: Weird loading headings** - Fixed with proper skeleton states
 
 ## Active Questions
 
@@ -118,6 +154,14 @@
 
 ## Current State
 
+**Loading and data fetching system is now optimized and production-ready:**
+
+- TanStack Query provides intelligent caching and background updates
+- Skeleton loading states provide smooth UX without flashing content
+- Race conditions eliminated with proper data loading timing
+- Performance optimized with 5-minute stale time and background refetching
+- Dev tools available for debugging and monitoring
+
 Company onboarding system is fully implemented and working flawlessly. The complete flow includes:
 
 - Multi-step form with data persistence
@@ -126,5 +170,6 @@ Company onboarding system is fully implemented and working flawlessly. The compl
 - Background AI summary generation using Gemini
 - Immediate user feedback with toast notifications
 - Clean server actions architecture
+- **NEW: Optimized loading states and data fetching**
 
 Ready to implement the company profile page to display the AI summary and status.

@@ -23,13 +23,13 @@ export const env = createEnv({
     AUTH_SECRET: z.string(),
     MAILHOG_PORT: z.coerce.number(),
     MAILHOG_HOST: z.string(),
-    RESEND_API_KEY: z
-      .string()
-      .optional()
-      .refine(
-        (val) => process.env.NODE_ENV !== 'production' || val !== undefined,
-        { message: 'RESEND_API_KEY is required in production' },
-      ),
+    // RESEND_API_KEY: z
+    //   .string()
+    //   .optional()
+    //   .refine(
+    //     (val) => process.env.NODE_ENV !== 'production' || val !== undefined,
+    //     { message: 'RESEND_API_KEY is required in production' },
+    //   ),
     EMAIL_FROM: z.string(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),

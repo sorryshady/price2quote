@@ -4,50 +4,29 @@ import { useEffect, useState } from 'react'
 
 import { getUserCompaniesAction } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
-
-interface Company {
-  id: string
-  name: string
-  description: string | null
-  country: string
-  businessType: 'freelancer' | 'company'
-  logoUrl: string | null
-  aiSummary: string | null
-  aiSummaryStatus: 'pending' | 'generating' | 'completed' | 'failed' | null
-  address: string | null
-  phone: string | null
-  website: string | null
-  createdAt: Date
-  updatedAt: Date
-  services: Array<{
-    id: string
-    name: string
-    description: string | null
-    skillLevel: 'beginner' | 'intermediate' | 'advanced'
-    basePrice: string | null
-    currency: string
-  }>
-}
+import type { CompanyWithServices } from '@/types'
 
 export function useCompanies() {
   const { user } = useAuth()
-  const [companies, setCompanies] = useState<Company[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [companies, setCompanies] = useState<CompanyWithServices[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   const fetchCompanies = async () => {
     if (!user) {
       setCompanies([])
       setIsLoading(false)
+      setHasInitialized(true)
       return
     }
 
     try {
       setIsLoading(true)
       setError(null)
-      
+
       const result = await getUserCompaniesAction(user.id)
-      
+
       if (result.success && result.companies) {
         setCompanies(result.companies)
       } else {
@@ -60,20 +39,24 @@ export function useCompanies() {
       console.error('Error in useCompanies:', err)
     } finally {
       setIsLoading(false)
+      setHasInitialized(true)
     }
   }
 
   useEffect(() => {
-    fetchCompanies()
-  }, [user?.id])
+    if (!hasInitialized) {
+      fetchCompanies()
+    }
+  }, [hasInitialized])
 
-  const hasCompanies = companies.length > 0
+  // Only calculate hasCompanies after we've initialized and loaded data
+  const hasCompanies = hasInitialized && !isLoading && companies.length > 0
 
   return {
     companies,
-    isLoading,
+    isLoading: isLoading && !hasInitialized,
     error,
     hasCompanies,
     refetch: fetchCompanies,
   }
-} 
+}

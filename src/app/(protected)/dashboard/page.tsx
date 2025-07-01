@@ -2,19 +2,15 @@
 
 import Image from 'next/image'
 
-import { useCompanies } from '@/hooks/use-companies'
+import { DashboardSkeleton } from '@/components/ui/loading-states'
+
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
 export default function DashboardPage() {
-  const { companies, isLoading } = useCompanies()
+  const { companies, isLoading } = useCompaniesQuery()
 
   if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   return (

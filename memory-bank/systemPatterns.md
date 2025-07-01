@@ -16,12 +16,12 @@
 - Theme-aware components with dark mode support
 - Form components with validation and error handling
 - Toast notifications for user feedback
-- Loading states and transitions
+- **NEW: Skeleton loading states for better UX**
 
 ### State Management
 
 - Zustand for global state (auth, theme)
-- React Query for server state (planned)
+- **NEW: TanStack Query for server state (implemented)**
 - Local storage for persistence
 - Context providers for theme and auth
 
@@ -41,6 +41,23 @@
 - Session management
 - Database operations with Drizzle ORM
 
+### **NEW: Data Fetching Patterns**
+
+- TanStack Query for intelligent caching
+- 5-minute stale time, 10-minute cache time
+- Background refetching for fresh data
+- Automatic retries for failed requests
+- Query keys based on user ID for proper invalidation
+- Dev tools for debugging and monitoring
+
+### **NEW: Loading State Patterns**
+
+- Skeleton loading over spinners for better UX
+- Component-specific skeletons (SidebarSkeleton, DashboardSkeleton, etc.)
+- Loading states that match content structure
+- No flashing content or race conditions
+- Progressive loading with meaningful placeholders
+
 ## Component Relationships
 
 ### Auth Flow
@@ -53,6 +70,19 @@ graph TD
     C --> E[Public Routes]
     D --> F[Middleware]
     E --> F
+```
+
+### **NEW: Data Fetching Flow**
+
+```mermaid
+graph TD
+    A[QueryProvider] --> B[useCompaniesQuery]
+    B --> C[TanStack Query Cache]
+    C --> D[API Route]
+    D --> E[Database]
+    B --> F[Loading States]
+    B --> G[Error Handling]
+    C --> H[Background Refetch]
 ```
 
 ### Session Management
@@ -75,11 +105,13 @@ graph TD
 - AuthProvider for authentication state
 - ThemeProvider for theme management
 - ToastProvider for notifications
+- **NEW: QueryProvider for data fetching**
 
 ### Hook Pattern
 
 - useAuth for authentication
 - useTheme for theme management
+- **NEW: useCompaniesQuery for optimized data fetching**
 - Custom hooks for reusable logic
 
 ### Middleware Pattern
@@ -87,6 +119,13 @@ graph TD
 - Route protection
 - Session validation
 - API route protection
+
+### **NEW: Skeleton Pattern**
+
+- Component-specific skeleton loading
+- Structure matching the actual content
+- Smooth transitions without flashing
+- Progressive content reveal
 
 ## Technical Decisions
 
@@ -107,7 +146,15 @@ graph TD
 - Responsive design
 - Theme support
 - Animation system
-- Loading states
+- **NEW: Skeleton loading states**
+- **NEW: TanStack Query for smooth data fetching**
+
+### **NEW: Data Fetching**
+
+- TanStack Query for intelligent caching
+- Background refetching for fresh data
+- Proper error handling and retries
+- Dev tools for debugging
 
 ## Implementation Notes
 
@@ -116,6 +163,77 @@ graph TD
 - Security is prioritized
 - Performance is monitored
 - Code is modular and maintainable
+- **NEW: Loading states are meaningful and non-jarring**
+- **NEW: Data fetching is optimized and cached**
+
+## **NEW: TanStack Query Patterns**
+
+### Query Configuration
+
+```typescript
+const {
+  data: companies = [],
+  isLoading,
+  error,
+  refetch,
+} = useQuery({
+  queryKey: ['companies', user?.id],
+  queryFn: async () => {
+    if (!user) return []
+    const result = await getUserCompaniesAction(user.id)
+    if (result.success && result.companies) {
+      return result.companies
+    }
+    throw new Error(result.error || 'Failed to fetch companies')
+  },
+  enabled: !!user,
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 10 * 60 * 1000, // 10 minutes
+})
+```
+
+### Query Provider Setup
+
+```typescript
+const [queryClient] = useState(
+  () =>
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 5 * 60 * 1000, // 5 minutes
+          gcTime: 10 * 60 * 1000, // 10 minutes
+          retry: 1,
+          refetchOnWindowFocus: false,
+        },
+      },
+    }),
+)
+```
+
+### Skeleton Loading Pattern
+
+```typescript
+// Component-specific skeleton
+export function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-48" />
+      <div className="rounded-lg border p-4">
+        <Skeleton className="mb-2 h-6 w-32" />
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Usage in component
+if (isLoading) {
+  return <DashboardSkeleton />
+}
+```
 
 ## Authentication Patterns
 

@@ -7,6 +7,8 @@ import { companies, services } from '@/db/schema'
 import { uploadCompanyLogo } from '@/lib/storage'
 import { generateCompanySummary } from '@/lib/gemini'
 
+import type { CompanyWithServices } from '@/types'
+
 export async function generateCompanySummaryAction(data: {
   name: string
   description: string
@@ -29,7 +31,11 @@ export async function generateCompanySummaryAction(data: {
   }
 }
 
-export async function getUserCompaniesAction(userId: string) {
+export async function getUserCompaniesAction(userId: string): Promise<{
+  success: boolean
+  companies?: CompanyWithServices[]
+  error?: string
+}> {
   try {
     const userCompanies = await db.query.companies.findMany({
       where: eq(companies.userId, userId),
@@ -48,7 +54,7 @@ export async function getUserCompaniesAction(userId: string) {
       })
     )
     
-    return { success: true, companies: companiesWithServices }
+    return { success: true, companies: companiesWithServices as CompanyWithServices[] }
   } catch (error) {
     console.error('Error fetching user companies:', error)
     return { success: false, error: 'Failed to fetch companies' }

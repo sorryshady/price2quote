@@ -3,8 +3,9 @@
 import { Fragment, useState } from 'react'
 
 import { Card, CardContent } from '@/components/ui/card'
+import { AddCompanySkeleton } from '@/components/ui/loading-states'
 
-import { useCompanies } from '@/hooks/use-companies'
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
 import { STORAGE_KEY } from './step-company-info'
 import { StepCompanyInfo } from './step-company-info'
@@ -42,7 +43,8 @@ const steps: { id: OnboardingStep; title: string; description: string }[] = [
 ]
 
 export function OnboardingForm() {
-  const { hasCompanies } = useCompanies()
+  const { hasCompanies, isLoading } = useCompaniesQuery()
+
   // On mount, read currentStep from localStorage
   const getInitialStep = () => {
     if (typeof window !== 'undefined') {
@@ -138,6 +140,11 @@ export function OnboardingForm() {
     }
   }
 
+  // Show skeleton while loading to prevent heading flash
+  if (isLoading) {
+    return <AddCompanySkeleton />
+  }
+
   return (
     <>
       <div className="space-y-2 text-center">
@@ -145,7 +152,7 @@ export function OnboardingForm() {
           {hasCompanies ? 'Add Company' : 'Welcome to PricingGPT'}
         </h1>
         <p className="text-muted-foreground">
-          {hasCompanies &&
+          {!hasCompanies &&
             "Let's set up your company profile to get started with AI-powered pricing"}
         </p>
       </div>

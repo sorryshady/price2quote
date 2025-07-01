@@ -19,24 +19,24 @@ interface User {
 interface AuthState {
   user: User | null
   isLoading: boolean
+  isInitialized: boolean
   setUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
+  setInitialized: (initialized: boolean) => void
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
 }
 
-type AuthStore = {
-  set: (partial: Partial<AuthState>) => void
-  get: () => AuthState
-}
-
 export const useAuth = create<AuthState>()(
   persist(
-    (set: AuthStore['set'], get: AuthStore['get']) => ({
+    (set, get) => ({
       user: null,
-      isLoading: true,
+      isLoading: false,
+      isInitialized: false,
       setUser: (user: User | null) => set({ user }),
       setLoading: (loading: boolean) => set({ isLoading: loading }),
+      setInitialized: (initialized: boolean) =>
+        set({ isInitialized: initialized }),
 
       logout: async () => {
         try {
@@ -65,22 +65,24 @@ export const useAuth = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        const { setUser, setLoading } = get()
-        setLoading(true)
+        // Only show loading if we haven't initialized yet
+        if (!get().isInitialized) {
+          set({ isLoading: true })
+        }
 
         try {
           const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/me`)
           if (response.ok) {
             const data = await response.json()
-            setUser(data.user)
+            set({ user: data.user })
           } else {
-            setUser(null)
+            set({ user: null })
           }
         } catch (error) {
           console.error('Auth check error:', error)
-          setUser(null)
+          set({ user: null })
         } finally {
-          setLoading(false)
+          set({ isLoading: false, isInitialized: true })
         }
       },
     }),
@@ -94,11 +96,12 @@ export const useAuth = create<AuthState>()(
 
 // Single hook for all auth-related functionality
 export function useAuthState() {
-  const { user, isLoading, logout, checkAuth, setUser } = useAuth()
+  const { user, isLoading, isInitialized, logout, checkAuth, setUser } =
+    useAuth()
 
   return {
     user,
-    isLoading,
+    isLoading: isLoading && !isInitialized, // Only show loading for initial check
     isAuthenticated: !!user,
     logout,
     checkAuth,

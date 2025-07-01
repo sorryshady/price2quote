@@ -11,12 +11,12 @@ import {
   FileText,
   HelpCircle,
   LayoutDashboard,
-  Loader2,
   Mail,
   MessageCircle,
   Settings,
 } from 'lucide-react'
 
+import { SidebarSkeleton } from '@/components/ui/loading-states'
 import {
   Sidebar,
   SidebarContent,
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/sidebar'
 
 import { useAuth } from '@/hooks/use-auth'
-import { useCompanies } from '@/hooks/use-companies'
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
 import { NavMain } from './nav-main'
 import { NavSecondary } from './nav-secondary'
@@ -95,52 +95,11 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
-  const { hasCompanies, isLoading: companiesLoading } = useCompanies()
+  const { hasCompanies, isLoading } = useCompaniesQuery()
 
   if (!user) return null
 
   const { name, email, image, subscriptionTier } = user
-
-  // Show loading state while checking companies
-  if (companiesLoading) {
-    return (
-      <Sidebar collapsible="icon" variant="floating" {...props}>
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                className="data-[slot=sidebar-menu-button]:!p-1.5"
-              >
-                <Link href="/dashboard">
-                  <IconInnerShadowTop className="!size-5" />
-                  <span className="text-base font-semibold">Price2Quote</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-          </div>
-        </SidebarContent>
-        <SidebarFooter>
-          <NavUser
-            user={{
-              name: name || '',
-              email,
-              image: image || '',
-              subscriptionTier,
-            }}
-          />
-        </SidebarFooter>
-      </Sidebar>
-    )
-  }
-
-  // Show setup nav if no companies, main nav if companies exist
-  const navItems = hasCompanies ? data.navMain : data.navSetup
 
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
@@ -160,8 +119,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {isLoading ? (
+          <SidebarSkeleton />
+        ) : (
+          <>
+            <NavMain items={hasCompanies ? data.navMain : data.navSetup} />
+            <NavSecondary items={data.navSecondary} className="mt-auto" />
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser

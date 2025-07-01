@@ -1,6 +1,7 @@
 export type SubscriptionTier = 'free' | 'pro'
 export type BusinessType = 'freelancer' | 'company'
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced'
+export type AISummaryStatus = 'pending' | 'generating' | 'completed' | 'failed'
 
 export interface User {
   id: string
@@ -20,6 +21,7 @@ export interface Company {
   logoUrl?: string
   description?: string
   aiSummary?: string
+  aiSummaryStatus?: AISummaryStatus
   address?: string
   phone?: string
   website?: string
@@ -33,10 +35,15 @@ export interface Service {
   name: string
   description?: string
   skillLevel: SkillLevel
-  basePrice?: number
+  basePrice?: string
   currency: string
   createdAt: Date
   updatedAt: Date
+}
+
+// Extended type for companies with services (what the API returns)
+export interface CompanyWithServices extends Company {
+  services: Service[]
 }
 
 export interface SubscriptionFeatures {

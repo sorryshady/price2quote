@@ -3,10 +3,11 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { Loader2 } from 'lucide-react'
+import { LoadingSpinner } from '@/components/ui/loading-states'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import { useAuth } from '@/hooks/use-auth'
-import { useCompanies } from '@/hooks/use-companies'
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
 interface ProtectedContentProps {
   children: React.ReactNode
@@ -14,7 +15,7 @@ interface ProtectedContentProps {
 
 export function ProtectedContent({ children }: ProtectedContentProps) {
   const { isLoading: authLoading } = useAuth()
-  const { hasCompanies, isLoading: companiesLoading } = useCompanies()
+  const { hasCompanies, isLoading: companiesLoading } = useCompaniesQuery()
   const router = useRouter()
   const pathname = usePathname()
   const [isRedirecting, setIsRedirecting] = useState(false)
@@ -37,20 +38,25 @@ export function ProtectedContent({ children }: ProtectedContentProps) {
     }
   }, [hasCompanies, pathname, authLoading, companiesLoading, router])
 
-  // Show loading spinner while checking auth or companies
-  if (authLoading || companiesLoading || isRedirecting) {
+  // Show skeleton loading for initial auth check only
+  if (authLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  // Show minimal loading for redirects
+  if (isRedirecting) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="text-primary h-8 w-8 animate-spin" />
-          <p className="text-muted-foreground">
-            {authLoading
-              ? 'Loading user...'
-              : companiesLoading
-                ? 'Checking companies...'
-                : 'Redirecting...'}
-          </p>
-        </div>
+        <LoadingSpinner size="md" text="Redirecting..." />
       </div>
     )
   }
@@ -61,5 +67,6 @@ export function ProtectedContent({ children }: ProtectedContentProps) {
   }
 
   // Show children if user has companies or is on add-company page
+  // Companies loading will be handled by individual components if needed
   return <>{children}</>
 }
