@@ -29,6 +29,20 @@
       "when": 1751392401601,
       "tag": "0003_free_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1751399892835,
+      "tag": "0004_shocking_grey_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1751400000000,
+      "tag": "0005_create_quotes_table",
+      "breakpoints": true
     }
   ]
 }

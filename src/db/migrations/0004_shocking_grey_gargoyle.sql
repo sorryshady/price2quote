@@ -1,0 +1,1 @@
+CREATE TYPE "public"."quote_status" AS ENUM('draft', 'sent', 'accepted', 'rejected');

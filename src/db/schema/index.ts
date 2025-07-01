@@ -1,5 +1,6 @@
 export { default as accounts } from './accounts'
+export { default as companies } from './companies'
+export { default as quotes, quoteStatusEnum } from './quotes'
+export { default as services } from './services'
 export { default as sessions } from './sessions'
 export { default as users } from './users'
-export { default as companies } from './companies'
-export { default as services } from './services'
