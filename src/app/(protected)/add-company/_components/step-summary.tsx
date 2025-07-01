@@ -1,10 +1,13 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+
+import { generateCompanySummaryAction } from '@/app/server-actions/action'
 
 import { STORAGE_KEY } from './step-company-info'
 
@@ -59,13 +62,36 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
 
   const handleComplete = async () => {
     setIsSubmitting(true)
-    // TODO: Upload logo, save to DB, clear localStorage, redirect
-    setTimeout(() => {
+
+    try {
+      const result = await generateCompanySummaryAction({
+        name: summary?.companyInfo.name || '',
+        description: summary?.companyProfile.description || '',
+        businessType: summary?.companyInfo.businessType || '',
+        country: summary?.companyInfo.country || '',
+        currency: summary?.companyInfo.currency || '',
+        services:
+          summary?.services.map((service) => ({
+            name: service.name,
+            description: service.description,
+            skillLevel: service.skillLevel,
+            basePrice: service.basePrice,
+          })) || [],
+      })
+
+      if (result.success) {
+        console.log('Generated AI Summary:', result.summary)
+        alert('AI Summary generated! Check console for results.')
+      } else {
+        console.error('Failed to generate summary:', result.error)
+        alert('Failed to generate AI summary. Check console for details.')
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error)
+      alert('Error generating AI summary. Check console for details.')
+    } finally {
       setIsSubmitting(false)
-      alert('Company setup complete! (API integration goes here)')
-      // localStorage.removeItem(STORAGE_KEY)
-      // window.location.href = '/dashboard'
-    }, 1500)
+    }
   }
 
   if (!hydrated)
@@ -111,10 +137,12 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
           {companyProfile?.logo && (
             <div className="mt-2">
               <b>Logo:</b>
-              <img
+              <Image
                 src={companyProfile.logo}
                 alt="Logo preview"
-                className="mt-1 h-12 w-12 rounded border object-cover"
+                className="mt-1 h-16 w-20 rounded border object-cover"
+                width={64}
+                height={48}
               />
             </div>
           )}
@@ -172,7 +200,7 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
           {isSubmitting ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : null}
-          {isSubmitting ? 'Completing...' : 'Complete Setup'}
+          {isSubmitting ? 'Generating Summary...' : 'Generate AI Summary'}
         </Button>
       </div>
     </div>

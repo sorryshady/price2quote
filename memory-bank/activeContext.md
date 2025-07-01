@@ -2,11 +2,10 @@
 
 ## Current Focus
 
-- Company onboarding UI implementation
-- Multi-step onboarding form with logo upload
-- Services management interface
-- AI summary generation integration
-- Subscription-based feature access
+- Company onboarding form implementation COMPLETED
+- AI integration with Gemini for company summary generation
+- Database save functionality with background AI processing
+- Company profile management with AI summary status
 
 ## Recent Changes
 
@@ -32,15 +31,15 @@
    - Gmail integration for emails
    - PDF quote generation
 
-4. Company Setup Requirements:
+4. Company Onboarding Implementation COMPLETED:
 
-   - Company name, country, business type
-   - Logo upload via Supabase storage
-   - Services offered by the company (max 20)
-   - Skill levels per service (beginner, intermediate, advanced)
-   - Company description
-   - Base pricing per service (optional)
-   - AI-generated company summary for quote context
+   - Multi-step onboarding form (Company Info, Profile, Services, Summary)
+   - localStorage persistence for form data and current step
+   - Logo upload with Base64 preview (max 4MB)
+   - Services management (add/edit/remove up to 20 services)
+   - Form validation and error handling
+   - Responsive UI with progress indicators
+   - Hydration from localStorage on page reload
 
 5. Database & Storage Setup:
    - Companies and services tables created with proper relationships
@@ -63,37 +62,39 @@
 10. Base pricing: Store per service (optional)
 11. AI summary updates: On-demand with smart triggers
 12. Storage access controlled through API routes (not Supabase auth)
+13. **NEW: Server-side background AI processing** - Save company immediately, trigger AI generation in background
+14. **NEW: AI summary status tracking** - pending/generating/completed/failed states in database
 
 ## Current Considerations
 
-1. Multi-step onboarding UI design and implementation
-2. Logo upload component integration
-3. Services management interface (add/edit/delete services)
-4. AI summary generation on company save
-5. Onboarding middleware and route protection
-6. Subscription validation during onboarding
-7. Error handling and user feedback
+1. Gemini AI integration setup and configuration
+2. Database schema updates for AI summary fields
+3. Background AI processing implementation
+4. Company save API endpoint with logo upload
+5. AI summary generation prompt engineering
+6. Error handling for AI generation failures
+7. Company profile page with AI summary status display
 
 ## Next Steps
 
-1. Create onboarding route and layout
-2. Implement multi-step onboarding form
-3. Add logo upload component
-4. Create services management interface
-5. Integrate AI summary generation
-6. Add onboarding middleware
-7. Implement subscription validation
+1. **IMMEDIATE: Setup Gemini AI integration**
+2. Update database schema for AI summary fields
+3. Implement company save API endpoint
+4. Create background AI processing function
+5. Add AI summary status to company profile
+6. Implement retry mechanism for failed AI generation
 
 ## Known Issues
 
-- None currently - database and storage setup complete
+- None currently - onboarding form implementation complete
 
 ## Active Questions
 
 1. Should companies be one-to-one with users initially?
 2. Multi-currency implementation approach?
 3. AI summary generation frequency optimization?
+4. **NEW: Gemini API key management and security?**
 
 ## Current State
 
-Database schema and Supabase storage setup are complete. Ready to implement the comprehensive company onboarding UI with multi-step form, logo upload, services management, and AI summary generation for the PricingGPT platform.
+Company onboarding form is fully implemented and functional. Ready to implement AI integration with Gemini for company summary generation, followed by database save functionality with background processing.

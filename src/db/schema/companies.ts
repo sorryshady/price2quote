@@ -4,6 +4,9 @@ import users from './users'
 // Define business type enum
 export const businessTypeEnum = pgEnum('business_type', ['freelancer', 'company'])
 
+// Define AI summary status enum
+export const aiSummaryStatusEnum = pgEnum('ai_summary_status', ['pending', 'generating', 'completed', 'failed'])
+
 const companies = pgTable('companies', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -13,6 +16,7 @@ const companies = pgTable('companies', {
   logoUrl: varchar('logo_url', { length: 2048 }),
   description: text('description'),
   aiSummary: text('ai_summary'),
+  aiSummaryStatus: aiSummaryStatusEnum('ai_summary_status').default('pending'),
   address: text('address'),
   phone: varchar('phone', { length: 50 }),
   website: varchar('website', { length: 255 }),
