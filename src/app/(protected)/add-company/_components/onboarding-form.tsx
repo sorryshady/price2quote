@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Card, CardContent } from '@/components/ui/card'
 
+import { STORAGE_KEY } from './step-company-info'
 import { StepCompanyInfo } from './step-company-info'
 import { StepCompanyProfile } from './step-company-profile'
 import { StepServices } from './step-services'
@@ -39,7 +40,27 @@ const steps: { id: OnboardingStep; title: string; description: string }[] = [
 ]
 
 export function OnboardingForm() {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('company-info')
+  // On mount, read currentStep from localStorage
+  const getInitialStep = () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          if (
+            parsed.currentStep &&
+            steps.some((s) => s.id === parsed.currentStep)
+          ) {
+            return parsed.currentStep
+          }
+        } catch {}
+      }
+    }
+    return 'company-info'
+  }
+
+  const [currentStep, setCurrentStep] =
+    useState<OnboardingStep>(getInitialStep())
   const [formData, setFormData] = useState({
     companyInfo: {},
     companyProfile: {},
@@ -52,6 +73,11 @@ export function OnboardingForm() {
     const nextIndex = currentStepIndex + 1
     if (nextIndex < steps.length) {
       setCurrentStep(steps[nextIndex].id)
+      // Save currentStep to localStorage
+      const draft = localStorage.getItem(STORAGE_KEY)
+      const parsed = draft ? JSON.parse(draft) : {}
+      parsed.currentStep = steps[nextIndex].id
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
     }
   }
 
@@ -59,6 +85,11 @@ export function OnboardingForm() {
     const prevIndex = currentStepIndex - 1
     if (prevIndex >= 0) {
       setCurrentStep(steps[prevIndex].id)
+      // Save currentStep to localStorage
+      const draft = localStorage.getItem(STORAGE_KEY)
+      const parsed = draft ? JSON.parse(draft) : {}
+      parsed.currentStep = steps[prevIndex].id
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
     }
   }
 
