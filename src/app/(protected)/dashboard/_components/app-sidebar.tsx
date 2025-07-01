@@ -81,7 +81,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
   if (!user) return null
-  const { name, email, image } = user
+  const { name, email, image, subscriptionTier } = user
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
@@ -104,7 +104,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={{ name: name || '', email, image: image || '' }} />
+        <NavUser
+          user={{
+            name: name || '',
+            email,
+            image: image || '',
+            subscriptionTier,
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
   )

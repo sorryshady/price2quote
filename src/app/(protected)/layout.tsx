@@ -10,12 +10,12 @@ import { getUser } from '@/lib/auth'
 
 import { AppSidebar } from './dashboard/_components/app-sidebar'
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const user = getUser()
+  const user = await getUser()
   if (!user) redirect('/login')
   return (
     <SidebarProvider>

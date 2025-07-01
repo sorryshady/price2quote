@@ -2,9 +2,11 @@
 
 import {
   IconCreditCard,
+  IconCrown,
   IconDotsVertical,
   IconLogout,
   IconNotification,
+  IconUser,
   IconUserCircle,
 } from '@tabler/icons-react'
 
@@ -26,6 +28,7 @@ import {
 } from '@/components/ui/sidebar'
 
 import { useAuth } from '@/hooks/use-auth'
+import { SubscriptionTier } from '@/types'
 
 export function NavUser({
   user,
@@ -34,6 +37,7 @@ export function NavUser({
     name: string
     email: string
     image?: string
+    subscriptionTier: SubscriptionTier
   }
 }) {
   const { isMobile } = useSidebar()
@@ -89,6 +93,22 @@ export function NavUser({
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
+                  <div className="mt-1 flex items-center gap-1">
+                    {user.subscriptionTier === 'pro' ? (
+                      <IconCrown className="h-4 w-4 text-yellow-600" />
+                    ) : (
+                      <IconUser className="h-4 w-4 text-gray-600" />
+                    )}
+                    <span
+                      className={`text-xs font-medium ${
+                        user.subscriptionTier === 'pro'
+                          ? 'text-yellow-600'
+                          : 'text-gray-600'
+                      }`}
+                    >
+                      {user.subscriptionTier === 'pro' ? 'Pro' : 'Free'} Plan
+                    </span>
+                  </div>
                 </div>
               </div>
             </DropdownMenuLabel>

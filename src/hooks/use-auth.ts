@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { env } from '@/env/client'
+import { SubscriptionTier } from '@/types'
 
 interface User {
   id: string
@@ -10,6 +11,7 @@ interface User {
   name: string | null
   image: string | null
   emailVerified: Date | null
+  subscriptionTier: SubscriptionTier
 }
 
 interface AuthState {

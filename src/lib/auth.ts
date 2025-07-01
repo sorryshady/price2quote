@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 
 import db from '@/db'
 import { sessions, users } from '@/db/schema'
+import { SubscriptionTier } from '@/types'
 
 export type Session = {
   id: string
@@ -14,6 +15,7 @@ export type Session = {
     email: string
     name: string | null
     image: string | null
+    subscriptionTier: SubscriptionTier
   }
 }
 
@@ -34,6 +36,7 @@ export async function getSession(): Promise<Session | null> {
           email: users.email,
           name: users.name,
           image: users.image,
+          subscriptionTier: users.subscriptionTier,
         },
       })
       .from(sessions)
