@@ -38,25 +38,18 @@ export type AIQuoteData = {
   }
 }
 
-// Register fonts (you can add custom fonts later)
-Font.register({
-  family: 'Inter',
-  src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2',
-})
+// Register Nunito font (Google Fonts)
 
-// Fallback to system fonts if Inter fails to load
-Font.register({
-  family: 'Helvetica',
-  src: 'Helvetica',
-})
+// Fallback to Helvetica
+Font.register({ family: 'Helvetica', src: 'Helvetica' })
 
 // Strictly black, white, gray palette
 const BG = '#fff'
-const SECTION_BG = '#f5f5f5'
+const SECTION_BG = '#f7f7f9'
 const TEXT = '#222'
 const TEXT_SOFT = '#444'
 const TEXT_SOFT2 = '#888'
-const BORDER = '#f5f5f5'
+const BORDER = '#ececec'
 
 // Create styles
 const styles = StyleSheet.create({
@@ -70,17 +63,21 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: SECTION_BG,
     color: TEXT,
-    padding: 24,
+    padding: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottom: `1px solid ${BORDER}`,
+    borderRadius: 8,
+    margin: 18,
+    marginBottom: 0,
   },
   logo: {
     width: 56,
     height: 56,
     marginRight: 16,
     objectFit: 'contain',
+    borderRadius: 8,
   },
   companyBlock: {
     flexDirection: 'row',
@@ -93,14 +90,16 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: 700,
     color: TEXT,
     marginBottom: 2,
+    letterSpacing: 0.2,
   },
   companyDetails: {
     fontSize: 9,
     color: TEXT_SOFT2,
     marginBottom: 1,
+    letterSpacing: 0.1,
   },
   quoteInfo: {
     alignItems: 'flex-end',
@@ -108,9 +107,10 @@ const styles = StyleSheet.create({
   },
   quoteTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 600,
     color: TEXT_SOFT,
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   quoteNumber: {
     fontSize: 10,
@@ -125,23 +125,26 @@ const styles = StyleSheet.create({
     backgroundColor: SECTION_BG,
     margin: 18,
     marginTop: 0,
-    padding: 18,
+    marginBottom: 24,
+    padding: 24,
     borderBottom: `1px solid ${BORDER}`,
+    borderRadius: 8,
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: 600,
     color: TEXT_SOFT,
-    marginBottom: 8,
+    marginBottom: 10,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
 
   label: {
-    fontWeight: 'bold',
+    fontWeight: 600,
     color: TEXT_SOFT,
     marginRight: 4,
     marginBottom: 4,
+    letterSpacing: 0.2,
   },
   value: {
     color: TEXT,
@@ -151,16 +154,17 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: BORDER,
     marginVertical: 12,
+    borderRadius: 8,
   },
   summary: {
-    fontStyle: 'italic',
     color: TEXT_SOFT,
     marginBottom: 8,
   },
   serviceBlock: {
-    marginBottom: 10,
-    paddingBottom: 8,
+    marginBottom: 14,
+    paddingBottom: 10,
     borderBottom: `1px solid ${BORDER}`,
+    borderRadius: 8,
   },
   pointsSection: {
     flexDirection: 'column',
@@ -168,10 +172,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   serviceName: {
-    fontWeight: 'bold',
+    fontWeight: 700,
     fontSize: 12,
     color: TEXT_SOFT,
     marginBottom: 2,
+    letterSpacing: 0.2,
   },
   serviceDesc: {
     fontSize: 10,
@@ -206,20 +211,21 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: 600,
     color: TEXT_SOFT,
   },
   totalAmount: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: 700,
     color: TEXT_SOFT,
   },
   footer: {
     textAlign: 'center',
     fontSize: 9,
     color: TEXT_SOFT2,
-    marginTop: 24,
-    marginBottom: 8,
+    marginTop: 32,
+    marginBottom: 12,
+    borderRadius: 8,
   },
 })
 
