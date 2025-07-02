@@ -70,8 +70,8 @@ export interface Quote {
   currency: string
   status: QuoteStatus
   clientEmail?: string | null
-  clientName?: string
-  sentAt?: Date
+  clientName?: string | null
+  sentAt?: Date | null
   createdAt: Date
   updatedAt: Date
   quoteData?: JSON

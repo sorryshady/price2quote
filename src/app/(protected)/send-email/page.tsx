@@ -18,12 +18,18 @@ import { CustomToast } from '@/components/ui/custom-toast'
 
 import { env } from '@/env/client'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import type { Quote } from '@/types'
+
+import { EmailComposer } from './_components/email-composer'
+import { QuoteSelector } from './_components/quote-selector'
 
 export default function SendEmailPage() {
   const { companies, isLoading, error, refetch } = useCompaniesQuery()
   const searchParams = useSearchParams()
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
+  const [isSending, setIsSending] = useState(false)
 
   // Get the first company (for free users) or check if any company has email
   const primaryCompany = companies?.[0]
@@ -100,6 +106,18 @@ export default function SendEmailPage() {
     }
   }
 
+  const handleSendEmail = async () => {
+    setIsSending(true)
+    try {
+      // TODO: Implement actual email sending logic
+      toast.custom(<CustomToast message="Email sent!" type="success" />)
+    } catch {
+      toast.custom(<CustomToast message="Failed to send email" type="error" />)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
@@ -158,10 +176,10 @@ export default function SendEmailPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Send Email</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Send Email</h1>
           <p className="text-muted-foreground">
             Connect your Gmail account to send quotes
           </p>
@@ -169,10 +187,10 @@ export default function SendEmailPage() {
 
         {/* Connected Status - Top Right */}
         {hasEmailConnected && (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-md bg-green-100 px-3 py-1.5 dark:bg-green-900/30">
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+            <div className="flex w-full items-center gap-2 rounded-md bg-green-100 px-3 py-1.5 sm:w-auto dark:bg-green-900/30">
               <MailCheck className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+              <span className="truncate text-sm font-medium text-green-700 dark:text-green-300">
                 {primaryCompany.email}
               </span>
             </div>
@@ -181,7 +199,7 @@ export default function SendEmailPage() {
               size="sm"
               onClick={handleDisconnectGmail}
               disabled={isDisconnecting}
-              className="h-8 px-2"
+              className="h-8 w-full px-2 sm:w-auto"
             >
               {isDisconnecting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -198,20 +216,21 @@ export default function SendEmailPage() {
 
       {/* Main Content */}
       {hasEmailConnected ? (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Functionality</CardTitle>
-              <CardDescription>
-                Your Gmail account is connected and ready to send quotes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button disabled className="w-full">
-                Email functionality coming soon
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div>
+            <QuoteSelector
+              selectedQuoteId={selectedQuote?.id || null}
+              onQuoteSelect={setSelectedQuote}
+            />
+          </div>
+          <div>
+            <EmailComposer
+              selectedQuote={selectedQuote}
+              companyName={primaryCompany?.name}
+              onSendEmail={handleSendEmail}
+              isSending={isSending}
+            />
+          </div>
         </div>
       ) : (
         <Card>

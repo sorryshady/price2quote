@@ -1193,7 +1193,7 @@ export default function NewQuotePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button onClick={handleViewQuote} variant="outline">
                 <Eye className="h-4 w-4" /> View Quote
               </Button>
