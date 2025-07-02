@@ -430,6 +430,7 @@ export async function generateFinalQuoteAction(data: {
         currency: 'USD',
         aiSummary: company.aiSummary || undefined,
         phone: company.phone || '',
+        email: company.email || '',
       },
       projectData: data.projectData,
       finalData: {

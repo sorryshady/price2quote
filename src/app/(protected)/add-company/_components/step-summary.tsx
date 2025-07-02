@@ -26,6 +26,7 @@ interface CompanyProfile {
   logo?: string
   address?: string
   phone?: string
+  email?: string
   website?: string
 }
 
@@ -90,6 +91,7 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
           logo: summary?.companyProfile.logo,
           address: summary?.companyProfile.address,
           phone: summary?.companyProfile.phone,
+          email: summary?.companyProfile.email,
           website: summary?.companyProfile.website,
         },
         services:
@@ -197,6 +199,11 @@ export function StepSummary({ onPrevious }: StepSummaryProps) {
           {companyProfile?.phone && (
             <div>
               <b>Phone:</b> {companyProfile.phone}
+            </div>
+          )}
+          {companyProfile?.email && (
+            <div>
+              <b>Email:</b> {companyProfile.email}
             </div>
           )}
           {companyProfile?.website && (

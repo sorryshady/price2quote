@@ -19,6 +19,7 @@ const companyProfileSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   address: z.string().optional(),
   phone: z.string().optional(),
+  email: z.string().email('Please enter a valid email address').optional(),
   website: z.string().optional(),
   logo: z.string().optional(), // base64 string
 })
@@ -49,6 +50,7 @@ export function StepCompanyProfile({
       description: data.description || '',
       address: data.address || '',
       phone: data.phone || '',
+      email: data.email || '',
       website: data.website || '',
       logo: data.logo || '',
     },
@@ -181,6 +183,10 @@ export function StepCompanyProfile({
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
           <Input id="phone" placeholder="Phone" {...form.register('phone')} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" placeholder="Email" {...form.register('email')} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="website">Website</Label>

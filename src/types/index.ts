@@ -25,6 +25,7 @@ export interface Company {
   aiSummaryStatus?: AISummaryStatus
   address?: string
   phone?: string
+  email?: string
   website?: string
   createdAt: Date
   updatedAt: Date

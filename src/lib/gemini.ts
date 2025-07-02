@@ -379,6 +379,7 @@ export async function generateFinalQuoteWithAI(data: {
     currency: string
     aiSummary?: string
     phone?: string
+    email?: string
   }
   projectData: {
     title: string
