@@ -6,6 +6,8 @@ import db from '@/db'
 import { companies, gmailConnections } from '@/db/schema'
 import { env } from '@/env/server'
 import { getUser } from '@/lib/auth'
+import { generateAIEmail } from '@/lib/gemini'
+import type { Quote } from '@/types'
 
 export async function getGmailConnectionAction(companyId: string) {
   try {
@@ -110,5 +112,62 @@ export async function refreshGmailTokenAction(companyId: string) {
   } catch (error) {
     console.error('Error refreshing Gmail token:', error)
     return { success: false, error: 'Failed to refresh token' }
+  }
+}
+
+interface GenerateAIEmailData {
+  quote: Quote
+  companyName: string
+  companyDescription?: string
+  companyBusinessType: string
+  companyCountry: string
+  companyAiSummary?: string
+  companyPhone?: string
+  emailType: 'draft' | 'sent' | 'revised' | 'accepted' | 'rejected'
+  customContext?: string
+}
+
+export async function generateAIEmailAction(data: GenerateAIEmailData) {
+  try {
+    const result = await generateAIEmail({
+      companyData: {
+        name: data.companyName,
+        description: data.companyDescription,
+        businessType: data.companyBusinessType,
+        country: data.companyCountry,
+        aiSummary: data.companyAiSummary,
+        phone: data.companyPhone,
+      },
+      quoteData: {
+        projectTitle: data.quote.projectTitle,
+        clientName: data.quote.clientName || undefined,
+        clientEmail: data.quote.clientEmail || undefined,
+        amount: data.quote.amount || undefined,
+        currency: data.quote.currency,
+        status: data.quote.status,
+        projectDescription: data.quote.projectDescription || undefined,
+        createdAt: data.quote.createdAt,
+      },
+      emailType: data.emailType,
+      customContext: data.customContext,
+    })
+
+    if (result.success && result.email) {
+      return {
+        success: true,
+        email: result.email,
+      }
+    } else {
+      return {
+        success: false,
+        error: result.error || 'Failed to generate AI email',
+      }
+    }
+  } catch (error) {
+    console.error('Error in generateAIEmailAction:', error)
+    return {
+      success: false,
+      error: 'Failed to generate AI email',
+    }
   }
 }

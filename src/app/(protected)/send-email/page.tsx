@@ -227,6 +227,11 @@ export default function SendEmailPage() {
             <EmailComposer
               selectedQuote={selectedQuote}
               companyName={primaryCompany?.name}
+              companyDescription={primaryCompany?.description}
+              companyBusinessType={primaryCompany?.businessType}
+              companyCountry={primaryCompany?.country}
+              companyAiSummary={primaryCompany?.aiSummary}
+              companyPhone={primaryCompany?.phone}
               onSendEmail={handleSendEmail}
               isSending={isSending}
             />

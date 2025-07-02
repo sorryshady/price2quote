@@ -3,26 +3,27 @@
 import { useEffect, useState } from 'react'
 
 import { Edit3, RotateCcw, Send, Wand2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CustomToast } from '@/components/ui/custom-toast'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
+import { generateAIEmailAction } from '@/app/server-actions/gmail'
+import type { Quote } from '@/types'
+
 interface EmailComposerProps {
-  selectedQuote: {
-    id: string
-    projectTitle: string
-    clientName?: string | null
-    clientEmail?: string | null
-    amount?: string | null
-    currency: string
-    status: string
-    createdAt: Date
-  } | null
+  selectedQuote: Quote | null
   companyName?: string
+  companyDescription?: string
+  companyBusinessType?: string
+  companyCountry?: string
+  companyAiSummary?: string
+  companyPhone?: string
   onSendEmail: (emailData: EmailData) => Promise<void>
   isSending: boolean
 }
@@ -49,7 +50,7 @@ Based on our discussion and requirements, I've prepared a detailed quote that in
 
 I've attached the complete quote document for your review. Please take your time to go through it, and don't hesitate to reach out if you have any questions or would like to discuss any aspects of the proposal.
 
-I'm available for a call to walk through the details or address any concerns you might have.
+{contactMethod}
 
 Looking forward to hearing from you.
 
@@ -69,7 +70,7 @@ I understand you're likely reviewing the proposal and may have questions. I'm he
 • Investment of {amount}
 • Any modifications you'd like to discuss
 
-Would you be available for a brief call this week to discuss the quote or address any questions you might have?
+{contactMethod}
 
 I'm flexible with timing and happy to work around your schedule.
 
@@ -89,7 +90,7 @@ The updated investment is {amount}.
 
 I've attached the revised quote for your review. Please let me know if this better aligns with your needs and budget.
 
-I'm available to discuss any further adjustments or answer any questions you may have.
+{contactMethod}
 
 Best regards,
 {companyName}`,
@@ -141,6 +142,11 @@ Best regards,
 export function EmailComposer({
   selectedQuote,
   companyName = 'Your Company',
+  companyDescription,
+  companyBusinessType = 'company',
+  companyCountry = 'US',
+  companyAiSummary,
+  companyPhone,
   onSendEmail,
   isSending,
 }: EmailComposerProps) {
@@ -180,6 +186,9 @@ export function EmailComposer({
         ),
         '{companyName}': companyName,
         '{revisionNotes}': 'Updated scope and pricing based on your feedback',
+        '{contactMethod}': companyPhone
+          ? `I'm available for a call to walk through the details or address any concerns you might have. Feel free to reach out to me at ${companyPhone}.`
+          : '',
       }
 
       let subject = template.subject
@@ -204,16 +213,48 @@ export function EmailComposer({
 
     setIsGenerating(true)
     try {
-      // TODO: Implement AI generation
-      // const aiContent = await generateAIEmail(selectedQuote)
-      // setEmailData(prev => ({ ...prev, ...aiContent }))
+      const result = await generateAIEmailAction({
+        quote: selectedQuote,
+        companyName,
+        companyDescription,
+        companyBusinessType,
+        companyCountry,
+        companyAiSummary,
+        companyPhone,
+        emailType: selectedQuote.status as
+          | 'draft'
+          | 'sent'
+          | 'revised'
+          | 'accepted'
+          | 'rejected',
+      })
 
-      // For now, just use the template
-      setTimeout(() => {
-        setIsGenerating(false)
-      }, 1000)
+      if (result.success && result.email) {
+        setEmailData((prev) => ({
+          ...prev,
+          subject: result.email.subject,
+          body: result.email.body,
+        }))
+        toast.custom(
+          <CustomToast
+            message="AI email generated successfully!"
+            type="success"
+          />,
+        )
+      } else {
+        toast.custom(
+          <CustomToast
+            message={result.error || 'Failed to generate AI email'}
+            type="error"
+          />,
+        )
+      }
     } catch (error) {
       console.error('Error generating AI content:', error)
+      toast.custom(
+        <CustomToast message="Failed to generate AI email" type="error" />,
+      )
+    } finally {
       setIsGenerating(false)
     }
   }
@@ -253,6 +294,9 @@ export function EmailComposer({
         ),
         '{companyName}': companyName,
         '{revisionNotes}': 'Updated scope and pricing based on your feedback',
+        '{contactMethod}': companyPhone
+          ? `I'm available for a call to walk through the details or address any concerns you might have.`
+          : '',
       }
 
       let subject = template.subject

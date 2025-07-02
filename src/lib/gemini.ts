@@ -475,3 +475,115 @@ RESPONSE FORMAT (JSON only):
     throw new Error('Failed to generate final quote with AI')
   }
 }
+
+// AI email generation function
+export async function generateAIEmail(data: {
+  companyData: {
+    name: string
+    description?: string
+    businessType: string
+    country: string
+    aiSummary?: string
+    phone?: string
+  }
+  quoteData: {
+    projectTitle: string
+    clientName?: string
+    clientEmail?: string
+    amount?: string
+    currency: string
+    status: string
+    projectDescription?: string
+    createdAt: Date
+  }
+  emailType: 'draft' | 'sent' | 'revised' | 'accepted' | 'rejected'
+  customContext?: string
+}) {
+  try {
+    const formatCurrency = (
+      amount: string | null | undefined,
+      currency: string,
+    ) => {
+      if (!amount) return 'TBD'
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency || 'USD',
+      }).format(parseFloat(amount))
+    }
+
+    const prompt = `You are an expert business communication specialist helping ${data.companyData.name} write professional emails to clients.
+
+COMPANY CONTEXT:
+${data.companyData.name} - ${data.companyData.businessType} in ${data.companyData.country}
+${data.companyData.aiSummary ? `Business Summary: ${data.companyData.aiSummary}` : ''}
+${data.companyData.description ? `Description: ${data.companyData.description}` : ''}
+${data.companyData.phone ? `Phone: ${data.companyData.phone}` : ''}
+
+QUOTE DETAILS:
+Project: ${data.quoteData.projectTitle}
+Client: ${data.quoteData.clientName || 'Client'}
+Amount: ${formatCurrency(data.quoteData.amount, data.quoteData.currency)}
+Status: ${data.quoteData.status}
+${data.quoteData.projectDescription ? `Description: ${data.quoteData.projectDescription}` : ''}
+${data.customContext ? `Additional Context: ${data.customContext}` : ''}
+
+EMAIL TYPE: ${data.emailType.toUpperCase()}
+
+TASK: Generate a professional, personalized email that:
+1. Matches the company's tone and business type
+2. Is appropriate for the quote status
+3. Includes all relevant project details
+4. Has a clear call-to-action
+5. Is warm but professional
+6. Uses the client's name when available
+7. References the specific project and amount
+8. Includes contact information in the signature (phone number if available)
+
+EMAIL REQUIREMENTS:
+- Subject line should be clear and professional
+- Body should be 3-5 paragraphs
+- Include a greeting with client name if available
+- Reference the specific project and amount
+- End with a professional signature using company name
+- Include phone number in signature if available
+- Tone should match the email type (follow-up, confirmation, etc.)
+
+RESPONSE FORMAT (JSON only):
+{
+  "subject": "string",
+  "body": "string (with proper line breaks)",
+  "tone": "professional|friendly|formal|casual"
+}`
+
+    const result = await geminiModel.generateContent(prompt)
+    const response = await result.response
+    const text = response.text().trim()
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error('Invalid AI response format')
+    }
+
+    const aiResponse = JSON.parse(jsonMatch[0]) as {
+      subject: string
+      body: string
+      tone: string
+    }
+
+    return {
+      success: true,
+      email: {
+        subject: aiResponse.subject,
+        body: aiResponse.body,
+        tone: aiResponse.tone,
+      },
+    }
+  } catch (error) {
+    console.error('Error generating AI email:', error)
+    return {
+      success: false,
+      error: 'Failed to generate AI email',
+    }
+  }
+}
