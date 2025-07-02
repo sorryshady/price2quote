@@ -323,10 +323,12 @@ export default function ConversationDetailPage() {
               >
                 <CardContent className="pt-6">
                   {/* Email Header */}
-                  <div className="mb-4 flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{email.subject}</h3>
+                  <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex min-w-0 flex-wrap items-center justify-center gap-2 sm:justify-start">
+                        <h3 className="w-full truncate text-center font-semibold sm:w-auto sm:text-left">
+                          {email.subject}
+                        </h3>
                         <EmailDirectionIndicator direction={email.direction} />
                         <UnreadEmailBadge isRead={email.isRead} />
                         {email.includeQuotePdf && (
@@ -335,13 +337,13 @@ export default function ConversationDetailPage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-muted-foreground truncate text-center text-sm sm:text-left">
                         To: {email.to}
                         {email.cc && ` | CC: ${email.cc}`}
                         {email.bcc && ` | BCC: ${email.bcc}`}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="min-w-[90px] flex-shrink-0 text-center sm:text-right">
                       <p className="text-sm font-medium">
                         {formatDate(email.sentAt)}
                       </p>
@@ -399,7 +401,7 @@ export default function ConversationDetailPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="flex items-center gap-2"
+                                      className="flex max-w-xs min-w-0 items-center gap-2 truncate overflow-hidden"
                                       disabled={downloadingAttachments.has(
                                         attachment,
                                       )}
@@ -442,7 +444,7 @@ export default function ConversationDetailPage() {
                                       ) : (
                                         <Download className="h-4 w-4" />
                                       )}
-                                      <span className="text-sm">
+                                      <span className="block max-w-[120px] min-w-0 truncate overflow-hidden text-sm">
                                         {attachment.split('/').pop() ||
                                           attachment}
                                       </span>
