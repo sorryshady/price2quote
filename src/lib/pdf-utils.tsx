@@ -11,7 +11,6 @@ export async function generateQuotePDF(quote: Quote): Promise<Blob> {
     const element = <QuotePDF quote={quote} />
     const blob = await pdf(element).toBlob()
 
-    console.log('PDF blob generated, size:', blob.size)
     return blob
   } catch (error) {
     console.error('Error generating PDF:', error)

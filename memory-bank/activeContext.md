@@ -323,3 +323,13 @@
 - ✅ Real-time usage tracking
 
 **Ready for Phase 3: Interactive Features** - Quote status management, client communication, and advanced quote workflows.
+
+- PDF/quote export now uses a professional letterhead layout:
+  - Header with logo, company info, and contact details
+  - Main content area with card-style sections, consistent margins, and rounded corners
+  - Footer for disclaimer/thank you
+  - All text uses Helvetica
+  - Live preview in app via PDFViewer
+- All linter errors are resolved
+- No custom font registration complexity
+- This is now the standard for all quote/PDF exports

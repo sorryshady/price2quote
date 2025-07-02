@@ -5,7 +5,6 @@ import {
   Document,
   Font,
   Image,
-  Link,
   Page,
   StyleSheet,
   Text,
@@ -60,36 +59,35 @@ const styles = StyleSheet.create({
     color: TEXT,
     padding: 0,
   },
-  header: {
+  letterhead: {
     backgroundColor: SECTION_BG,
-    color: TEXT,
-    padding: 32,
+    padding: 24,
+    paddingBottom: 12,
+    borderBottom: `1px solid ${BORDER}`,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottom: `1px solid ${BORDER}`,
-    borderRadius: 8,
-    margin: 18,
     marginBottom: 0,
   },
+  letterheadLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   logo: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     marginRight: 16,
     objectFit: 'contain',
     borderRadius: 8,
   },
-  companyBlock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
   companyInfo: {
     flexDirection: 'column',
     justifyContent: 'center',
+    gap: 2,
   },
   companyName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 700,
     color: TEXT,
     marginBottom: 2,
@@ -101,15 +99,22 @@ const styles = StyleSheet.create({
     marginBottom: 1,
     letterSpacing: 0.1,
   },
-  quoteInfo: {
+  contactInfo: {
+    fontSize: 9,
+    color: TEXT_SOFT2,
+    marginTop: 2,
+    letterSpacing: 0.1,
+  },
+  letterheadRight: {
     alignItems: 'flex-end',
     flexDirection: 'column',
+    gap: 2,
   },
   quoteTitle: {
-    fontSize: 18,
-    fontWeight: 600,
+    fontSize: 16,
+    fontWeight: 700,
     color: TEXT_SOFT,
-    marginBottom: 4,
+    marginBottom: 2,
     letterSpacing: 0.5,
   },
   quoteNumber: {
@@ -121,26 +126,28 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: TEXT_SOFT2,
   },
+  content: {
+    marginTop: 32,
+    marginBottom: 32,
+    marginHorizontal: 48,
+  },
   section: {
     backgroundColor: SECTION_BG,
-    margin: 18,
-    marginTop: 0,
-    marginBottom: 24,
+    marginBottom: 18,
     padding: 24,
-    borderBottom: `1px solid ${BORDER}`,
     borderRadius: 8,
+    borderBottom: `1px solid ${BORDER}`,
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 700,
     color: TEXT_SOFT,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
-
   label: {
-    fontWeight: 600,
+    fontWeight: 700,
     color: TEXT_SOFT,
     marginRight: 4,
     marginBottom: 4,
@@ -150,13 +157,8 @@ const styles = StyleSheet.create({
     color: TEXT,
     marginBottom: 4,
   },
-  divider: {
-    height: 1,
-    backgroundColor: BORDER,
-    marginVertical: 12,
-    borderRadius: 8,
-  },
   summary: {
+    fontStyle: 'italic',
     color: TEXT_SOFT,
     marginBottom: 8,
   },
@@ -211,7 +213,7 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 700,
     color: TEXT_SOFT,
   },
   totalAmount: {
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     marginBottom: 12,
     borderRadius: 8,
+    marginHorizontal: 48,
   },
 })
 
@@ -241,10 +244,6 @@ export function QuotePDF({ quote }: QuotePDFProps) {
       ? JSON.parse(quoteData)
       : quoteData
     : undefined
-  const hasLogo = company?.logoUrl
-  const hasAddress = company?.address
-  const hasPhone = company?.phone
-  const hasWebsite = company?.website
 
   const formatCurrency = (
     amount: string | null | undefined,
@@ -269,10 +268,12 @@ export function QuotePDF({ quote }: QuotePDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.companyBlock}>
-            {hasLogo && <Image src={company.logoUrl!} style={styles.logo} />}
+        {/* Letterhead Header */}
+        <View style={styles.letterhead}>
+          <View style={styles.letterheadLeft}>
+            {company?.logoUrl && (
+              <Image src={company.logoUrl} style={styles.logo} />
+            )}
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>
                 {company?.name || 'Your Company'}
@@ -280,193 +281,196 @@ export function QuotePDF({ quote }: QuotePDFProps) {
               <Text style={styles.companyDetails}>
                 {company?.businessType || ''}
               </Text>
-              {hasAddress && (
+              {company?.address && (
                 <Text style={styles.companyDetails}>{company.address}</Text>
               )}
-              {hasPhone && (
+              {company?.phone && (
                 <Text style={styles.companyDetails}>
                   Phone: {company.phone}
                 </Text>
               )}
-              {hasWebsite && (
-                <Link src={company.website} style={styles.companyDetails}>
-                  {company.website}
-                </Link>
+              {company?.website && (
+                <Text style={styles.companyDetails}>{company.website}</Text>
               )}
             </View>
           </View>
-          <View style={styles.quoteInfo}>
+          <View style={styles.letterheadRight}>
             <Text style={styles.quoteTitle}>QUOTE</Text>
             <Text style={styles.quoteNumber}>#{quote.id.slice(0, 8)}</Text>
             <Text style={styles.date}>{formatDate(quote.createdAt)}</Text>
           </View>
         </View>
 
-        {/* Executive Summary (AI) */}
-        {aiData?.quoteDocument?.executiveSummary && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Executive Summary</Text>
-            <Text style={styles.summary}>
-              {aiData.quoteDocument.executiveSummary}
-            </Text>
-          </View>
-        )}
-
-        {/* Service Breakdown (AI) */}
-        {aiData?.quoteDocument?.serviceBreakdown && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Service Breakdown</Text>
-            {aiData.quoteDocument.serviceBreakdown.map((s, i: number) => (
-              <View key={i} style={styles.serviceBlock}>
-                <Text style={styles.serviceName}>{s.serviceName}</Text>
-                <Text style={styles.serviceDesc}>{s.description}</Text>
-                <Text style={styles.serviceDesc}>
-                  Quantity: {s.quantity} @{' '}
-                  {formatCurrency(s.unitPrice.toString(), quote.currency)}
-                </Text>
-                <Text style={styles.serviceDesc}>
-                  Total:{' '}
-                  {formatCurrency(s.totalPrice.toString(), quote.currency)}
-                </Text>
-                {s.deliverables && s.deliverables.length > 0 && (
-                  <View>
-                    <Text style={styles.label}>Deliverables:</Text>
-                    {s.deliverables.map((d: string, j: number) => (
-                      <Text key={j} style={styles.deliverables}>
-                        - {d}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Terms & Payment (AI) */}
-        {(aiData?.quoteDocument?.termsAndConditions ||
-          aiData?.quoteDocument?.paymentTerms ||
-          aiData?.quoteDocument?.deliveryTimeline ||
-          aiData?.quoteDocument?.nextSteps) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Terms & Payment</Text>
-            {aiData?.quoteDocument?.termsAndConditions && (
-              <View style={styles.pointsSection}>
-                <Text style={styles.label}>Terms:</Text>
-                {aiData.quoteDocument.termsAndConditions.map(
-                  (t: string, i: number) => (
-                    <Text key={i} style={styles.terms}>
-                      - {t}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            {aiData?.quoteDocument?.paymentTerms && (
-              <Text style={styles.value}>
-                Payment Terms: {aiData.quoteDocument.paymentTerms}
+        {/* Main Content Area */}
+        <View style={styles.content}>
+          {/* Executive Summary (AI) */}
+          {aiData?.quoteDocument?.executiveSummary && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Executive Summary</Text>
+              <Text style={styles.summary}>
+                {aiData.quoteDocument.executiveSummary}
               </Text>
-            )}
-            {aiData?.quoteDocument?.deliveryTimeline && (
-              <Text style={styles.value}>
-                Delivery Timeline: {aiData.quoteDocument.deliveryTimeline}
-              </Text>
-            )}
-            {aiData?.quoteDocument?.nextSteps && (
-              <Text style={styles.value}>
-                Next Steps: {aiData.quoteDocument.nextSteps}
-              </Text>
-            )}
-          </View>
-        )}
+            </View>
+          )}
 
-        {/* Presentation (AI) */}
-        {(aiData?.presentation?.keyHighlights ||
-          aiData?.presentation?.valueProposition ||
-          aiData?.presentation?.competitiveAdvantages) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Why Choose Us</Text>
-            {aiData?.presentation?.keyHighlights && (
-              <View style={styles.pointsSection}>
-                <Text style={styles.label}>Key Highlights:</Text>
-                {aiData.presentation.keyHighlights.map(
-                  (h: string, i: number) => (
-                    <Text key={i} style={styles.highlight}>
-                      - {h}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-            {aiData?.presentation?.valueProposition && (
-              <Text style={styles.value}>
-                Value Proposition: {aiData.presentation.valueProposition}
-              </Text>
-            )}
-            {aiData?.presentation?.competitiveAdvantages && (
-              <View style={styles.pointsSection}>
-                <Text style={styles.label}>Competitive Advantages:</Text>
-                {aiData.presentation.competitiveAdvantages.map(
-                  (c: string, i: number) => (
-                    <Text key={i} style={styles.highlight}>
-                      - {c}
-                    </Text>
-                  ),
-                )}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Fallback: Basic Info if no AI data */}
-        {!aiData && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Client & Project</Text>
-            <Text style={styles.value}>
-              Client: {quote.clientName || 'Not specified'}
-            </Text>
-            <Text style={styles.value}>Project: {quote.projectTitle}</Text>
-            {quote.projectDescription && (
-              <Text style={styles.value}>
-                Description: {quote.projectDescription}
-              </Text>
-            )}
-          </View>
-        )}
-
-        {/* Services List (always show) */}
-        {!aiData && quote.quoteServices && quote.quoteServices.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Services</Text>
-            {quote.quoteServices.map((qs: QuoteService, idx: number) => (
-              <View key={qs.id || idx} style={styles.serviceBlock}>
-                <Text style={styles.serviceName}>
-                  {qs.service?.name || 'Service'}
-                </Text>
-                <Text style={styles.serviceDesc}>Quantity: {qs.quantity}</Text>
-                <Text style={styles.serviceDesc}>
-                  Unit Price: {formatCurrency(qs.unitPrice, quote.currency)}
-                </Text>
-                <Text style={styles.serviceDesc}>
-                  Total: {formatCurrency(qs.totalPrice, quote.currency)}
-                </Text>
-                {qs.service?.description && (
+          {/* Service Breakdown (AI) */}
+          {aiData?.quoteDocument?.serviceBreakdown && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Service Breakdown</Text>
+              {aiData.quoteDocument.serviceBreakdown.map((s, i: number) => (
+                <View key={i} style={styles.serviceBlock}>
+                  <Text style={styles.serviceName}>{s.serviceName}</Text>
+                  <Text style={styles.serviceDesc}>{s.description}</Text>
                   <Text style={styles.serviceDesc}>
-                    {qs.service.description}
+                    Quantity: {s.quantity} @{' '}
+                    {formatCurrency(s.unitPrice.toString(), quote.currency)}
                   </Text>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
+                  <Text style={styles.serviceDesc}>
+                    Total:{' '}
+                    {formatCurrency(s.totalPrice.toString(), quote.currency)}
+                  </Text>
+                  {s.deliverables && s.deliverables.length > 0 && (
+                    <View>
+                      <Text style={styles.label}>Deliverables:</Text>
+                      {s.deliverables.map((d: string, j: number) => (
+                        <Text key={j} style={styles.deliverables}>
+                          - {d}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
 
-        {/* Total */}
-        <View style={styles.section}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalAmount}>
-              {formatCurrency(quote.amount, quote.currency)}
-            </Text>
+          {/* Terms & Payment (AI) */}
+          {(aiData?.quoteDocument?.termsAndConditions ||
+            aiData?.quoteDocument?.paymentTerms ||
+            aiData?.quoteDocument?.deliveryTimeline ||
+            aiData?.quoteDocument?.nextSteps) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Terms & Payment</Text>
+              {aiData?.quoteDocument?.termsAndConditions && (
+                <View style={styles.pointsSection}>
+                  <Text style={styles.label}>Terms:</Text>
+                  {aiData.quoteDocument.termsAndConditions.map(
+                    (t: string, i: number) => (
+                      <Text key={i} style={styles.terms}>
+                        - {t}
+                      </Text>
+                    ),
+                  )}
+                </View>
+              )}
+              {aiData?.quoteDocument?.paymentTerms && (
+                <Text style={styles.value}>
+                  Payment Terms: {aiData.quoteDocument.paymentTerms}
+                </Text>
+              )}
+              {aiData?.quoteDocument?.deliveryTimeline && (
+                <Text style={styles.value}>
+                  Delivery Timeline: {aiData.quoteDocument.deliveryTimeline}
+                </Text>
+              )}
+              {aiData?.quoteDocument?.nextSteps && (
+                <Text style={styles.value}>
+                  Next Steps: {aiData.quoteDocument.nextSteps}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {/* Presentation (AI) */}
+          {(aiData?.presentation?.keyHighlights ||
+            aiData?.presentation?.valueProposition ||
+            aiData?.presentation?.competitiveAdvantages) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Why Choose Us</Text>
+              {aiData?.presentation?.keyHighlights && (
+                <View style={styles.pointsSection}>
+                  <Text style={styles.label}>Key Highlights:</Text>
+                  {aiData.presentation.keyHighlights.map(
+                    (h: string, i: number) => (
+                      <Text key={i} style={styles.highlight}>
+                        - {h}
+                      </Text>
+                    ),
+                  )}
+                </View>
+              )}
+              {aiData?.presentation?.valueProposition && (
+                <Text style={styles.value}>
+                  Value Proposition: {aiData.presentation.valueProposition}
+                </Text>
+              )}
+              {aiData?.presentation?.competitiveAdvantages && (
+                <View style={styles.pointsSection}>
+                  <Text style={styles.label}>Competitive Advantages:</Text>
+                  {aiData.presentation.competitiveAdvantages.map(
+                    (c: string, i: number) => (
+                      <Text key={i} style={styles.highlight}>
+                        - {c}
+                      </Text>
+                    ),
+                  )}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Fallback: Basic Info if no AI data */}
+          {!aiData && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Client & Project</Text>
+              <Text style={styles.value}>
+                Client: {quote.clientName || 'Not specified'}
+              </Text>
+              <Text style={styles.value}>Project: {quote.projectTitle}</Text>
+              {quote.projectDescription && (
+                <Text style={styles.value}>
+                  Description: {quote.projectDescription}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {/* Services List (always show) */}
+          {!aiData && quote.quoteServices && quote.quoteServices.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Services</Text>
+              {quote.quoteServices.map((qs: QuoteService, idx: number) => (
+                <View key={qs.id || idx} style={styles.serviceBlock}>
+                  <Text style={styles.serviceName}>
+                    {qs.service?.name || 'Service'}
+                  </Text>
+                  <Text style={styles.serviceDesc}>
+                    Quantity: {qs.quantity}
+                  </Text>
+                  <Text style={styles.serviceDesc}>
+                    Unit Price: {formatCurrency(qs.unitPrice, quote.currency)}
+                  </Text>
+                  <Text style={styles.serviceDesc}>
+                    Total: {formatCurrency(qs.totalPrice, quote.currency)}
+                  </Text>
+                  {qs.service?.description && (
+                    <Text style={styles.serviceDesc}>
+                      {qs.service.description}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Total */}
+          <View style={styles.section}>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(quote.amount, quote.currency)}
+              </Text>
+            </View>
           </View>
         </View>
 

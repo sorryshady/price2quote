@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, FileDown, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { z } from 'zod'
 
 import { AIQuoteRecommendations } from '@/components/ui/ai-quote-recommendations'
@@ -17,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { CustomToast } from '@/components/ui/custom-toast'
 import {
   Form,
   FormControl,
@@ -49,6 +51,11 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
+import {
+  downloadPDF,
+  generateQuoteFilename,
+  generateQuotePDF,
+} from '@/lib/pdf-utils'
 import type { Service } from '@/types'
 
 const quoteSchema = z.object({
@@ -282,7 +289,7 @@ export default function NewQuotePage() {
     console.log('Current selected services:')
     selectedServices.forEach((service, index) => {
       console.log(
-        `${index}: ${service.service.name} - Price: ${service.unitPrice}`,
+        `${index}: ${service.service.name} - Quantity: ${service.quantity}, Unit Price: ${service.unitPrice}, Total: ${service.quantity * service.unitPrice}`,
       )
     })
 
@@ -293,15 +300,20 @@ export default function NewQuotePage() {
           if (r.serviceName === service.service.name) return true
           // Try matching without skill level suffix (e.g., "Cake Baking (advanced)" matches "Cake Baking")
           const serviceNameWithoutSuffix = service.service.name
-          const recommendationNameWithoutSuffix = r.serviceName.replace(
-            /\s*\([^)]+\)$/,
-            '',
+          const recommendationNameWithoutSuffix = r.serviceName
+            .replace(/\s*\([^)]+\)$/, '')
+            .toLowerCase()
+          return (
+            serviceNameWithoutSuffix.toLowerCase() ===
+            recommendationNameWithoutSuffix.toLowerCase()
           )
-          return serviceNameWithoutSuffix === recommendationNameWithoutSuffix
         })
         if (recommendation) {
           console.log(
-            `✅ MATCH FOUND: Updating ${service.service.name} from ${service.unitPrice} to ${recommendation.recommendedPrice}`,
+            `✅ MATCH FOUND: Updating ${service.service.name} from ${service.unitPrice}/unit to ${recommendation.recommendedPrice}/unit`,
+          )
+          console.log(
+            `   Quantity: ${service.quantity}, Old Total: ${service.quantity * service.unitPrice}, New Total: ${service.quantity * recommendation.recommendedPrice}`,
           )
           return {
             ...service,
@@ -317,7 +329,7 @@ export default function NewQuotePage() {
       console.log('Final updated services:')
       updated.forEach((service, index) => {
         console.log(
-          `${index}: ${service.service.name} - Price: ${service.unitPrice}`,
+          `${index}: ${service.service.name} - Quantity: ${service.quantity}, Unit Price: ${service.unitPrice}, Total: ${service.quantity * service.unitPrice}`,
         )
       })
       return updated
@@ -369,9 +381,9 @@ export default function NewQuotePage() {
       if (result.success && result.aiResponse) {
         console.log('=== NEGOTIATION SUCCESS ===')
         console.log(`Service: ${negotiationData.serviceName}`)
-        console.log(`Old recommended price: ${service.recommendedPrice}`)
+        console.log(`Old recommended price: ${service.recommendedPrice}/unit`)
         console.log(
-          `New suggested price: ${result.aiResponse.recommendation.suggestedPrice}`,
+          `New suggested price: ${result.aiResponse.recommendation.suggestedPrice}/unit`,
         )
 
         // Update the AI response with negotiation feedback
@@ -383,7 +395,7 @@ export default function NewQuotePage() {
             serviceRecommendations: prev.serviceRecommendations.map((s) => {
               if (s.serviceName === negotiationData.serviceName) {
                 console.log(
-                  `✅ UPDATING AI RESPONSE: ${s.serviceName} from ${s.recommendedPrice} to ${result.aiResponse.recommendation.suggestedPrice}`,
+                  `✅ UPDATING AI RESPONSE: ${s.serviceName} from ${s.recommendedPrice}/unit to ${result.aiResponse.recommendation.suggestedPrice}/unit`,
                 )
                 return {
                   ...s,
@@ -401,7 +413,7 @@ export default function NewQuotePage() {
           console.log('Updated AI response service recommendations:')
           updated.serviceRecommendations.forEach((rec, index) => {
             console.log(
-              `${index}: ${rec.serviceName} - Recommended: ${rec.recommendedPrice}`,
+              `${index}: ${rec.serviceName} - Recommended: ${rec.recommendedPrice}/unit`,
             )
           })
 
@@ -472,6 +484,9 @@ export default function NewQuotePage() {
         quoteData: finalQuoteData,
       })
 
+      // set the quote from result into localStorage
+      localStorage.setItem('quote', JSON.stringify(result.quote))
+
       if (result.success && result.quote) {
         setSavedQuoteId(result.quote.id)
         setFinalQuoteData(finalQuoteData)
@@ -490,9 +505,39 @@ export default function NewQuotePage() {
     setShowViewQuote(true)
   }
 
-  const handleDownloadQuote = () => {
-    // TODO: Implement PDF download
-    console.log('Download quote as PDF')
+  const handleDownloadQuote = async () => {
+    const quote = JSON.parse(localStorage.getItem('quote') || '{}')
+    if (!quote || Object.keys(quote).length === 0) {
+      toast.custom(
+        <CustomToast
+          message="No quote data found. Please generate a quote first."
+          type={'error'}
+        />,
+      )
+      return
+    }
+    try {
+      const pdfBlob = await generateQuotePDF(quote)
+      const filename = generateQuoteFilename(quote)
+      if (!pdfBlob || !filename) {
+        toast.custom(
+          <CustomToast
+            message="Failed to generate PDF. Please try again."
+            type={'error'}
+          />,
+        )
+        return
+      }
+      downloadPDF(pdfBlob, filename)
+      toast.custom(
+        <CustomToast message="PDF downloaded successfully" type="success" />,
+      )
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      toast.custom(
+        <CustomToast message="Failed to download PDF" type="error" />,
+      )
+    }
   }
 
   const handleResetForm = () => {
@@ -501,6 +546,7 @@ export default function NewQuotePage() {
     setFinalQuoteData(null)
     setSavedQuoteId(null)
     setShowViewQuote(false)
+    localStorage.removeItem('quote')
   }
 
   const handleFillDummyValues = () => {
@@ -548,6 +594,7 @@ export default function NewQuotePage() {
           (s) =>
             s.id !== cakeService.id &&
             (s.name.toLowerCase().includes('pastries') ||
+              s.name.toLowerCase().includes('pastry') ||
               s.name.toLowerCase().includes('dessert') ||
               s.name.toLowerCase().includes('assorted')),
         )

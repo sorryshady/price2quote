@@ -505,6 +505,18 @@ const generateCompanySummary = async (companyId: string) => {
 }
 ```
 
+## PDF Export & Quote Document Pattern
+
+- Letterhead-style header at the top with logo, company name, and contact info (website, phone, address)
+- Main content area is centered, with marginTop, marginBottom, and marginHorizontal (e.g. 48px) so content never touches the page edge
+- All main sections (executive summary, service breakdown, terms, etc.) are displayed as card-style sections with rounded corners, light gray backgrounds, and padding
+- Footer area at the bottom for disclaimer or thank you message, always with margin
+- All text uses Helvetica for maximum compatibility and a clean, professional look
+- PDFViewer is used in the app for live preview and rapid design iteration
+- All linter errors are resolved and code is type-safe
+- No custom font registration complexity; Helvetica is used for all weights/styles
+- This pattern is now the standard for all PDF/quote exports in the project
+
 ## Component Relationships
 
 ### Quote Creation Flow

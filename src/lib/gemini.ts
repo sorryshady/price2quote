@@ -126,14 +126,16 @@ Client Location: ${data.projectData.clientLocation}
 Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
 
 SELECTED SERVICES:
-${data.projectData.selectedServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at $${s.currentPrice}/unit`).join('\n')}
+${data.projectData.selectedServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at $${s.currentPrice}/unit (total: $${s.quantity * s.currentPrice})`).join('\n')}
 
 TASK: Provide a structured analysis with:
 1. Market research based on company location vs client location
-2. Pricing recommendations for each service with confidence levels
+2. Pricing recommendations for each service PER UNIT with confidence levels
 3. Total quote amount with confidence level
 4. Reasoning for each recommendation
 5. If in person delivery is required, spread the delivery charge over the services. Do not generate separate delivery charges.
+
+IMPORTANT: The "recommendedPrice" should be the PER UNIT price, not the total price for all quantities. For example, if you recommend $12/unit for 40 units, the recommendedPrice should be 12, not 480.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -176,14 +178,62 @@ RESPONSE FORMAT (JSON only):
     const validatedResponse: AIQuoteResponse = {
       ...aiResponse,
       serviceRecommendations: aiResponse.serviceRecommendations.map(
-        (service) => ({
-          ...service,
-          confidenceLevel: validateConfidenceLevel(service.confidenceLevel),
-          priceRange: {
+        (service) => {
+          // Find the corresponding service data to get quantity
+          const serviceData = data.projectData.selectedServices.find(
+            (s) => s.serviceName === service.serviceName,
+          )
+
+          // Validate and potentially fix unit price if AI returned total price
+          let recommendedPrice = service.recommendedPrice
+          let priceRange = {
             min: Math.max(0, service.priceRange.min),
             max: Math.max(service.priceRange.min, service.priceRange.max),
-          },
-        }),
+          }
+
+          // If AI might have returned total price instead of unit price, convert it
+          if (serviceData && serviceData.quantity > 1) {
+            const currentTotal = serviceData.currentPrice * serviceData.quantity
+            const recommendedTotal = service.recommendedPrice
+
+            // If recommended price is much higher than current total, it might be a total price
+            if (recommendedTotal > currentTotal * 2) {
+              // Check if it's closer to being a total price than a unit price
+              const unitPriceGuess = recommendedTotal / serviceData.quantity
+              const totalPriceGuess = recommendedTotal
+
+              const unitPriceDiff = Math.abs(
+                unitPriceGuess - serviceData.currentPrice,
+              )
+              const totalPriceDiff = Math.abs(totalPriceGuess - currentTotal)
+
+              if (totalPriceDiff < unitPriceDiff) {
+                // AI probably returned total price, convert to unit price
+                recommendedPrice = recommendedTotal / serviceData.quantity
+                priceRange = {
+                  min: Math.max(
+                    0,
+                    service.priceRange.min / serviceData.quantity,
+                  ),
+                  max: Math.max(
+                    service.priceRange.min / serviceData.quantity,
+                    service.priceRange.max / serviceData.quantity,
+                  ),
+                }
+                console.log(
+                  `Converted AI recommendation from total price ${recommendedTotal} to unit price ${recommendedPrice} for ${service.serviceName}`,
+                )
+              }
+            }
+          }
+
+          return {
+            ...service,
+            recommendedPrice,
+            confidenceLevel: validateConfidenceLevel(service.confidenceLevel),
+            priceRange,
+          }
+        },
       ),
     }
 
@@ -255,9 +305,9 @@ Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudg
 
 NEGOTIATION CONTEXT:
 Service: ${data.negotiationData.serviceName}
-AI Recommended Price: $${data.negotiationData.currentRecommendedPrice}
-User Proposed Price: $${data.negotiationData.proposedPrice}
-Price Range: $${data.negotiationData.priceRange.min} - $${data.negotiationData.priceRange.max}
+AI Recommended Price: $${data.negotiationData.currentRecommendedPrice}/unit
+User Proposed Price: $${data.negotiationData.proposedPrice}/unit
+Price Range: $${data.negotiationData.priceRange.min}/unit - $${data.negotiationData.priceRange.max}/unit
 User Reasoning: ${data.negotiationData.userReasoning}
 
 TASK: Provide a structured response about the proposed price change:
@@ -265,6 +315,8 @@ TASK: Provide a structured response about the proposed price change:
 2. Consider the user's reasoning and provide feedback
 3. Suggest any adjustments or alternative approaches
 4. Provide confidence level for your assessment
+
+IMPORTANT: All prices should be PER UNIT prices, not total prices for all quantities.
 
 RESPONSE FORMAT (JSON only):
 {

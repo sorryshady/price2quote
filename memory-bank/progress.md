@@ -386,3 +386,8 @@
 - Protected routes and middleware
 - Email verification flow
 - Secure password handling
+
+- PDF/quote export is now fully type-safe, uses a letterhead layout, card-style sections, Helvetica font, and is previewed live in the app with PDFViewer
+- All linter errors are resolved
+- No custom font registration is needed
+- This is now the standard for all quote/PDF exports
