@@ -378,6 +378,7 @@ export async function generateFinalQuoteWithAI(data: {
     country: string
     currency: string
     aiSummary?: string
+    phone?: string
   }
   projectData: {
     title: string
@@ -405,6 +406,7 @@ export async function generateFinalQuoteWithAI(data: {
 COMPANY CONTEXT:
 ${data.companyData.name} - ${data.companyData.businessType} in ${data.companyData.country}
 ${data.companyData.aiSummary ? `AI Business Summary: ${data.companyData.aiSummary}` : ''}
+Phone: ${data.companyData.phone}
 
 PROJECT DETAILS:
 Title: ${data.projectData.title}
@@ -424,6 +426,9 @@ TASK: Generate a professional quote document with:
 2. Detailed service breakdown
 3. Terms and conditions
 4. Professional presentation
+5. Contact information to be added in the nextSteps. 
+6. Mention payment terms but do not specify any specific payment methods (like card, bank transfer, etc).
+
 
 RESPONSE FORMAT (JSON only):
 {
