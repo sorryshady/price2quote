@@ -104,13 +104,16 @@ export async function createQuoteAction(data: CreateQuoteData) {
       await db.insert(quoteServices).values(quoteServiceData)
     }
 
+    // Fetch the complete quote with company and service details
+    const completeQuote = await getQuoteWithServicesAction(quote.id)
+
     revalidatePath('/dashboard')
     revalidatePath('/quotes')
     revalidatePath('/new-quote')
 
     return {
       success: true,
-      quote,
+      quote: completeQuote.success ? completeQuote.quote : quote,
     }
   } catch (error) {
     console.error('Error creating quote:', error)
@@ -234,15 +237,46 @@ export async function updateQuoteStatusAction(
 
 export async function getQuoteWithServicesAction(quoteId: string) {
   try {
-    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId))
+    // Fetch quote with company details
+    const [quoteData] = await db
+      .select({
+        id: quotes.id,
+        userId: quotes.userId,
+        companyId: quotes.companyId,
+        projectTitle: quotes.projectTitle,
+        projectDescription: quotes.projectDescription,
+        amount: quotes.amount,
+        currency: quotes.currency,
+        status: quotes.status,
+        clientEmail: quotes.clientEmail,
+        clientName: quotes.clientName,
+        quoteData: quotes.quoteData,
+        sentAt: quotes.sentAt,
+        createdAt: quotes.createdAt,
+        updatedAt: quotes.updatedAt,
+        company: {
+          id: companies.id,
+          name: companies.name,
+          businessType: companies.businessType,
+          country: companies.country,
+          address: companies.address,
+          phone: companies.phone,
+          website: companies.website,
+          logoUrl: companies.logoUrl,
+        },
+      })
+      .from(quotes)
+      .leftJoin(companies, eq(quotes.companyId, companies.id))
+      .where(eq(quotes.id, quoteId))
 
-    if (!quote) {
+    if (!quoteData) {
       return {
         success: false,
         error: 'Quote not found',
       }
     }
 
+    // Fetch quote services with service details
     const quoteServicesData = await db
       .select({
         id: quoteServices.id,
@@ -253,14 +287,23 @@ export async function getQuoteWithServicesAction(quoteId: string) {
         totalPrice: quoteServices.totalPrice,
         notes: quoteServices.notes,
         createdAt: quoteServices.createdAt,
+        service: {
+          id: services.id,
+          name: services.name,
+          description: services.description,
+          skillLevel: services.skillLevel,
+          basePrice: services.basePrice,
+          currency: services.currency,
+        },
       })
       .from(quoteServices)
+      .leftJoin(services, eq(quoteServices.serviceId, services.id))
       .where(eq(quoteServices.quoteId, quoteId))
 
     return {
       success: true,
       quote: {
-        ...quote,
+        ...quoteData,
         quoteServices: quoteServicesData,
       },
     }

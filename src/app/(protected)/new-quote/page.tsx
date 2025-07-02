@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { Eye, FileDown, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -94,6 +95,7 @@ export default function NewQuotePage() {
   const { user } = useAuth()
   const { companies } = useCompaniesQuery()
   const { canCreate, currentQuotes, upgradeMessage } = useQuoteLimit()
+  const queryClient = useQueryClient()
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>(
     [],
   )
@@ -170,11 +172,11 @@ export default function NewQuotePage() {
     if (
       user?.subscriptionTier === 'free' &&
       companies?.length === 1 &&
-      !form.getValues('companyId')
+      (!form.getValues('companyId') || form.getValues('companyId') === '')
     ) {
       form.setValue('companyId', companies[0].id)
     }
-  }, [companies, user?.subscriptionTier, form])
+  }, [companies, user?.subscriptionTier, form, selectedCompanyId])
 
   // Update currency when company changes
   useEffect(() => {
@@ -182,6 +184,31 @@ export default function NewQuotePage() {
       form.setValue('currency', selectedCompany.services[0].currency)
     }
   }, [selectedCompany, form])
+
+  // Check for existing quote in localStorage on page load
+  useEffect(() => {
+    const savedQuote = localStorage.getItem('quote')
+    if (savedQuote) {
+      try {
+        const quoteData = JSON.parse(savedQuote)
+        if (quoteData && quoteData.id) {
+          setSavedQuoteId(quoteData.id)
+          // Extract the AI-generated quote data if it exists
+          if (quoteData.quoteData) {
+            const aiData =
+              typeof quoteData.quoteData === 'string'
+                ? JSON.parse(quoteData.quoteData)
+                : quoteData.quoteData
+            setFinalQuoteData(aiData)
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing saved quote from localStorage:', error)
+        // Clear invalid data
+        localStorage.removeItem('quote')
+      }
+    }
+  }, [])
 
   const handleServiceToggle = (service: Service) => {
     setSelectedServices((prev) => {
@@ -484,12 +511,20 @@ export default function NewQuotePage() {
         quoteData: finalQuoteData,
       })
 
-      // set the quote from result into localStorage
-      localStorage.setItem('quote', JSON.stringify(result.quote))
-
       if (result.success && result.quote) {
+        // Store the complete quote with company data in localStorage
+        localStorage.setItem('quote', JSON.stringify(result.quote))
         setSavedQuoteId(result.quote.id)
         setFinalQuoteData(finalQuoteData)
+
+        // Invalidate quotes query to refresh the quotes list
+        await queryClient.invalidateQueries({ queryKey: ['quotes', user.id] })
+
+        // Invalidate quote limit to update the count
+        await queryClient.invalidateQueries({
+          queryKey: ['quote-limit', user.id],
+        })
+
         // Don't reset form yet - let user view the quote first
       } else {
         console.error('Failed to create quote:', result.error)
@@ -541,12 +576,26 @@ export default function NewQuotePage() {
   }
 
   const handleResetForm = () => {
+    // Store the current company ID if it's a free user with one company
+    const currentCompanyId =
+      user?.subscriptionTier === 'free' && companies?.length === 1
+        ? companies[0].id
+        : null
+
     form.reset()
     setSelectedServices([])
     setFinalQuoteData(null)
     setSavedQuoteId(null)
     setShowViewQuote(false)
     localStorage.removeItem('quote')
+
+    // Re-select company for free users after reset
+    if (currentCompanyId) {
+      // Use setTimeout to ensure the reset has completed
+      setTimeout(() => {
+        form.setValue('companyId', currentCompanyId)
+      }, 0)
+    }
   }
 
   const handleFillDummyValues = () => {
@@ -649,181 +698,111 @@ export default function NewQuotePage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">New Quote</h1>
         <p className="text-muted-foreground">
-          Create a new quote for your client
+          {savedQuoteId && finalQuoteData
+            ? 'Your quote has been generated successfully'
+            : 'Create a new quote for your client'}
         </p>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* AI Generation Loading Overlay */}
-          {isGeneratingAI && (
-            <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50">
-              <div className="bg-background rounded-lg p-8 text-center">
-                <LoadingSpinner
-                  size="lg"
-                  text="Generating AI quote, please wait..."
-                />
-              </div>
-            </div>
-          )}
-          {/* Company Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company</CardTitle>
-              <CardDescription>
-                {user?.subscriptionTier === 'free' && companies?.length === 1
-                  ? 'Your company (auto-selected)'
-                  : 'Select the company to create the quote for'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user?.subscriptionTier === 'free' && companies?.length === 1 ? (
-                <div className="bg-muted rounded-lg p-3">
-                  <p className="font-medium">{companies[0].name}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {companies[0].businessType} • {companies[0].country}
-                  </p>
+      {/* Show form only when no quote is generated */}
+      {!savedQuoteId || !finalQuoteData ? (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* AI Generation Loading Overlay */}
+            {isGeneratingAI && (
+              <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50">
+                <div className="bg-background rounded-lg p-8 text-center">
+                  <LoadingSpinner
+                    size="lg"
+                    text="Generating AI quote, please wait..."
+                  />
                 </div>
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="companyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a company" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies?.map((company) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Project Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Details</CardTitle>
-              <CardDescription>
-                Basic information about the project
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="projectTitle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter project title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="projectDescription"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe the project requirements..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="deliveryTimeline"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Delivery Timeline</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select timeline" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1_week">1 Week</SelectItem>
-                          <SelectItem value="2_weeks">2 Weeks</SelectItem>
-                          <SelectItem value="1_month">1 Month</SelectItem>
-                          <SelectItem value="2_months">2 Months</SelectItem>
-                          <SelectItem value="3_months">3 Months</SelectItem>
-                          <SelectItem value="custom">Custom</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="projectComplexity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Project Complexity</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select complexity" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="simple">Simple</SelectItem>
-                          <SelectItem value="moderate">Moderate</SelectItem>
-                          <SelectItem value="complex">Complex</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+            )}
+            {/* Company Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Company</CardTitle>
+                <CardDescription>
+                  {user?.subscriptionTier === 'free' && companies?.length === 1
+                    ? 'Your company (auto-selected)'
+                    : 'Select the company to create the quote for'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {user?.subscriptionTier === 'free' &&
+                companies?.length === 1 ? (
+                  <div className="bg-muted rounded-lg p-3">
+                    <p className="font-medium">{companies[0].name}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {companies[0].businessType} • {companies[0].country}
+                    </p>
+                  </div>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="companyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a company" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {companies?.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </CardContent>
+            </Card>
 
-              {form.watch('deliveryTimeline') === 'custom' && (
+            {/* Project Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Details</CardTitle>
+                <CardDescription>
+                  Basic information about the project
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="customTimeline"
+                  name="projectTitle"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Custom Timeline</FormLabel>
+                      <FormLabel>Project Title</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="e.g., 6 weeks, 2 months, etc."
+                        <Input placeholder="Enter project title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="projectDescription"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe the project requirements..."
+                          className="min-h-[100px]"
                           {...field}
                         />
                       </FormControl>
@@ -831,168 +810,341 @@ export default function NewQuotePage() {
                     </FormItem>
                   )}
                 />
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Services Selection */}
-          {selectedCompany && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Services</CardTitle>
-                <CardDescription>
-                  Select the services to include in this quote
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedCompany.services?.map((service) => (
-                  <div key={service.id} className="flex items-center space-x-4">
-                    <Switch
-                      checked={selectedServices.some(
-                        (s) => s.serviceId === service.id,
-                      )}
-                      onCheckedChange={() => handleServiceToggle(service)}
-                      disabled={isGeneratingAI}
-                    />
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium">
-                        {service.name}
-                      </Label>
-                      {service.description && (
-                        <p className="text-muted-foreground text-sm">
-                          {service.description}
-                        </p>
-                      )}
-                      <div className="mt-1 flex items-center gap-2">
-                        <Badge variant="outline">{service.skillLevel}</Badge>
-                        {service.basePrice && (
-                          <Badge variant="secondary">
-                            {formatCurrency(parseFloat(service.basePrice))}
-                          </Badge>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="deliveryTimeline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Delivery Timeline</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select timeline" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="1_week">1 Week</SelectItem>
+                            <SelectItem value="2_weeks">2 Weeks</SelectItem>
+                            <SelectItem value="1_month">1 Month</SelectItem>
+                            <SelectItem value="2_months">2 Months</SelectItem>
+                            <SelectItem value="3_months">3 Months</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="projectComplexity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Complexity</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select complexity" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="simple">Simple</SelectItem>
+                            <SelectItem value="moderate">Moderate</SelectItem>
+                            <SelectItem value="complex">Complex</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {form.watch('deliveryTimeline') === 'custom' && (
+                  <FormField
+                    control={form.control}
+                    name="customTimeline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Custom Timeline</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., 6 weeks, 2 months, etc."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Services Selection */}
+            {selectedCompany && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Services</CardTitle>
+                  <CardDescription>
+                    Select the services to include in this quote
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedCompany.services?.map((service) => (
+                    <div
+                      key={service.id}
+                      className="flex items-center space-x-4"
+                    >
+                      <Switch
+                        checked={selectedServices.some(
+                          (s) => s.serviceId === service.id,
                         )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Selected Services Details */}
-          {selectedServices.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Quote Details</CardTitle>
-                <CardDescription>
-                  Configure quantities and pricing for selected services
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedServices.map((selectedService) => (
-                  <div
-                    key={selectedService.serviceId}
-                    className="space-y-3 rounded-lg border p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">
-                        {selectedService.service.name}
-                      </h4>
-                      <Badge variant="outline">
-                        {selectedService.service.skillLevel}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label className="text-sm">Quantity</Label>
-                        <Input
-                          type="number"
-                          min="0.1"
-                          step="0.1"
-                          value={selectedService.quantity}
-                          onChange={(e) =>
-                            updateServiceQuantity(
-                              selectedService.serviceId,
-                              parseFloat(e.target.value) || 1,
-                            )
-                          }
-                          disabled={isGeneratingAI}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm">Unit Price</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={selectedService.unitPrice}
-                          onChange={(e) =>
-                            updateServicePrice(
-                              selectedService.serviceId,
-                              parseFloat(e.target.value) || 0,
-                            )
-                          }
-                          disabled={isGeneratingAI}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm">Total</Label>
-                        <Input
-                          value={formatCurrency(
-                            selectedService.quantity *
-                              selectedService.unitPrice,
-                          )}
-                          disabled
-                          className="bg-muted"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm">Description</Label>
-                      <Textarea
-                        placeholder="Describe this service for the client..."
-                        value={selectedService.notes}
-                        onChange={(e) =>
-                          updateServiceNotes(
-                            selectedService.serviceId,
-                            e.target.value,
-                          )
-                        }
-                        className="min-h-[60px]"
+                        onCheckedChange={() => handleServiceToggle(service)}
                         disabled={isGeneratingAI}
                       />
+                      <div className="flex-1">
+                        <Label className="text-sm font-medium">
+                          {service.name}
+                        </Label>
+                        {service.description && (
+                          <p className="text-muted-foreground text-sm">
+                            {service.description}
+                          </p>
+                        )}
+                        <div className="mt-1 flex items-center gap-2">
+                          <Badge variant="outline">{service.skillLevel}</Badge>
+                          {service.basePrice && (
+                            <Badge variant="secondary">
+                              {formatCurrency(parseFloat(service.basePrice))}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Selected Services Details */}
+            {selectedServices.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quote Details</CardTitle>
+                  <CardDescription>
+                    Configure quantities and pricing for selected services
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedServices.map((selectedService) => (
+                    <div
+                      key={selectedService.serviceId}
+                      className="space-y-3 rounded-lg border p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">
+                          {selectedService.service.name}
+                        </h4>
+                        <Badge variant="outline">
+                          {selectedService.service.skillLevel}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label className="text-sm">Quantity</Label>
+                          <Input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={selectedService.quantity}
+                            onChange={(e) =>
+                              updateServiceQuantity(
+                                selectedService.serviceId,
+                                parseFloat(e.target.value) || 1,
+                              )
+                            }
+                            disabled={isGeneratingAI}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm">Unit Price</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={selectedService.unitPrice}
+                            onChange={(e) =>
+                              updateServicePrice(
+                                selectedService.serviceId,
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            disabled={isGeneratingAI}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm">Total</Label>
+                          <Input
+                            value={formatCurrency(
+                              selectedService.quantity *
+                                selectedService.unitPrice,
+                            )}
+                            disabled
+                            className="bg-muted"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm">Description</Label>
+                        <Textarea
+                          placeholder="Describe this service for the client..."
+                          value={selectedService.notes}
+                          onChange={(e) =>
+                            updateServiceNotes(
+                              selectedService.serviceId,
+                              e.target.value,
+                            )
+                          }
+                          className="min-h-[60px]"
+                          disabled={isGeneratingAI}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between text-lg font-semibold">
+                    <span>Total Amount:</span>
+                    <span>{formatCurrency(calculateTotal())}</span>
                   </div>
-                ))}
+                </CardContent>
+              </Card>
+            )}
 
-                <Separator />
+            {/* Client Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Client Information</CardTitle>
+                <CardDescription>Client details for the quote</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="clientName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter client name"
+                            {...field}
+                            disabled={isGeneratingAI}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="flex items-center justify-between text-lg font-semibold">
-                  <span>Total Amount:</span>
-                  <span>{formatCurrency(calculateTotal())}</span>
+                  <FormField
+                    control={form.control}
+                    name="clientEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter client email"
+                            {...field}
+                            disabled={isGeneratingAI}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="clientLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Location *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., San Francisco, CA"
+                            {...field}
+                            disabled={isGeneratingAI}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientBudget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Budget (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter budget amount"
+                            value={field.value || ''}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value
+                                  ? parseFloat(e.target.value)
+                                  : undefined,
+                              )
+                            }
+                            disabled={isGeneratingAI}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Client Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Client Information</CardTitle>
-              <CardDescription>Client details for the quote</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Final Notes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Final Notes</CardTitle>
+                <CardDescription>
+                  Additional notes, terms, or special conditions for the quote
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <FormField
                   control={form.control}
-                  name="clientName"
+                  name="finalNotes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Client Name</FormLabel>
+                      <FormLabel>Notes</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter client name"
+                        <Textarea
+                          placeholder="Add any final notes, terms, or special conditions for this quote..."
+                          className="min-h-[100px]"
                           {...field}
                           disabled={isGeneratingAI}
                         />
@@ -1001,123 +1153,29 @@ export default function NewQuotePage() {
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
 
-                <FormField
-                  control={form.control}
-                  name="clientEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter client email"
-                          {...field}
-                          disabled={isGeneratingAI}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="clientLocation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client Location *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., San Francisco, CA"
-                          {...field}
-                          disabled={isGeneratingAI}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="clientBudget"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client Budget (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Enter budget amount"
-                          value={field.value || ''}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseFloat(e.target.value)
-                                : undefined,
-                            )
-                          }
-                          disabled={isGeneratingAI}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Final Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Final Notes</CardTitle>
-              <CardDescription>
-                Additional notes, terms, or special conditions for the quote
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="finalNotes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Add any final notes, terms, or special conditions for this quote..."
-                        className="min-h-[100px]"
-                        {...field}
-                        disabled={isGeneratingAI}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Submit Buttons */}
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={selectedServices.length === 0 || isGeneratingAI}
-              onClick={handleGenerateAIQuote}
-            >
-              {isGeneratingAI ? 'Generating...' : 'Get AI-Assisted Quote'}
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || selectedServices.length === 0}
-            >
-              {isSubmitting ? 'Creating Quote...' : 'Create Quote'}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            {/* Submit Buttons */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={selectedServices.length === 0 || isGeneratingAI}
+                onClick={handleGenerateAIQuote}
+              >
+                {isGeneratingAI ? 'Generating...' : 'Get AI-Assisted Quote'}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || selectedServices.length === 0}
+              >
+                {isSubmitting ? 'Creating Quote...' : 'Create Quote'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      ) : null}
 
       {/* Generated Quote Section */}
       {savedQuoteId && finalQuoteData && (
@@ -1131,6 +1189,7 @@ export default function NewQuotePage() {
             </CardTitle>
             <CardDescription>
               Your professional quote has been created and saved successfully.
+              You can view, download, or create a new quote.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1141,7 +1200,7 @@ export default function NewQuotePage() {
               <Button onClick={handleDownloadQuote} variant="outline">
                 <FileDown className="h-4 w-4" /> Download PDF
               </Button>
-              <Button onClick={handleResetForm} variant="secondary">
+              <Button onClick={handleResetForm} variant="default">
                 <Plus className="h-4 w-4" /> Create New Quote
               </Button>
             </div>
@@ -1158,20 +1217,22 @@ export default function NewQuotePage() {
         </Card>
       )}
 
-      {/* Dummy Data Button */}
-      <div className="mt-8 border-t pt-6">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleFillDummyValues}
-          className="w-full"
-        >
-          🎂 Fill with Dummy Values (Birthday Event)
-        </Button>
-        <p className="text-muted-foreground mt-2 text-center text-xs">
-          Populates form with realistic data for testing AI quote generation
-        </p>
-      </div>
+      {/* Dummy Data Button - Only show when no quote is generated */}
+      {(!savedQuoteId || !finalQuoteData) && (
+        <div className="mt-8 border-t pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleFillDummyValues}
+            className="w-full"
+          >
+            🎂 Fill with Dummy Values (Birthday Event)
+          </Button>
+          <p className="text-muted-foreground mt-2 text-center text-xs">
+            Populates form with realistic data for testing AI quote generation
+          </p>
+        </div>
+      )}
 
       {/* AI Recommendations Modal */}
       {showAIRecommendations && aiResponse && (
