@@ -44,13 +44,15 @@ export default function ConversationDetailPage() {
       if (result.success && result.emails) {
         setEmails(result.emails)
 
-        // Extract conversation info from first email
+        // Extract conversation info from conversation ID
         if (result.emails.length > 0) {
-          const firstEmail = result.emails[0]
+          // Parse conversation ID to get better info
+          const [quoteId, clientEmail] = conversationId.split('_')
+          const decodedClientEmail = decodeURIComponent(clientEmail)
           setConversationInfo({
-            projectTitle: firstEmail.quoteId, // We'll get this from quote data later
-            clientName: firstEmail.to.split('@')[0], // Simple name extraction
-            clientEmail: firstEmail.to,
+            projectTitle: `Quote: ${quoteId.slice(0, 8)}...`, // Show truncated quote ID
+            clientName: decodedClientEmail.split('@')[0], // Extract name from email
+            clientEmail: decodedClientEmail,
             quoteStatus: 'sent', // We'll get this from quote data later
           })
         }

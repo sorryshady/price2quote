@@ -1,9 +1,9 @@
 'use server'
 
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 import db from '@/db'
-import { emailThreads, quotes } from '@/db/schema'
+import { emailThreads } from '@/db/schema'
 import { getSession } from '@/lib/auth'
 
 export interface EmailThread {
@@ -47,7 +47,8 @@ function generateConversationId(
   companyId: string,
 ): string {
   const normalizedEmail = normalizeEmail(clientEmail)
-  return `${quoteId}-${normalizedEmail}-${companyId}`
+  // Use a separator that won't be URL-encoded and won't conflict with UUIDs
+  return `${quoteId}_${normalizedEmail}_${companyId}`
 }
 
 export async function getEmailThreadsAction(quoteId: string) {
@@ -190,20 +191,24 @@ export async function getConversationEmailsAction(conversationId: string) {
     }
 
     // Parse conversation ID to get quoteId, clientEmail, and companyId
-    const [quoteId, clientEmail, companyId] = conversationId.split('-')
+    const [quoteId, clientEmail, companyId] = conversationId.split('_')
 
     if (!quoteId || !clientEmail || !companyId) {
       return { success: false, error: 'Invalid conversation ID' }
     }
+
+    // Decode URL-encoded parts
+    const decodedClientEmail = decodeURIComponent(clientEmail)
+    const decodedCompanyId = decodeURIComponent(companyId)
 
     // Get all emails for this conversation
     const threads = await db.query.emailThreads.findMany({
       where: (emailThreads, { eq, and }) =>
         and(
           eq(emailThreads.quoteId, quoteId),
-          eq(emailThreads.companyId, companyId),
+          eq(emailThreads.companyId, decodedCompanyId),
           eq(emailThreads.userId, session.user.id),
-          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${clientEmail}))`,
+          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${decodedClientEmail}))`,
         ),
       orderBy: (emailThreads, { asc }) => [asc(emailThreads.sentAt)],
     })
@@ -258,11 +263,15 @@ export async function deleteConversationAction(conversationId: string) {
     }
 
     // Parse conversation ID
-    const [quoteId, clientEmail, companyId] = conversationId.split('-')
+    const [quoteId, clientEmail, companyId] = conversationId.split('_')
 
     if (!quoteId || !clientEmail || !companyId) {
       return { success: false, error: 'Invalid conversation ID' }
     }
+
+    // Decode URL-encoded parts
+    const decodedClientEmail = decodeURIComponent(clientEmail)
+    const decodedCompanyId = decodeURIComponent(companyId)
 
     // Delete all emails in this conversation
     await db
@@ -270,9 +279,9 @@ export async function deleteConversationAction(conversationId: string) {
       .where(
         and(
           eq(emailThreads.quoteId, quoteId),
-          eq(emailThreads.companyId, companyId),
+          eq(emailThreads.companyId, decodedCompanyId),
           eq(emailThreads.userId, session.user.id),
-          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${clientEmail}))`,
+          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${decodedClientEmail}))`,
         ),
       )
 
