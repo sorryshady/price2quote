@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import React from 'react'
 
 import { LoadingSpinner } from '@/components/ui/loading-states'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -13,23 +14,23 @@ interface ProtectedContentProps {
   children: React.ReactNode
 }
 
-export function ProtectedContent({ children }: ProtectedContentProps) {
-  const { isLoading: authLoading } = useAuth()
+function ProtectedContentComponent({ children }: ProtectedContentProps) {
+  const { isLoading: authLoading, isInitialized } = useAuth()
   const { hasCompanies, isLoading: companiesLoading } = useCompaniesQuery()
   const router = useRouter()
   const pathname = usePathname()
   const [isRedirecting, setIsRedirecting] = useState(false)
 
+  // Reset redirecting state when we reach the target route
   useEffect(() => {
-    // Reset redirecting state when we reach the target route
     if (isRedirecting && pathname === '/add-company') {
       setIsRedirecting(false)
     }
   }, [pathname, isRedirecting])
 
   useEffect(() => {
-    // Don't redirect if still loading
-    if (authLoading || companiesLoading) return
+    // Don't redirect if still loading or not initialized
+    if (authLoading || companiesLoading || !isInitialized) return
 
     // Only redirect to add-company if user has no companies and is not already there
     if (!hasCompanies && pathname !== '/add-company') {
@@ -39,10 +40,17 @@ export function ProtectedContent({ children }: ProtectedContentProps) {
     }
 
     // Don't redirect users away from add-company page - let them stay if they want to add more companies
-  }, [hasCompanies, pathname, authLoading, companiesLoading, router])
+  }, [
+    hasCompanies,
+    pathname,
+    authLoading,
+    companiesLoading,
+    isInitialized,
+    router,
+  ])
 
   // Show skeleton loading for initial auth check only
-  if (authLoading) {
+  if (authLoading || !isInitialized) {
     return (
       <div className="space-y-6 p-6">
         <Skeleton className="h-8 w-48" />
@@ -68,3 +76,7 @@ export function ProtectedContent({ children }: ProtectedContentProps) {
   // Companies loading will be handled by individual components if needed
   return <>{children}</>
 }
+
+ProtectedContentComponent.displayName = 'ProtectedContent'
+
+export const ProtectedContent = React.memo(ProtectedContentComponent)

@@ -65,8 +65,10 @@ export const useAuth = create<AuthState>()(
       },
 
       checkAuth: async () => {
+        const currentState = get()
+
         // Only show loading if we haven't initialized yet
-        if (!get().isInitialized) {
+        if (!currentState.isInitialized) {
           set({ isLoading: true })
         }
 
@@ -76,11 +78,19 @@ export const useAuth = create<AuthState>()(
             const data = await response.json()
             set({ user: data.user })
           } else {
-            set({ user: null })
+            // Only clear user if we get a 401/403, not on network errors
+            if (response.status === 401 || response.status === 403) {
+              set({ user: null })
+            }
+            // Don't clear user on other errors to prevent flickering
           }
         } catch (error) {
           console.error('Auth check error:', error)
-          set({ user: null })
+          // Don't clear user on network errors to prevent flickering
+          // Only clear if we're not initialized yet
+          if (!currentState.isInitialized) {
+            set({ user: null })
+          }
         } finally {
           set({ isLoading: false, isInitialized: true })
         }

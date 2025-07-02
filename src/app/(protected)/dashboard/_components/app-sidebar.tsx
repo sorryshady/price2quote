@@ -93,11 +93,20 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth()
+function AppSidebarComponent({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const { user, isInitialized } = useAuth()
   const { hasCompanies, isLoading } = useCompaniesQuery()
 
-  if (!user) return null
+  // Memoize navigation items to prevent unnecessary re-renders
+  const navItems = React.useMemo(
+    () => (hasCompanies ? data.navMain : data.navSetup),
+    [hasCompanies],
+  )
+
+  // Don't render if user is not available or auth not initialized
+  if (!user || !isInitialized) return null
 
   const { name, email, image, subscriptionTier } = user
 
@@ -123,7 +132,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarSkeleton />
         ) : (
           <>
-            <NavMain items={hasCompanies ? data.navMain : data.navSetup} />
+            <NavMain items={navItems} />
             <NavSecondary items={data.navSecondary} className="mt-auto" />
           </>
         )}
@@ -141,3 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   )
 }
+
+AppSidebarComponent.displayName = 'AppSidebar'
+
+export const AppSidebar = React.memo(AppSidebarComponent)
