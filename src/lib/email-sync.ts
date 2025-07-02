@@ -5,7 +5,7 @@ import { emailSyncStatus, emailThreads } from '@/db/schema'
 import {
   type GmailMessage,
   type ParsedEmail,
-  fetchRecentEmails,
+  fetchThreadMessages,
   getEmailDetails,
   markEmailAsRead,
   parseGmailMessage,
@@ -117,25 +117,36 @@ export class EmailSyncService {
         gmailConnection.expiresAt,
       )
 
-      // Fetch recent emails
-      const emails = await fetchRecentEmails(accessToken, 50, 'is:unread')
+      // Get all outbound emails for this company that we've sent
+      const outboundEmails = await db.query.emailThreads.findMany({
+        where: (emailThreads, { eq, and }) =>
+          and(
+            eq(emailThreads.companyId, companyId),
+            eq(emailThreads.direction, 'outbound'),
+          ),
+      })
 
       console.log(
-        `Found ${emails.length} unread emails for company ${companyId}`,
+        `Found ${outboundEmails.length} outbound emails to check for responses`,
       )
 
-      // Process each email
-      for (const email of emails) {
-        await this.processIncomingEmail(email, accessToken, companyId, userId)
+      // Check each outbound email's thread for new responses
+      for (const outboundEmail of outboundEmails) {
+        if (outboundEmail.gmailThreadId) {
+          await this.checkThreadForNewEmails(
+            accessToken,
+            outboundEmail.gmailThreadId,
+            companyId,
+            userId,
+          )
+        }
       }
 
-      // Update sync status with last email ID
-      if (emails.length > 0) {
-        await this.updateSyncStatus(companyId, emails[emails.length - 1].id)
-      } else {
-        // Update sync timestamp even when no emails found
-        await this.updateSyncStatus(companyId, syncStatus.lastMessageId || '')
-      }
+      // Also sync read status for outbound emails
+      await this.syncOutboundEmailReadStatus(accessToken, companyId)
+
+      // Update sync status with current timestamp
+      await this.updateSyncStatus(companyId, new Date().toISOString())
     } catch (error) {
       console.error(`Error syncing company ${companyId}:`, error)
       throw error
@@ -181,7 +192,12 @@ export class EmailSyncService {
         await this.updateQuoteStatusFromEmail(parsedEmail, matchResult.quoteId)
 
         // Mark email as read in Gmail
-        await markEmailAsRead(accessToken, email.id)
+        try {
+          await markEmailAsRead(accessToken, email.id)
+        } catch (error) {
+          console.warn(`Could not mark email as read in Gmail: ${error}`)
+          // Continue processing even if marking as read fails
+        }
 
         console.log(
           `Successfully processed email for quote: ${matchResult.quoteId}`,
@@ -199,12 +215,15 @@ export class EmailSyncService {
     email: ParsedEmail,
     companyId: string,
   ): Promise<EmailMatchResult> {
+    console.log(`Matching email "${email.subject}" from ${email.fromEmail}`)
+
     // Strategy 1: Thread ID matching (most reliable)
     const threadMatch = await this.findQuoteByThreadId(
       email.threadId,
       companyId,
     )
     if (threadMatch) {
+      console.log(`Found thread match: ${threadMatch}`)
       return {
         quoteId: threadMatch,
         confidence: 'high',
@@ -216,6 +235,7 @@ export class EmailSyncService {
     // Strategy 2: Subject line matching with quote ID
     const subjectMatch = await this.findQuoteBySubject(email.subject, companyId)
     if (subjectMatch) {
+      console.log(`Found subject match: ${subjectMatch}`)
       return {
         quoteId: subjectMatch,
         confidence: 'high',
@@ -224,12 +244,13 @@ export class EmailSyncService {
       }
     }
 
-    // Strategy 3: Client email matching
+    // Strategy 3: Client email matching (most common for replies)
     const clientMatch = await this.findQuoteByClientEmail(
       email.fromEmail,
       companyId,
     )
     if (clientMatch) {
+      console.log(`Found client email match: ${clientMatch}`)
       return {
         quoteId: clientMatch,
         confidence: 'medium',
@@ -241,6 +262,7 @@ export class EmailSyncService {
     // Strategy 4: Quote reference in email body
     const bodyMatch = await this.findQuoteByBodyContent(email.body, companyId)
     if (bodyMatch) {
+      console.log(`Found body match: ${bodyMatch}`)
       return {
         quoteId: bodyMatch,
         confidence: 'low',
@@ -249,6 +271,7 @@ export class EmailSyncService {
       }
     }
 
+    console.log(`No match found for email from ${email.fromEmail}`)
     return {
       quoteId: null,
       confidence: 'low',
@@ -278,6 +301,61 @@ export class EmailSyncService {
       return false
     }
 
+    // Skip promotional/marketing emails from known services
+    const promotionalDomains = [
+      'duolingo.com',
+      'spotify.com',
+      'netflix.com',
+      'amazon.com',
+      'ebay.com',
+      'linkedin.com',
+      'facebook.com',
+      'twitter.com',
+      'instagram.com',
+      'youtube.com',
+      'google.com',
+      'microsoft.com',
+      'apple.com',
+      'salesforce.com',
+      'hubspot.com',
+      'mailchimp.com',
+      'constantcontact.com',
+      'sendgrid.com',
+      'stripe.com',
+      'paypal.com',
+    ]
+
+    const fromDomain = email.fromEmail.split('@')[1]?.toLowerCase()
+    if (fromDomain && promotionalDomains.includes(fromDomain)) {
+      console.log(`Skipping promotional email from ${fromDomain}`)
+      return false
+    }
+
+    // Skip emails with promotional keywords in subject
+    const promotionalKeywords = [
+      'newsletter',
+      'promotion',
+      'offer',
+      'discount',
+      'sale',
+      'marketing',
+      'advertisement',
+      'sponsored',
+      'unsubscribe',
+      'confirm your email',
+      'verify your email',
+      'welcome to',
+      'your account',
+      'password reset',
+      'security alert',
+    ]
+
+    const subjectLower = email.subject.toLowerCase()
+    if (promotionalKeywords.some((keyword) => subjectLower.includes(keyword))) {
+      console.log(`Skipping promotional email with subject: ${email.subject}`)
+      return false
+    }
+
     return true
   }
 
@@ -295,6 +373,8 @@ export class EmailSyncService {
     threadId: string,
     companyId: string,
   ): Promise<string | null> {
+    console.log(`Looking for existing thread: ${threadId}`)
+
     const existingThread = await db.query.emailThreads.findFirst({
       where: (emailThreads, { eq, and }) =>
         and(
@@ -303,7 +383,29 @@ export class EmailSyncService {
         ),
     })
 
-    return existingThread?.quoteId || null
+    if (existingThread) {
+      console.log(`Found existing thread for quote: ${existingThread.quoteId}`)
+
+      // Validate that this quote still exists and belongs to the company
+      const quote = await db.query.quotes.findFirst({
+        where: (quotes, { eq, and }) =>
+          and(
+            eq(quotes.id, existingThread.quoteId),
+            eq(quotes.companyId, companyId),
+          ),
+      })
+
+      if (quote) {
+        return existingThread.quoteId
+      } else {
+        console.log(
+          `Quote ${existingThread.quoteId} no longer exists, ignoring thread match`,
+        )
+        return null
+      }
+    }
+
+    return null
   }
 
   private async findQuoteBySubject(
@@ -328,13 +430,49 @@ export class EmailSyncService {
     fromEmail: string,
     companyId: string,
   ): Promise<string | null> {
-    const quote = await db.query.quotes.findFirst({
-      where: (quotes, { eq, and }) =>
-        and(eq(quotes.clientEmail, fromEmail), eq(quotes.companyId, companyId)),
+    console.log(`Looking for quotes with client email: ${fromEmail}`)
+
+    // Get all quotes for this company
+    const quotes = await db.query.quotes.findMany({
+      where: (quotes, { eq, and }) => and(eq(quotes.companyId, companyId)),
       orderBy: (quotes, { desc }) => [desc(quotes.createdAt)],
     })
 
-    return quote?.id || null
+    console.log(`Found ${quotes.length} quotes for company ${companyId}`)
+
+    // Look for exact match first
+    const exactMatch = quotes.find(
+      (quote) => quote.clientEmail?.toLowerCase() === fromEmail.toLowerCase(),
+    )
+
+    if (exactMatch) {
+      console.log(`Found exact client email match: ${exactMatch.id}`)
+      return exactMatch.id
+    }
+
+    // Look for partial match (domain match)
+    const fromDomain = fromEmail.split('@')[1]?.toLowerCase()
+    if (fromDomain) {
+      const domainMatch = quotes.find((quote) =>
+        quote.clientEmail?.toLowerCase().includes(fromDomain),
+      )
+
+      if (domainMatch) {
+        console.log(
+          `Found domain match: ${domainMatch.id} (${domainMatch.clientEmail})`,
+        )
+        return domainMatch.id
+      }
+    }
+
+    // Look for most recent quote as fallback
+    if (quotes.length > 0) {
+      console.log(`Using most recent quote as fallback: ${quotes[0].id}`)
+      return quotes[0].id
+    }
+
+    console.log(`No client email match found`)
+    return null
   }
 
   private async findQuoteByBodyContent(
@@ -382,6 +520,58 @@ export class EmailSyncService {
     })
   }
 
+  // Sync read status for outbound emails
+  async syncOutboundEmailReadStatus(
+    accessToken: string,
+    companyId: string,
+  ): Promise<void> {
+    try {
+      console.log('Syncing outbound email read status...')
+
+      // Get all outbound emails for this company
+      const outboundEmails = await db.query.emailThreads.findMany({
+        where: (emailThreads, { eq, and }) =>
+          and(
+            eq(emailThreads.companyId, companyId),
+            eq(emailThreads.direction, 'outbound'),
+            eq(emailThreads.isRead, false), // Only check unread emails
+          ),
+      })
+
+      console.log(`Found ${outboundEmails.length} outbound emails to check`)
+
+      for (const email of outboundEmails) {
+        try {
+          // Get email details from Gmail to check read status
+          const emailDetails = await getEmailDetails(
+            accessToken,
+            email.gmailMessageId,
+          )
+
+          // Check if email has been read (has 'UNREAD' label removed)
+          const isRead = !emailDetails.labelIds.includes('UNREAD')
+
+          if (isRead && !email.isRead) {
+            console.log(
+              `Marking outbound email ${email.gmailMessageId} as read`,
+            )
+            await db
+              .update(emailThreads)
+              .set({ isRead: true })
+              .where(eq(emailThreads.id, email.id))
+          }
+        } catch (error) {
+          console.error(
+            `Error checking read status for email ${email.gmailMessageId}:`,
+            error,
+          )
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing outbound email read status:', error)
+    }
+  }
+
   private async updateSyncStatus(
     companyId: string,
     lastMessageId: string,
@@ -393,5 +583,54 @@ export class EmailSyncService {
         lastMessageId,
       })
       .where(eq(emailSyncStatus.companyId, companyId))
+  }
+
+  private async checkThreadForNewEmails(
+    accessToken: string,
+    threadId: string,
+    companyId: string,
+    userId: string,
+  ): Promise<void> {
+    try {
+      console.log(`Checking thread ${threadId} for new emails`)
+
+      // Get all messages in the thread
+      const threadMessages = await fetchThreadMessages(accessToken, threadId)
+      console.log(
+        `Found ${threadMessages.length} messages in thread ${threadId}`,
+      )
+
+      // Get existing emails for this thread from our database
+      const existingEmails = await db.query.emailThreads.findMany({
+        where: (emailThreads, { eq, and }) =>
+          and(
+            eq(emailThreads.gmailThreadId, threadId),
+            eq(emailThreads.companyId, companyId),
+          ),
+      })
+
+      const existingMessageIds = new Set(
+        existingEmails.map((e) => e.gmailMessageId),
+      )
+      console.log(
+        `Already have ${existingMessageIds.size} emails from this thread`,
+      )
+
+      // Find new messages that we haven't processed yet
+      const newMessages = threadMessages.filter(
+        (msg) => !existingMessageIds.has(msg.id),
+      )
+      console.log(
+        `Found ${newMessages.length} new messages in thread ${threadId}`,
+      )
+
+      // Process only the new messages
+      for (const message of newMessages) {
+        await this.processIncomingEmail(message, accessToken, companyId, userId)
+      }
+    } catch (error) {
+      console.error(`Error checking thread ${threadId} for new emails:`, error)
+      // Don't throw error to avoid stopping other threads
+    }
   }
 }

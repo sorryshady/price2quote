@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip'
 import { UnreadEmailBadge } from '@/components/ui/unread-email-badge'
 
+import { markEmailAsReadAction } from '@/app/server-actions/email-sync'
 import {
   type EmailThread,
   getConversationEmailsAction,
@@ -56,6 +57,16 @@ export default function ConversationDetailPage() {
       const result = await getConversationEmailsAction(conversationId)
       if (result.success && result.emails) {
         setEmails(result.emails)
+
+        // Mark unread emails as read when conversation is opened
+        const unreadEmails = result.emails.filter((email) => !email.isRead)
+        for (const email of unreadEmails) {
+          try {
+            await markEmailAsReadAction(email.gmailMessageId)
+          } catch (error) {
+            console.error('Error marking email as read:', error)
+          }
+        }
 
         // Extract conversation info from conversation ID
         if (result.emails.length > 0) {
