@@ -6,6 +6,6 @@ Generated AI Summary: Ernyg, initially established as a creative web development
 
 
 
-UI ensure quotes cards always remain identical irresepctive of size.
+
 
 email id and quote id, if same will come under same thread. any one changes will result in a new thread

@@ -1,13 +1,15 @@
 'use server'
 
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 
 import db from '@/db'
-import { emailThreads } from '@/db/schema'
+import { emailThreads, quotes } from '@/db/schema'
 import { getSession } from '@/lib/auth'
 
 export interface EmailThread {
   id: string
+  quoteId: string
+  companyId: string
   gmailMessageId: string
   gmailThreadId: string | null
   to: string
@@ -19,6 +21,33 @@ export interface EmailThread {
   includeQuotePdf: boolean | null
   sentAt: Date
   createdAt: Date
+}
+
+export interface ConversationGroup {
+  conversationId: string
+  quoteId: string
+  clientEmail: string
+  clientName: string | null
+  projectTitle: string | null
+  quoteStatus: string | null
+  totalEmails: number
+  lastEmailAt: Date
+  emails: EmailThread[]
+}
+
+// Helper function to normalize email addresses
+function normalizeEmail(email: string): string {
+  return email.toLowerCase().trim()
+}
+
+// Generate conversation ID based on grouping criteria
+function generateConversationId(
+  quoteId: string,
+  clientEmail: string,
+  companyId: string,
+): string {
+  const normalizedEmail = normalizeEmail(clientEmail)
+  return `${quoteId}-${normalizedEmail}-${companyId}`
 }
 
 export async function getEmailThreadsAction(quoteId: string) {
@@ -57,26 +86,138 @@ export async function getEmailThreadsByCompanyAction(companyId: string) {
       return { success: false, error: 'Unauthorized' }
     }
 
-    // Simple query to get email threads
+    // Get all email threads for the company
     const threads = await db.query.emailThreads.findMany({
       where: (emailThreads, { eq, and }) =>
         and(
           eq(emailThreads.companyId, companyId),
           eq(emailThreads.userId, session.user.id),
         ),
+      orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
     })
 
-    // Parse attachments JSON
+    // Get unique quote IDs to fetch quote data
+    const quoteIds = [...new Set(threads.map((thread) => thread.quoteId))]
+
+    // Fetch quote data for all threads
+    const quotes = await db.query.quotes.findMany({
+      where: (quotes, { inArray }) => inArray(quotes.id, quoteIds),
+      columns: {
+        id: true,
+        projectTitle: true,
+        clientName: true,
+        clientEmail: true,
+        status: true,
+      },
+    })
+
+    // Create a map of quote data
+    const quoteMap = new Map(quotes.map((quote) => [quote.id, quote]))
+
+    // Parse attachments JSON and add quote data
     const parsedThreads = threads.map((thread) => ({
       ...thread,
-      quote: null, // We'll add quote data later if needed
+      quote: quoteMap.get(thread.quoteId) || undefined,
       attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
     }))
 
-    return { success: true, threads: parsedThreads }
+    // Group threads into conversations
+    const conversations = groupThreadsIntoConversations(parsedThreads)
+
+    return { success: true, conversations }
   } catch (error) {
     console.error('Error fetching email threads by company:', error)
     return { success: false, error: 'Failed to fetch email threads' }
+  }
+}
+
+// Group email threads into conversations
+function groupThreadsIntoConversations(
+  threads: Array<
+    EmailThread & {
+      quote?: {
+        clientName?: string | null
+        projectTitle?: string | null
+        status?: string | null
+      }
+    }
+  >,
+): ConversationGroup[] {
+  const conversationMap = new Map<string, ConversationGroup>()
+
+  for (const thread of threads) {
+    const conversationId = generateConversationId(
+      thread.quoteId,
+      thread.to,
+      thread.companyId,
+    )
+
+    if (!conversationMap.has(conversationId)) {
+      conversationMap.set(conversationId, {
+        conversationId,
+        quoteId: thread.quoteId,
+        clientEmail: thread.to,
+        clientName: thread.quote?.clientName || null,
+        projectTitle: thread.quote?.projectTitle || null,
+        quoteStatus: thread.quote?.status || null,
+        totalEmails: 0,
+        lastEmailAt: thread.sentAt,
+        emails: [],
+      })
+    }
+
+    const conversation = conversationMap.get(conversationId)!
+    conversation.emails.push(thread)
+    conversation.totalEmails += 1
+
+    // Update last email date
+    if (thread.sentAt > conversation.lastEmailAt) {
+      conversation.lastEmailAt = thread.sentAt
+    }
+  }
+
+  // Sort conversations by last email date (newest first)
+  return Array.from(conversationMap.values()).sort(
+    (a, b) => b.lastEmailAt.getTime() - a.lastEmailAt.getTime(),
+  )
+}
+
+export async function getConversationEmailsAction(conversationId: string) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Parse conversation ID to get quoteId, clientEmail, and companyId
+    const [quoteId, clientEmail, companyId] = conversationId.split('-')
+
+    if (!quoteId || !clientEmail || !companyId) {
+      return { success: false, error: 'Invalid conversation ID' }
+    }
+
+    // Get all emails for this conversation
+    const threads = await db.query.emailThreads.findMany({
+      where: (emailThreads, { eq, and }) =>
+        and(
+          eq(emailThreads.quoteId, quoteId),
+          eq(emailThreads.companyId, companyId),
+          eq(emailThreads.userId, session.user.id),
+          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${clientEmail}))`,
+        ),
+      orderBy: (emailThreads, { asc }) => [asc(emailThreads.sentAt)],
+    })
+
+    // Parse attachments JSON
+    const parsedThreads: EmailThread[] = threads.map((thread) => ({
+      ...thread,
+      attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
+    }))
+
+    return { success: true, emails: parsedThreads }
+  } catch (error) {
+    console.error('Error fetching conversation emails:', error)
+    return { success: false, error: 'Failed to fetch conversation emails' }
   }
 }
 
@@ -109,6 +250,39 @@ export async function deleteEmailThreadAction(threadId: string) {
   }
 }
 
+export async function deleteConversationAction(conversationId: string) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Parse conversation ID
+    const [quoteId, clientEmail, companyId] = conversationId.split('-')
+
+    if (!quoteId || !clientEmail || !companyId) {
+      return { success: false, error: 'Invalid conversation ID' }
+    }
+
+    // Delete all emails in this conversation
+    await db
+      .delete(emailThreads)
+      .where(
+        and(
+          eq(emailThreads.quoteId, quoteId),
+          eq(emailThreads.companyId, companyId),
+          eq(emailThreads.userId, session.user.id),
+          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${clientEmail}))`,
+        ),
+      )
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting conversation:', error)
+    return { success: false, error: 'Failed to delete conversation' }
+  }
+}
+
 export async function getExistingThreadForQuoteAction(
   quoteId: string,
   clientEmail: string,
@@ -124,7 +298,7 @@ export async function getExistingThreadForQuoteAction(
         and(
           eq(emailThreads.quoteId, quoteId),
           eq(emailThreads.userId, session.user.id),
-          eq(emailThreads.to, clientEmail),
+          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${clientEmail}))`,
         ),
       orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
     })

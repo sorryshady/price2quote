@@ -1,8 +1,16 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { Mail, Search, Trash2 } from 'lucide-react'
+import {
+  Calendar,
+  Eye,
+  Mail,
+  MessageSquare,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { Badge } from '@/components/ui/badge'
@@ -12,26 +20,17 @@ import { CustomToast } from '@/components/ui/custom-toast'
 import { Input } from '@/components/ui/input'
 
 import {
-  type EmailThread,
-  deleteEmailThreadAction,
+  type ConversationGroup,
+  deleteConversationAction,
   getEmailThreadsByCompanyAction,
 } from '@/app/server-actions/email-threads'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
-interface EmailThreadWithQuote extends EmailThread {
-  quote?: {
-    id: string
-    projectTitle: string
-    clientName: string | null
-    clientEmail: string | null
-    status: string
-  } | null
-}
-
 export default function ConversationsPage() {
+  const router = useRouter()
   const { companies, isLoading, error } = useCompaniesQuery()
-  const [threads, setThreads] = useState<EmailThreadWithQuote[]>([])
-  const [isLoadingThreads, setIsLoadingThreads] = useState(false)
+  const [conversations, setConversations] = useState<ConversationGroup[]>([])
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null,
@@ -43,16 +42,16 @@ export default function ConversationsPage() {
 
   useEffect(() => {
     if (currentCompanyId) {
-      loadEmailThreads(currentCompanyId)
+      loadConversations(currentCompanyId)
     }
   }, [currentCompanyId])
 
-  const loadEmailThreads = async (companyId: string) => {
-    setIsLoadingThreads(true)
+  const loadConversations = async (companyId: string) => {
+    setIsLoadingConversations(true)
     try {
       const result = await getEmailThreadsByCompanyAction(companyId)
-      if (result.success && result.threads) {
-        setThreads(result.threads as unknown as EmailThreadWithQuote[])
+      if (result.success && result.conversations) {
+        setConversations(result.conversations)
       } else {
         toast.custom(
           <CustomToast
@@ -62,20 +61,22 @@ export default function ConversationsPage() {
         )
       }
     } catch (error) {
-      console.error('Error loading email threads:', error)
+      console.error('Error loading conversations:', error)
       toast.custom(
         <CustomToast message="Failed to load conversations" type="error" />,
       )
     } finally {
-      setIsLoadingThreads(false)
+      setIsLoadingConversations(false)
     }
   }
 
-  const handleDeleteThread = async (threadId: string) => {
+  const handleDeleteConversation = async (conversationId: string) => {
     try {
-      const result = await deleteEmailThreadAction(threadId)
+      const result = await deleteConversationAction(conversationId)
       if (result.success) {
-        setThreads((prev) => prev.filter((thread) => thread.id !== threadId))
+        setConversations((prev) =>
+          prev.filter((conv) => conv.conversationId !== conversationId),
+        )
         toast.custom(
           <CustomToast message="Conversation deleted" type="success" />,
         )
@@ -88,32 +89,43 @@ export default function ConversationsPage() {
         )
       }
     } catch (error) {
-      console.error('Error deleting thread:', error)
+      console.error('Error deleting conversation:', error)
       toast.custom(
         <CustomToast message="Failed to delete conversation" type="error" />,
       )
     }
   }
 
-  const filteredThreads = threads.filter((thread) => {
+  const filteredConversations = conversations.filter((conversation) => {
     const searchLower = searchQuery.toLowerCase()
     return (
-      thread.subject.toLowerCase().includes(searchLower) ||
-      thread.to.toLowerCase().includes(searchLower) ||
-      thread.quote?.projectTitle.toLowerCase().includes(searchLower) ||
-      thread.quote?.clientName?.toLowerCase().includes(searchLower) ||
-      thread.quote?.clientEmail?.toLowerCase().includes(searchLower)
+      conversation.projectTitle?.toLowerCase().includes(searchLower) ||
+      conversation.clientName?.toLowerCase().includes(searchLower) ||
+      conversation.clientEmail.toLowerCase().includes(searchLower) ||
+      conversation.quoteStatus?.toLowerCase().includes(searchLower)
     )
   })
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+  const formatRelativeDate = (date: Date) => {
+    const now = new Date()
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
+    if (diffInHours < 24) {
+      return new Date(date).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } else if (diffInHours < 168) {
+      // 7 days
+      return new Date(date).toLocaleDateString('en-US', {
+        weekday: 'short',
+      })
+    } else {
+      return new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
+    }
   }
 
   if (isLoading) {
@@ -182,7 +194,7 @@ export default function ConversationsPage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold sm:text-3xl">Conversations</h1>
         <p className="text-muted-foreground">
-          View and manage your email conversations
+          View and manage your email conversations with clients
         </p>
       </div>
 
@@ -191,7 +203,7 @@ export default function ConversationsPage() {
         <div className="relative">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
-            placeholder="Search conversations by subject, client, or project..."
+            placeholder="Search conversations by project, client, or status..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -218,17 +230,17 @@ export default function ConversationsPage() {
       </div>
 
       {/* Conversations List */}
-      {isLoadingThreads ? (
+      {isLoadingConversations ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="bg-muted h-48 animate-pulse rounded" />
           ))}
         </div>
-      ) : filteredThreads.length === 0 ? (
+      ) : filteredConversations.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <Mail className="text-muted-foreground mx-auto h-12 w-12" />
+              <MessageSquare className="text-muted-foreground mx-auto h-12 w-12" />
               <h3 className="mt-4 text-lg font-semibold">
                 No conversations yet
               </h3>
@@ -242,74 +254,96 @@ export default function ConversationsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredThreads.map((thread) => (
-            <Card key={thread.id} className="transition-shadow hover:shadow-lg">
+          {filteredConversations.map((conversation) => (
+            <Card
+              key={conversation.conversationId}
+              className="transition-shadow hover:shadow-lg"
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
                     <CardTitle className="truncate text-base">
-                      {thread.subject}
+                      {conversation.projectTitle || 'Untitled Project'}
                     </CardTitle>
                     <p className="text-muted-foreground truncate text-sm">
-                      To: {thread.to}
+                      {conversation.clientName || conversation.clientEmail}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteThread(thread.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        router.push(
+                          `/conversations/${conversation.conversationId}`,
+                        )
+                      }
+                      className="hover:text-primary"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        handleDeleteConversation(conversation.conversationId)
+                      }
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* Quote Info */}
-                {thread.quote && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        {thread.quote.projectTitle}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {thread.quote.status}
-                      </Badge>
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      Client:{' '}
-                      {thread.quote.clientName || thread.quote.clientEmail}
+                {/* Conversation Stats */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mail className="text-muted-foreground h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      {conversation.totalEmails} email
+                      {conversation.totalEmails !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {conversation.quoteStatus || 'draft'}
+                  </Badge>
+                </div>
+
+                {/* Latest Email Preview */}
+                {conversation.emails.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground line-clamp-2 text-sm">
+                      {
+                        conversation.emails[conversation.emails.length - 1]
+                          .subject
+                      }
+                    </p>
+                    <p className="text-muted-foreground line-clamp-2 text-xs">
+                      {conversation.emails[conversation.emails.length - 1].body}
                     </p>
                   </div>
                 )}
 
-                {/* Email Preview */}
-                <div className="space-y-1">
-                  <p className="text-muted-foreground line-clamp-3 text-sm">
-                    {thread.body}
-                  </p>
-                </div>
-
-                {/* Attachments */}
-                {thread.attachments && thread.attachments.length > 0 && (
+                {/* Attachments Info */}
+                {conversation.emails.some(
+                  (email) => email.attachments && email.attachments.length > 0,
+                ) && (
                   <div className="flex items-center gap-1">
                     <Mail className="text-muted-foreground h-3 w-3" />
                     <span className="text-muted-foreground text-xs">
-                      {thread.attachments.length} attachment
-                      {thread.attachments.length !== 1 ? 's' : ''}
+                      Has attachments
                     </span>
-                    {thread.includeQuotePdf && (
-                      <Badge variant="secondary" className="text-xs">
-                        Quote PDF
-                      </Badge>
-                    )}
                   </div>
                 )}
 
                 {/* Date */}
-                <p className="text-muted-foreground text-xs">
-                  Sent: {formatDate(thread.sentAt)}
-                </p>
+                <div className="flex items-center gap-1">
+                  <Calendar className="text-muted-foreground h-3 w-3" />
+                  <p className="text-muted-foreground text-xs">
+                    Last: {formatRelativeDate(conversation.lastEmailAt)}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ))}
