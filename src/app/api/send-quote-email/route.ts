@@ -36,15 +36,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the quote data
+    // Get quote data
     const quoteData = await db.query.quotes.findFirst({
       where: (quotes, { eq }) => eq(quotes.id, quoteId),
-      with: {
-        company: true,
-      },
     })
 
     if (!quoteData) {
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+    }
+
+    // Get company data separately
+    const companyData = await db.query.companies.findFirst({
+      where: (companies, { eq }) => eq(companies.id, quoteData.companyId),
+    })
+
+    // Combine quote and company data
+    const quoteWithCompany = {
+      ...quoteData,
+      company: companyData,
     }
 
     // Check if user owns this quote
@@ -75,7 +84,7 @@ export async function POST(req: NextRequest) {
     // Generate quote PDF if requested
     if (includeQuotePdf) {
       try {
-        const quotePdfBlob = await generateQuotePDF(quoteData as Quote)
+        const quotePdfBlob = await generateQuotePDF(quoteWithCompany as Quote)
         const quotePdfBuffer = Buffer.from(await quotePdfBlob.arrayBuffer())
         attachments.push({
           filename: `${quoteData.projectTitle} - Quote.pdf`,
