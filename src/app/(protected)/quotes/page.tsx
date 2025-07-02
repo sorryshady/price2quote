@@ -3,8 +3,30 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
-import { Check, Eye, File, FileDown, Mail, RefreshCcw, X } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  Check,
+  Eye,
+  File,
+  FileDown,
+  Mail,
+  RefreshCcw,
+  Trash2,
+  X,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { CustomToast } from '@/components/ui/custom-toast'
 import { QuotesSkeleton } from '@/components/ui/loading-states'
 import { QuotePreview } from '@/components/ui/quote-preview'
 import {
@@ -25,6 +48,7 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 
+import { deleteQuoteAction } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
@@ -109,6 +133,7 @@ function formatCurrency(amount: string | null, currency: string) {
 
 export default function QuotesPage() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const {
     currentQuotes,
     upgradeMessage,
@@ -118,12 +143,14 @@ export default function QuotesPage() {
     data: quotesData,
     isLoading: quotesLoading,
     error,
+    refetch: refetchQuotes,
   } = useQuotesQuery(user?.id || '')
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
   const [selectedQuote, setSelectedQuote] = useState<(typeof quotes)[0] | null>(
     null,
   )
   const [showQuotePreview, setShowQuotePreview] = useState(false)
+  const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null)
 
   const quotes = quotesData?.quotes || []
   const filteredQuotes =
@@ -142,6 +169,41 @@ export default function QuotesPage() {
     // TODO: Implement PDF download
     console.log('Download quote:', quote.id)
     // This would generate and download a PDF
+  }
+
+  const handleDeleteQuote = async (quoteId: string) => {
+    if (!user?.id) return
+
+    setDeletingQuoteId(quoteId)
+
+    try {
+      const result = await deleteQuoteAction(quoteId, user.id)
+
+      if (result.success) {
+        toast.custom(
+          <CustomToast message="Quote deleted successfully" type="success" />,
+        )
+        // Invalidate quote limit cache and refetch quotes
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['quote-limit', user.id] }),
+          refetchQuotes(),
+        ])
+      } else {
+        toast.custom(
+          <CustomToast
+            message={result.error || 'Failed to delete quote'}
+            type="error"
+          />,
+        )
+      }
+    } catch (error) {
+      console.error('Error deleting quote:', error)
+      toast.custom(
+        <CustomToast message="Failed to delete quote" type="error" />,
+      )
+    } finally {
+      setDeletingQuoteId(null)
+    }
   }
 
   const handleClosePreview = () => {
@@ -374,6 +436,44 @@ export default function QuotesPage() {
                       >
                         <FileDown className="h-4 w-4" /> Download PDF
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        title="Edit functionality coming soon"
+                      >
+                        <File className="h-4 w-4" /> Edit
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={deletingQuoteId === quote.id}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete &ldquo;
+                              {quote.projectTitle}&rdquo;? This action cannot be
+                              undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteQuote(quote.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete Quote
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>

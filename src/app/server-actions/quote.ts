@@ -466,3 +466,45 @@ export async function negotiatePriceAction(data: {
     }
   }
 }
+
+export async function deleteQuoteAction(quoteId: string, userId: string) {
+  try {
+    // First, verify the quote belongs to the user
+    const quote = await db.query.quotes.findFirst({
+      where: eq(quotes.id, quoteId),
+    })
+
+    if (!quote) {
+      return {
+        success: false,
+        error: 'Quote not found',
+      }
+    }
+
+    if (quote.userId !== userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to delete this quote',
+      }
+    }
+
+    // Delete quote services first (due to foreign key constraints)
+    await db.delete(quoteServices).where(eq(quoteServices.quoteId, quoteId))
+
+    // Delete the quote
+    await db.delete(quotes).where(eq(quotes.id, quoteId))
+
+    revalidatePath('/dashboard')
+    revalidatePath('/quotes')
+
+    return {
+      success: true,
+    }
+  } catch (error) {
+    console.error('Error deleting quote:', error)
+    return {
+      success: false,
+      error: 'Failed to delete quote',
+    }
+  }
+}

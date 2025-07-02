@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+'use client'
 
 import { Badge } from '@/components/ui/badge'
 import {
@@ -7,32 +7,28 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 
-import { getUser } from '@/lib/auth'
-import { getCurrentMonthQuotes } from '@/lib/subscription'
+import { useAuth } from '@/hooks/use-auth'
+import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 
 import { ProtectedContent } from './_components/protected-content'
 import { AppSidebar } from './dashboard/_components/app-sidebar'
 
-export default async function ProtectedLayout({
+export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const user = await getUser()
-  if (!user) redirect('/login')
+  const { user } = useAuth()
+  const { currentQuotes } = useQuoteLimit()
+
+  // Don't render if user is not available
+  if (!user) return null
 
   // Get quote usage for free users
-  let quoteUsage = null
-  try {
-    if (user.subscriptionTier === 'free') {
-      const currentQuotes = await getCurrentMonthQuotes(user.id)
-      quoteUsage = { current: currentQuotes, max: 3 }
-    }
-  } catch (error) {
-    console.error('Error fetching quote usage:', error)
-    // Fallback to showing no usage if there's an error
-    quoteUsage = { current: 0, max: 3 }
-  }
+  const quoteUsage =
+    user.subscriptionTier === 'free'
+      ? { current: currentQuotes || 0, max: 3 }
+      : null
 
   return (
     <SidebarProvider>

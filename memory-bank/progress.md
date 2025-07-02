@@ -241,6 +241,18 @@
   - useCallback optimization to prevent stale closure issues
   - Reliable negotiation system with proper price updates
 
+- **NEW: Quote Management Actions:**
+
+  - Delete quote functionality with confirmation dialog
+  - Proper cleanup of related quote services data
+  - User authorization checks for quote deletion
+  - Toast notifications for success/error feedback
+  - Placeholder edit button for future implementation
+  - Optimistic UI updates with TanStack Query refetch
+  - **NEW: Real-time quote count updates across all components**
+  - **NEW: Converted layout to client component for live updates**
+  - **NEW: TanStack Query cache invalidation for immediate UI sync**
+
 ## In Progress 🚧
 
 ### PDF Export
