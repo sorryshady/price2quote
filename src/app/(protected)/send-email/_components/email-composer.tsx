@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { Edit3, RotateCcw, Send, Wand2 } from 'lucide-react'
+import { Edit3, Paperclip, RotateCcw, Send, Wand2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { Badge } from '@/components/ui/badge'
@@ -30,9 +30,21 @@ interface EmailComposerProps {
 
 export interface EmailData {
   to: string
+  cc?: string
+  bcc?: string
   subject: string
   body: string
   quoteId: string
+  attachments: File[]
+  includeQuotePdf: boolean
+}
+
+interface AttachmentFile {
+  file: File
+  id: string
+  name: string
+  size: string
+  type: string
 }
 
 const emailTemplates = {
@@ -139,6 +151,15 @@ Best regards,
   },
 }
 
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
 export function EmailComposer({
   selectedQuote,
   companyName = 'Your Company',
@@ -152,12 +173,17 @@ export function EmailComposer({
 }: EmailComposerProps) {
   const [emailData, setEmailData] = useState<EmailData>({
     to: '',
+    cc: '',
+    bcc: '',
     subject: '',
     body: '',
     quoteId: '',
+    attachments: [],
+    includeQuotePdf: false,
   })
   const [isGenerating, setIsGenerating] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([])
 
   // Update email data when quote changes
   useEffect(() => {
@@ -188,7 +214,7 @@ export function EmailComposer({
         '{revisionNotes}': 'Updated scope and pricing based on your feedback',
         '{contactMethod}': companyPhone
           ? `I'm available for a call to walk through the details or address any concerns you might have. Feel free to reach out to me at ${companyPhone}.`
-          : '',
+          : `Please feel free to reach out via email if you have any questions or would like to discuss any aspects of the proposal.`,
       }
 
       let subject = template.subject
@@ -201,12 +227,17 @@ export function EmailComposer({
 
       setEmailData({
         to: selectedQuote.clientEmail || '',
+        cc: '',
+        bcc: '',
         subject,
         body,
         quoteId: selectedQuote.id,
+        attachments: [],
+        includeQuotePdf: false,
       })
+      setAttachments([])
     }
-  }, [selectedQuote, companyName])
+  }, [selectedQuote, companyName, companyPhone])
 
   const handleGenerateAI = async () => {
     if (!selectedQuote) return
@@ -264,7 +295,16 @@ export function EmailComposer({
       return
     }
 
-    await onSendEmail(emailData)
+    // Combine attachments and quote PDF if selected
+    const allAttachments = [...attachments.map((a) => a.file)]
+    if (emailData.includeQuotePdf) {
+      // The quote PDF will be generated on the server side
+    }
+
+    await onSendEmail({
+      ...emailData,
+      attachments: allAttachments,
+    })
   }
 
   const handleReset = () => {
@@ -295,8 +335,8 @@ export function EmailComposer({
         '{companyName}': companyName,
         '{revisionNotes}': 'Updated scope and pricing based on your feedback',
         '{contactMethod}': companyPhone
-          ? `I'm available for a call to walk through the details or address any concerns you might have.`
-          : '',
+          ? `I'm available for a call to walk through the details or address any concerns you might have. Feel free to reach out to me at ${companyPhone}.`
+          : `Please feel free to reach out via email if you have any questions or would like to discuss any aspects of the proposal.`,
       }
 
       let subject = template.subject
@@ -309,11 +349,69 @@ export function EmailComposer({
 
       setEmailData({
         to: selectedQuote.clientEmail || '',
+        cc: '',
+        bcc: '',
         subject,
         body,
         quoteId: selectedQuote.id,
+        attachments: [],
+        includeQuotePdf: false,
       })
+      setAttachments([])
     }
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+
+    files.forEach((file) => {
+      // Validate file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        toast.custom(
+          <CustomToast
+            message={`${file.name} is not a supported file type. Please upload PDF, TXT, or Word documents.`}
+            type="error"
+          />,
+        )
+        return
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast.custom(
+          <CustomToast
+            message={`${file.name} is too large. Maximum file size is 5MB.`}
+            type="error"
+          />,
+        )
+        return
+      }
+
+      const attachment: AttachmentFile = {
+        file,
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        size: formatFileSize(file.size),
+        type: file.type,
+      }
+
+      setAttachments((prev) => [...prev, attachment])
+    })
+
+    // Reset input
+    event.target.value = ''
+  }
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id))
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
   }
 
   if (!selectedQuote) {
@@ -383,6 +481,36 @@ export function EmailComposer({
           />
         </div>
 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="cc">CC (optional)</Label>
+            <Input
+              id="cc"
+              type="email"
+              value={emailData.cc}
+              onChange={(e) =>
+                setEmailData((prev) => ({ ...prev, cc: e.target.value }))
+              }
+              placeholder="cc@example.com"
+              disabled={!isEditing}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bcc">BCC (optional)</Label>
+            <Input
+              id="bcc"
+              type="email"
+              value={emailData.bcc}
+              onChange={(e) =>
+                setEmailData((prev) => ({ ...prev, bcc: e.target.value }))
+              }
+              placeholder="bcc@example.com"
+              disabled={!isEditing}
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
           <Input
@@ -408,6 +536,107 @@ export function EmailComposer({
             className="min-h-[300px]"
             disabled={!isEditing}
           />
+        </div>
+
+        {/* Attachments Section */}
+        <div className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Label>Attachments</Label>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setEmailData((prev) => ({
+                    ...prev,
+                    includeQuotePdf: !prev.includeQuotePdf,
+                  }))
+                }
+                className="flex-1 sm:flex-none"
+              >
+                <Paperclip className="mr-1 h-4 w-4" />
+                {emailData.includeQuotePdf
+                  ? 'Remove Quote PDF'
+                  : 'Add Quote PDF'}
+              </Button>
+
+              <div className="relative">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.txt,.doc,.docx"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  disabled={!isEditing}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 cursor-pointer sm:flex-none"
+                  disabled={!isEditing}
+                >
+                  <Paperclip className="mr-1 h-4 w-4" />
+                  Add Files
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quote PDF Attachment */}
+          {emailData.includeQuotePdf && (
+            <div className="bg-muted flex items-center justify-between rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {selectedQuote.projectTitle} - Quote.pdf
+                </span>
+                <Badge variant="secondary" className="text-xs">
+                  Quote PDF
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setEmailData((prev) => ({ ...prev, includeQuotePdf: false }))
+                }
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* File Attachments */}
+          {attachments.map((attachment) => (
+            <div
+              key={attachment.id}
+              className="bg-muted flex items-center justify-between rounded-lg p-3"
+            >
+              <div className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                <div>
+                  <span className="text-sm font-medium">{attachment.name}</span>
+                  <div className="text-muted-foreground text-xs">
+                    {attachment.size} • {attachment.type}
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeAttachment(attachment.id)}
+                disabled={!isEditing}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+
+          {attachments.length === 0 && !emailData.includeQuotePdf && (
+            <p className="text-muted-foreground py-4 text-center text-sm">
+              No attachments. Add files or include the quote PDF.
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end">

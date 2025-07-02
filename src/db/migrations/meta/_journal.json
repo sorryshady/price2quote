@@ -29,6 +29,13 @@
       "when": 1751442189061,
       "tag": "0003_awesome_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1751447220815,
+      "tag": "0004_boring_echo",
+      "breakpoints": true
     }
   ]
 }

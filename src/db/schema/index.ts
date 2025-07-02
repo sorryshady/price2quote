@@ -1,5 +1,6 @@
 export { default as accounts } from './accounts'
 export { default as companies } from './companies'
+export { default as emailThreads } from './email-threads'
 export { default as gmailConnections } from './gmail-connections'
 export { default as quotes, quoteServices } from './quotes'
 export { default as services } from './services'

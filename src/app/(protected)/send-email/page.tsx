@@ -20,7 +20,7 @@ import { env } from '@/env/client'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import type { Quote } from '@/types'
 
-import { EmailComposer } from './_components/email-composer'
+import { EmailComposer, type EmailData } from './_components/email-composer'
 import { QuoteSelector } from './_components/quote-selector'
 
 export default function SendEmailPage() {
@@ -106,12 +106,44 @@ export default function SendEmailPage() {
     }
   }
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = async (emailData: EmailData) => {
     setIsSending(true)
     try {
-      // TODO: Implement actual email sending logic
-      toast.custom(<CustomToast message="Email sent!" type="success" />)
-    } catch {
+      const formData = new FormData()
+      formData.append('to', emailData.to)
+      if (emailData.cc) formData.append('cc', emailData.cc)
+      if (emailData.bcc) formData.append('bcc', emailData.bcc)
+      formData.append('subject', emailData.subject)
+      formData.append('body', emailData.body)
+      formData.append('quoteId', emailData.quoteId)
+      formData.append('includeQuotePdf', emailData.includeQuotePdf.toString())
+
+      // Add file attachments
+      emailData.attachments.forEach((file: File) => {
+        formData.append('attachments', file)
+      })
+
+      const response = await fetch('/api/send-quote-email', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        toast.custom(
+          <CustomToast message="Email sent successfully!" type="success" />,
+        )
+      } else {
+        toast.custom(
+          <CustomToast
+            message={result.error || 'Failed to send email'}
+            type="error"
+          />,
+        )
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
       toast.custom(<CustomToast message="Failed to send email" type="error" />)
     } finally {
       setIsSending(false)
