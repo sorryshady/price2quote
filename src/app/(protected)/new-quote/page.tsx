@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { Eye, FileDown, Plus } from 'lucide-react'
+import { AlertTriangle, Eye, FileDown, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
@@ -455,7 +455,7 @@ export default function NewQuotePage() {
   }
 
   const onSubmit = async (data: QuoteFormData) => {
-    if (!user || !canCreate) return
+    if (!user) return
 
     setIsSubmitting(true)
     try {
@@ -524,6 +524,16 @@ export default function NewQuotePage() {
         await queryClient.invalidateQueries({
           queryKey: ['quote-limit', user.id],
         })
+
+        // Show upgrade message if this was the last free quote
+        if (!canCreate) {
+          toast.custom(
+            <CustomToast
+              message="Quote created! You've reached your free tier limit. Upgrade to Pro for unlimited quotes."
+              type="info"
+            />,
+          )
+        }
 
         // Don't reset form yet - let user view the quote first
       } else {
@@ -665,12 +675,19 @@ export default function NewQuotePage() {
     }
   }
 
-  // Check if user can create quotes
-  if (!canCreate) {
+  // Show upgrade prompt if user can't create more quotes and no quote is currently generated
+  if (!canCreate && (!savedQuoteId || !finalQuoteData)) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">New Quote</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">New Quote</h1>
+            {user?.subscriptionTier === 'free' && (
+              <Badge variant="outline" className="text-sm">
+                {currentQuotes}/3 quotes used
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground">
             You&apos;ve reached your quote limit for this month.
           </p>
@@ -696,7 +713,6 @@ export default function NewQuotePage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">New Quote</h1>
         <p className="text-muted-foreground">
           {savedQuoteId && finalQuoteData
             ? 'Your quote has been generated successfully'
@@ -1156,6 +1172,19 @@ export default function NewQuotePage() {
               </CardContent>
             </Card>
 
+            {/* Warning for last free quote */}
+            {user?.subscriptionTier === 'free' && currentQuotes === 2 && (
+              <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+                <div className="flex items-center gap-2 text-sm text-orange-700">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>
+                    This will be your last free quote. Upgrade to Pro for
+                    unlimited quotes.
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Submit Buttons */}
             <div className="flex justify-end gap-3">
               <Button
@@ -1169,8 +1198,17 @@ export default function NewQuotePage() {
               <Button
                 type="submit"
                 disabled={isSubmitting || selectedServices.length === 0}
+                title={
+                  !canCreate
+                    ? 'This will be your last free quote. Upgrade to Pro for unlimited quotes.'
+                    : undefined
+                }
               >
-                {isSubmitting ? 'Creating Quote...' : 'Create Quote'}
+                {isSubmitting
+                  ? 'Creating Quote...'
+                  : !canCreate
+                    ? 'Create Final Free Quote'
+                    : 'Create Quote'}
               </Button>
             </div>
           </form>
@@ -1193,6 +1231,37 @@ export default function NewQuotePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Show limit reached UI if user has hit the limit */}
+            {!canCreate && (
+              <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-orange-600">
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-orange-800">
+                      Quote Limit Reached
+                    </h4>
+                    <p className="mt-1 text-sm text-orange-700">
+                      You&apos;ve reached your free tier limit of 3 quotes.
+                      Upgrade to Pro for unlimited quotes and advanced features.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 border-orange-300 text-orange-700 hover:bg-orange-100"
+                      onClick={() => {
+                        // Navigate to upgrade page or show upgrade modal
+                        window.open('/dashboard?upgrade=true', '_blank')
+                      }}
+                    >
+                      Upgrade to Pro
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3">
               <Button onClick={handleViewQuote} variant="outline">
                 <Eye className="h-4 w-4" /> View Quote
@@ -1200,7 +1269,16 @@ export default function NewQuotePage() {
               <Button onClick={handleDownloadQuote} variant="outline">
                 <FileDown className="h-4 w-4" /> Download PDF
               </Button>
-              <Button onClick={handleResetForm} variant="default">
+              <Button
+                onClick={handleResetForm}
+                variant="default"
+                disabled={!canCreate}
+                title={
+                  !canCreate
+                    ? 'Upgrade to Pro to create more quotes'
+                    : undefined
+                }
+              >
                 <Plus className="h-4 w-4" /> Create New Quote
               </Button>
             </div>

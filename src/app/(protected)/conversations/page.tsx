@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 
 import {
   Calendar,
+  Download,
   Eye,
   Mail,
   MessageSquare,
@@ -190,7 +191,7 @@ export default function ConversationsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-bold sm:text-3xl">Conversations</h1>
         <p className="text-muted-foreground">
@@ -330,9 +331,9 @@ export default function ConversationsPage() {
                   (email) => email.attachments && email.attachments.length > 0,
                 ) && (
                   <div className="flex items-center gap-1">
-                    <Mail className="text-muted-foreground h-3 w-3" />
+                    <Download className="text-muted-foreground h-3 w-3" />
                     <span className="text-muted-foreground text-xs">
-                      Has attachments
+                      Has downloadable attachments
                     </span>
                   </div>
                 )}

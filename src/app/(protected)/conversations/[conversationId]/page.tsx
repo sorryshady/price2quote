@@ -11,11 +11,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 import { Separator } from '@/components/ui/separator'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 import {
   type EmailThread,
   getConversationEmailsAction,
 } from '@/app/server-actions/email-threads'
+import { downloadAttachment } from '@/lib/utils'
 
 export default function ConversationDetailPage() {
   const params = useParams()
@@ -24,6 +31,9 @@ export default function ConversationDetailPage() {
 
   const [emails, setEmails] = useState<EmailThread[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [downloadingAttachments, setDownloadingAttachments] = useState<
+    Set<string>
+  >(new Set())
   const [conversationInfo, setConversationInfo] = useState<{
     projectTitle: string
     clientName: string
@@ -93,7 +103,7 @@ export default function ConversationDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-4">
           <div className="bg-muted h-8 w-48 animate-pulse rounded" />
           <div className="space-y-4">
@@ -199,19 +209,67 @@ export default function ConversationDetailPage() {
                       <div className="flex items-center gap-2">
                         <Paperclip className="text-muted-foreground h-4 w-4" />
                         <span className="text-sm font-medium">
-                          Attachments:
+                          Attachments (click to download):
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {email.attachments.map(
                           (attachment, attachmentIndex) => (
-                            <div
-                              key={attachmentIndex}
-                              className="flex items-center gap-2 rounded border px-3 py-2"
-                            >
-                              <Download className="text-muted-foreground h-4 w-4" />
-                              <span className="text-sm">{attachment}</span>
-                            </div>
+                            <TooltipProvider key={attachmentIndex}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex items-center gap-2"
+                                    disabled={downloadingAttachments.has(
+                                      attachment,
+                                    )}
+                                    onClick={async () => {
+                                      setDownloadingAttachments((prev) =>
+                                        new Set(prev).add(attachment),
+                                      )
+                                      try {
+                                        await downloadAttachment(attachment)
+                                        toast.custom(
+                                          <CustomToast
+                                            message="Attachment downloaded successfully"
+                                            type="success"
+                                          />,
+                                        )
+                                      } catch (error) {
+                                        console.error('Download error:', error)
+                                        toast.custom(
+                                          <CustomToast
+                                            message="Failed to download attachment"
+                                            type="error"
+                                          />,
+                                        )
+                                      } finally {
+                                        setDownloadingAttachments((prev) => {
+                                          const newSet = new Set(prev)
+                                          newSet.delete(attachment)
+                                          return newSet
+                                        })
+                                      }
+                                    }}
+                                  >
+                                    {downloadingAttachments.has(attachment) ? (
+                                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    ) : (
+                                      <Download className="h-4 w-4" />
+                                    )}
+                                    <span className="text-sm">
+                                      {attachment.split('/').pop() ||
+                                        attachment}
+                                    </span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Click to download attachment</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           ),
                         )}
                       </div>
