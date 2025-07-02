@@ -177,8 +177,8 @@ export function QuoteSelector({
                 }`}
                 onClick={() => onQuoteSelect(quote)}
               >
-                <CardContent className="px-6 py-4">
-                  <div className="space-y-4">
+                <CardContent className="flex h-full flex-col px-6 py-4">
+                  <div className="flex-1 space-y-4">
                     <div className="flex items-start justify-between">
                       <h3 className="line-clamp-2 text-lg font-semibold">
                         {quote.projectTitle}
@@ -187,7 +187,6 @@ export function QuoteSelector({
                         {quote.status}
                       </Badge>
                     </div>
-
                     <div className="text-muted-foreground space-y-2 text-sm">
                       <p>
                         <span className="font-medium">Client:</span>{' '}
@@ -206,19 +205,16 @@ export function QuoteSelector({
                         {new Date(quote.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-
-                    <Button
-                      variant={
-                        selectedQuoteId === quote.id ? 'default' : 'outline'
-                      }
-                      size="sm"
-                      className="w-full"
-                    >
-                      {selectedQuoteId === quote.id
-                        ? 'Selected'
-                        : 'Select Quote'}
-                    </Button>
                   </div>
+                  <Button
+                    variant={
+                      selectedQuoteId === quote.id ? 'default' : 'outline'
+                    }
+                    size="sm"
+                    className="mt-4 w-full"
+                  >
+                    {selectedQuoteId === quote.id ? 'Selected' : 'Select Quote'}
+                  </Button>
                 </CardContent>
               </Card>
             ))}

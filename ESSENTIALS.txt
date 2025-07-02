@@ -5,4 +5,7 @@ Generated AI Summary: Ernyg is an Indian digital solutions company that evolved 
 Generated AI Summary: Ernyg, initially established as a creative web development studio specializing in UI/UX design, custom illustrations, and website art, has strategically evolved into a comprehensive digital solutions provider. Based in India, the company now offers a broad spectrum of services, including full-stack web development (from SPAs to SaaS), advanced UI/UX design for web and mobile applications, and end-to-end digital marketing solutions for diverse companies, from small businesses to established brands. Their expertise further extends to creating bespoke custom illustrations and developing holistic brand kits, with service engagements typically ranging from ₹10,000 to ₹100,000 INR for base projects. Operating as a project-based B2B service company, Ernyg is positioned to deliver high-level digital experiences and strategic branding outcomes, utilizing INR as its primary operational currency.
 
 
-fix update of status of quote immediately in ui of send email
+
+UI ensure quotes cards always remain identical irresepctive of size.
+
+email id and quote id, if same will come under same thread. any one changes will result in a new thread
