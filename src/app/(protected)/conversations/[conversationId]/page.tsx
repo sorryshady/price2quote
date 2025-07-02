@@ -27,6 +27,25 @@ import {
 } from '@/app/server-actions/email-threads'
 import { downloadAttachment } from '@/lib/utils'
 
+// Helper to split main and quoted content
+function splitBody(body: string): { main: string; quoted: string } {
+  const replyMarker = body.match(/\nOn .+ wrote:/)
+  if (replyMarker && replyMarker.index !== undefined) {
+    return {
+      main: body.slice(0, replyMarker.index).trim(),
+      quoted: body.slice(replyMarker.index).trim(),
+    }
+  }
+  const firstQuote = body.indexOf('\n>')
+  if (firstQuote !== -1) {
+    return {
+      main: body.slice(0, firstQuote).trim(),
+      quoted: body.slice(firstQuote).trim(),
+    }
+  }
+  return { main: body.trim(), quoted: '' }
+}
+
 export default function ConversationDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -44,6 +63,7 @@ export default function ConversationDetailPage() {
     quoteStatus: string
   } | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showQuoted, setShowQuoted] = useState<{ [id: string]: boolean }>({})
 
   useEffect(() => {
     if (conversationId) {
@@ -218,132 +238,165 @@ export default function ConversationDetailPage() {
             </CardContent>
           </Card>
         ) : (
-          emails.map((email) => (
-            <Card key={email.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="pt-6">
-                {/* Email Header */}
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{email.subject}</h3>
-                      <EmailDirectionIndicator direction={email.direction} />
-                      <UnreadEmailBadge isRead={email.isRead} />
-                      {email.includeQuotePdf && (
-                        <Badge variant="secondary" className="text-xs">
-                          Quote PDF
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      To: {email.to}
-                      {email.cc && ` | CC: ${email.cc}`}
-                      {email.bcc && ` | BCC: ${email.bcc}`}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {formatDate(email.sentAt)}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {formatTime(email.sentAt)}
-                    </p>
-                  </div>
-                </div>
-
-                <Separator className="mb-4" />
-
-                {/* Email Body */}
-                <div className="space-y-4">
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-sm whitespace-pre-wrap">{email.body}</p>
-                  </div>
-
-                  {/* Attachments */}
-                  {email.attachments && email.attachments.length > 0 && (
-                    <div className="space-y-2">
+          emails.map((email) => {
+            const { main, quoted } = splitBody(email.body)
+            return (
+              <Card
+                key={email.id}
+                className="transition-shadow hover:shadow-md"
+              >
+                <CardContent className="pt-6">
+                  {/* Email Header */}
+                  <div className="mb-4 flex items-start justify-between">
+                    <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Paperclip className="text-muted-foreground h-4 w-4" />
-                        <span className="text-sm font-medium">
-                          Attachments (click to download):
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {email.attachments.map(
-                          (attachment, attachmentIndex) => (
-                            <TooltipProvider key={attachmentIndex}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex items-center gap-2"
-                                    disabled={downloadingAttachments.has(
-                                      attachment,
-                                    )}
-                                    onClick={async () => {
-                                      setDownloadingAttachments((prev) =>
-                                        new Set(prev).add(attachment),
-                                      )
-                                      try {
-                                        await downloadAttachment(attachment)
-                                        toast.custom(
-                                          <CustomToast
-                                            message="Attachment downloaded successfully"
-                                            type="success"
-                                          />,
-                                        )
-                                      } catch (error) {
-                                        console.error('Download error:', error)
-                                        toast.custom(
-                                          <CustomToast
-                                            message="Failed to download attachment"
-                                            type="error"
-                                          />,
-                                        )
-                                      } finally {
-                                        setDownloadingAttachments((prev) => {
-                                          const newSet = new Set(prev)
-                                          newSet.delete(attachment)
-                                          return newSet
-                                        })
-                                      }
-                                    }}
-                                  >
-                                    {downloadingAttachments.has(attachment) ? (
-                                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                    ) : (
-                                      <Download className="h-4 w-4" />
-                                    )}
-                                    <span className="text-sm">
-                                      {attachment.split('/').pop() ||
-                                        attachment}
-                                    </span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Click to download attachment</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ),
+                        <h3 className="font-semibold">{email.subject}</h3>
+                        <EmailDirectionIndicator direction={email.direction} />
+                        <UnreadEmailBadge isRead={email.isRead} />
+                        {email.includeQuotePdf && (
+                          <Badge variant="secondary" className="text-xs">
+                            Quote PDF
+                          </Badge>
                         )}
                       </div>
+                      <p className="text-muted-foreground text-sm">
+                        To: {email.to}
+                        {email.cc && ` | CC: ${email.cc}`}
+                        {email.bcc && ` | BCC: ${email.bcc}`}
+                      </p>
                     </div>
-                  )}
-                </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {formatDate(email.sentAt)}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {formatTime(email.sentAt)}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Email Footer */}
-                <div className="mt-4 border-t pt-4">
-                  <div className="text-muted-foreground flex items-center justify-between text-xs">
-                    <span>Gmail Message ID: {email.gmailMessageId}</span>
-                    {email.gmailThreadId && (
-                      <span>Thread ID: {email.gmailThreadId}</span>
+                  <Separator className="mb-4" />
+
+                  {/* Email Body */}
+                  <div className="space-y-4">
+                    <div className="prose prose-sm max-w-none">
+                      <p className="text-sm whitespace-pre-wrap">{main}</p>
+                      {quoted && (
+                        <>
+                          <button
+                            className="text-primary mt-1 cursor-pointer text-xs underline"
+                            onClick={() =>
+                              setShowQuoted((prev) => ({
+                                ...prev,
+                                [email.id]: !prev[email.id],
+                              }))
+                            }
+                          >
+                            {showQuoted[email.id]
+                              ? 'Hide quoted'
+                              : 'Show quoted'}
+                          </button>
+                          {showQuoted[email.id] && (
+                            <pre className="text-muted-foreground border-muted mt-1 border-l-2 pl-2 text-xs whitespace-pre-wrap">
+                              {quoted}
+                            </pre>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Attachments */}
+                    {email.attachments && email.attachments.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="text-muted-foreground h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            Attachments (click to download):
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {email.attachments.map(
+                            (attachment, attachmentIndex) => (
+                              <TooltipProvider key={attachmentIndex}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-2"
+                                      disabled={downloadingAttachments.has(
+                                        attachment,
+                                      )}
+                                      onClick={async () => {
+                                        setDownloadingAttachments((prev) =>
+                                          new Set(prev).add(attachment),
+                                        )
+                                        try {
+                                          await downloadAttachment(attachment)
+                                          toast.custom(
+                                            <CustomToast
+                                              message="Attachment downloaded successfully"
+                                              type="success"
+                                            />,
+                                          )
+                                        } catch (error) {
+                                          console.error(
+                                            'Download error:',
+                                            error,
+                                          )
+                                          toast.custom(
+                                            <CustomToast
+                                              message="Failed to download attachment"
+                                              type="error"
+                                            />,
+                                          )
+                                        } finally {
+                                          setDownloadingAttachments((prev) => {
+                                            const newSet = new Set(prev)
+                                            newSet.delete(attachment)
+                                            return newSet
+                                          })
+                                        }
+                                      }}
+                                    >
+                                      {downloadingAttachments.has(
+                                        attachment,
+                                      ) ? (
+                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                      ) : (
+                                        <Download className="h-4 w-4" />
+                                      )}
+                                      <span className="text-sm">
+                                        {attachment.split('/').pop() ||
+                                          attachment}
+                                      </span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Click to download attachment</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ),
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+
+                  {/* Email Footer */}
+                  <div className="mt-4 border-t pt-4">
+                    <div className="text-muted-foreground flex items-center justify-between text-xs">
+                      <span>Gmail Message ID: {email.gmailMessageId}</span>
+                      {email.gmailThreadId && (
+                        <span>Thread ID: {email.gmailThreadId}</span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>
