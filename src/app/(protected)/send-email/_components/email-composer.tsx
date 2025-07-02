@@ -26,6 +26,7 @@ interface EmailComposerProps {
   companyPhone?: string
   onSendEmail: (emailData: EmailData) => Promise<void>
   isSending: boolean
+  onReset?: () => void
 }
 
 export interface EmailData {
@@ -170,6 +171,7 @@ export function EmailComposer({
   companyPhone,
   onSendEmail,
   isSending,
+  onReset,
 }: EmailComposerProps) {
   const [emailData, setEmailData] = useState<EmailData>({
     to: '',
@@ -305,6 +307,11 @@ export function EmailComposer({
       ...emailData,
       attachments: allAttachments,
     })
+
+    // Reset form after successful send
+    if (onReset) {
+      onReset()
+    }
   }
 
   const handleReset = () => {

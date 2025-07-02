@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import db from '@/db'
 import { emailThreads, quotes } from '@/db/schema'
 import { getSession } from '@/lib/auth'
+import { getValidGmailToken } from '@/lib/gmail'
 import { generateQuotePDF } from '@/lib/pdf-utils'
 import { supabase } from '@/lib/supabase'
 import type { Quote } from '@/types'
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
     // Get the quote data
     const quoteData = await db.query.quotes.findFirst({
       where: (quotes, { eq }) => eq(quotes.id, quoteId),
+      with: {
+        company: true,
+      },
     })
 
     if (!quoteData) {
@@ -105,28 +109,37 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Upload attachments to Supabase storage for record keeping
+    // Upload attachments to Supabase storage for record keeping (optional)
     const uploadedAttachments: string[] = []
-    for (const attachment of attachments) {
+    if (attachments.length > 0) {
       try {
-        const fileName = `email-attachments/${Date.now()}-${attachment.filename}`
-        const { error } = await supabase.storage
-          .from('quotes')
-          .upload(fileName, attachment.content, {
-            contentType: attachment.contentType,
-          })
+        for (const attachment of attachments) {
+          const fileName = `email-attachments/${Date.now()}-${attachment.filename}`
+          const { error } = await supabase.storage
+            .from('email-attachments')
+            .upload(fileName, attachment.content, {
+              contentType: attachment.contentType,
+            })
 
-        if (error) {
-          console.error('Error uploading attachment to Supabase:', error)
-          // Continue with email sending even if upload fails
-        } else {
-          uploadedAttachments.push(fileName)
+          if (error) {
+            console.error('Error uploading attachment to Supabase:', error)
+            // Continue with email sending even if upload fails
+          } else {
+            uploadedAttachments.push(fileName)
+          }
         }
       } catch (error) {
-        console.error('Error uploading attachment:', error)
+        console.error('Error uploading attachments to Supabase:', error)
         // Continue with email sending even if upload fails
       }
     }
+
+    // Get valid access token (refresh if needed)
+    const validAccessToken = await getValidGmailToken(
+      gmailConnection.accessToken,
+      gmailConnection.refreshToken,
+      gmailConnection.expiresAt,
+    )
 
     // Send email via Gmail API
     try {
@@ -135,7 +148,7 @@ export async function POST(req: NextRequest) {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${gmailConnection.accessToken}`,
+            Authorization: `Bearer ${validAccessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

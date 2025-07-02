@@ -25,7 +25,7 @@ interface EmailThreadWithQuote extends EmailThread {
     clientName: string | null
     clientEmail: string | null
     status: string
-  }
+  } | null
 }
 
 export default function ConversationsPage() {
@@ -52,7 +52,7 @@ export default function ConversationsPage() {
     try {
       const result = await getEmailThreadsByCompanyAction(companyId)
       if (result.success && result.threads) {
-        setThreads(result.threads as EmailThreadWithQuote[])
+        setThreads(result.threads as unknown as EmailThreadWithQuote[])
       } else {
         toast.custom(
           <CustomToast

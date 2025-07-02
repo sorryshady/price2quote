@@ -134,6 +134,8 @@ export default function SendEmailPage() {
         toast.custom(
           <CustomToast message="Email sent successfully!" type="success" />,
         )
+        // Reset form after successful send
+        setSelectedQuote(null)
       } else {
         toast.custom(
           <CustomToast
@@ -266,6 +268,7 @@ export default function SendEmailPage() {
               companyPhone={primaryCompany?.phone}
               onSendEmail={handleSendEmail}
               isSending={isSending}
+              onReset={() => setSelectedQuote(null)}
             />
           </div>
         </div>
