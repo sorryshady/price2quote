@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm'
 import db from '@/db'
 import { emailSyncStatus, emailThreads } from '@/db/schema'
 import { getSession } from '@/lib/auth'
+import { EmailSyncService } from '@/lib/email-sync'
 import type { SyncConfig } from '@/types'
 
 export async function getEmailSyncStatusAction(companyId: string) {
@@ -144,11 +145,10 @@ export async function syncIncomingEmailsAction(companyId: string) {
       return { success: false, error: 'Unauthorized' }
     }
 
-    // TODO: Implement Gmail API integration for fetching incoming emails
-    // This will be implemented in Phase 2
-    console.log('Sync requested for company:', companyId)
+    const syncService = new EmailSyncService()
+    await syncService.syncCompanyEmails(companyId)
 
-    return { success: true, message: 'Sync functionality coming in Phase 2' }
+    return { success: true, message: 'Email sync completed' }
   } catch (error) {
     console.error('Error syncing incoming emails:', error)
     return { success: false, error: 'Failed to sync incoming emails' }
