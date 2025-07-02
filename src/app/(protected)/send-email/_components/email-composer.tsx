@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from 'react'
 
-import { Edit3, Paperclip, RotateCcw, Send, Wand2, X } from 'lucide-react'
+import {
+  Edit3,
+  MessageSquare,
+  Paperclip,
+  RotateCcw,
+  Send,
+  Wand2,
+  X,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
+import { getExistingThreadForQuoteAction } from '@/app/server-actions/email-threads'
 import { generateAIEmailAction } from '@/app/server-actions/gmail'
 import type { Quote } from '@/types'
 
@@ -186,6 +195,31 @@ export function EmailComposer({
   const [isGenerating, setIsGenerating] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
+  const [threadContext, setThreadContext] = useState<{
+    hasExistingThread: boolean
+    threadCount: number
+    lastSentAt: Date | null
+  } | null>(null)
+
+  // Check for existing email thread
+  const checkThreadContext = async (quote: Quote, clientEmail: string) => {
+    try {
+      const threadResult = await getExistingThreadForQuoteAction(
+        quote.id,
+        clientEmail,
+      )
+      if (threadResult.success) {
+        setThreadContext({
+          hasExistingThread: threadResult.hasExistingThread || false,
+          threadCount: threadResult.threadCount || 0,
+          lastSentAt: threadResult.lastSentAt || null,
+        })
+      }
+    } catch (error) {
+      console.error('Error checking thread context:', error)
+      setThreadContext(null)
+    }
+  }
 
   // Update email data when quote changes
   useEffect(() => {
@@ -238,6 +272,13 @@ export function EmailComposer({
         includeQuotePdf: false,
       })
       setAttachments([])
+
+      // Check for existing email thread
+      if (selectedQuote.clientEmail) {
+        checkThreadContext(selectedQuote, selectedQuote.clientEmail)
+      } else {
+        setThreadContext(null)
+      }
     }
   }, [selectedQuote, companyName, companyPhone])
 
@@ -473,6 +514,23 @@ export function EmailComposer({
           </div>
         </div>
       </CardHeader>
+
+      {/* Thread Context Display */}
+      {threadContext?.hasExistingThread && (
+        <div className="bg-muted/30 border-b px-3 py-2 sm:px-4">
+          <div className="flex items-center gap-2 text-sm">
+            <MessageSquare className="h-4 w-4 text-blue-600" />
+            <span className="font-medium text-blue-600">Follow-up Email</span>
+            <span className="text-muted-foreground">
+              • Previous email sent{' '}
+              {threadContext.lastSentAt
+                ? new Date(threadContext.lastSentAt).toLocaleDateString()
+                : 'recently'}
+            </span>
+          </div>
+        </div>
+      )}
+
       <CardContent className="space-y-4 px-3 sm:px-4">
         <div className="space-y-2">
           <Label htmlFor="to">To</Label>

@@ -108,3 +108,35 @@ export async function deleteEmailThreadAction(threadId: string) {
     return { success: false, error: 'Failed to delete email thread' }
   }
 }
+
+export async function getExistingThreadForQuoteAction(
+  quoteId: string,
+  clientEmail: string,
+) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    const existingThread = await db.query.emailThreads.findFirst({
+      where: (emailThreads, { eq, and }) =>
+        and(
+          eq(emailThreads.quoteId, quoteId),
+          eq(emailThreads.userId, session.user.id),
+          eq(emailThreads.to, clientEmail),
+        ),
+      orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
+    })
+
+    return {
+      success: true,
+      hasExistingThread: !!existingThread,
+      threadCount: existingThread ? 1 : 0,
+      lastSentAt: existingThread?.sentAt || null,
+    }
+  } catch (error) {
+    console.error('Error checking existing thread:', error)
+    return { success: false, error: 'Failed to check existing thread' }
+  }
+}

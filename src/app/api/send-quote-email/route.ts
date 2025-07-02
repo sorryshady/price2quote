@@ -143,6 +143,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Check for existing email thread to continue conversation
+    const existingThread = await db.query.emailThreads.findFirst({
+      where: (emailThreads, { eq, and }) =>
+        and(
+          eq(emailThreads.quoteId, quoteId),
+          eq(emailThreads.userId, session.user.id),
+          eq(emailThreads.to, to),
+        ),
+      orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
+    })
+
     // Get valid access token (refresh if needed)
     const validAccessToken = await getValidGmailToken(
       gmailConnection.accessToken,
@@ -170,6 +181,10 @@ export async function POST(req: NextRequest) {
               attachments,
               from: gmailConnection.gmailEmail,
             }),
+            // Include thread ID if this is a follow-up email
+            ...(existingThread?.gmailThreadId && {
+              threadId: existingThread.gmailThreadId,
+            }),
           }),
         },
       )
@@ -194,7 +209,8 @@ export async function POST(req: NextRequest) {
           companyId: quoteData.companyId,
           quoteId: quoteId,
           gmailMessageId: messageId,
-          gmailThreadId: threadId,
+          // Use existing thread ID if this is a follow-up, otherwise use new thread ID
+          gmailThreadId: existingThread?.gmailThreadId || threadId,
           to: to,
           cc: cc || null,
           bcc: bcc || null,

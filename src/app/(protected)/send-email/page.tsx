@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, Mail, MailCheck, MailX } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -17,6 +18,7 @@ import {
 import { CustomToast } from '@/components/ui/custom-toast'
 
 import { env } from '@/env/client'
+import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import type { Quote } from '@/types'
 
@@ -24,7 +26,9 @@ import { EmailComposer, type EmailData } from './_components/email-composer'
 import { QuoteSelector } from './_components/quote-selector'
 
 export default function SendEmailPage() {
+  const { user } = useAuth()
   const { companies, isLoading, error, refetch } = useCompaniesQuery()
+  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -136,6 +140,8 @@ export default function SendEmailPage() {
         )
         // Reset form after successful send
         setSelectedQuote(null)
+        // Invalidate quotes query to update status from 'draft' to 'sent'
+        queryClient.invalidateQueries({ queryKey: ['quotes', user?.id || ''] })
       } else {
         toast.custom(
           <CustomToast
