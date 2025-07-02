@@ -1,4 +1,4 @@
-import { RefreshCw, Wifi } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 
 import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
@@ -39,33 +39,11 @@ export function EmailSyncStatus({
     return `${diffDays}d ago`
   }
 
-  const getSyncStatusColor = () => {
-    if (!syncStatus?.syncEnabled) return 'text-gray-400'
-    if (isSyncing) return 'text-blue-500'
-
-    const lastSync = syncStatus.lastSyncAt
-    if (!lastSync) return 'text-yellow-500'
-
-    const now = new Date()
-    const diffMs = now.getTime() - lastSync.getTime()
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-
-    if (diffMins > syncStatus.syncFrequencyMinutes * 2) return 'text-red-500'
-    if (diffMins > syncStatus.syncFrequencyMinutes) return 'text-yellow-500'
-
-    return 'text-green-500'
-  }
-
   const isEnabled = syncStatus?.syncEnabled ?? true
 
   return (
-    <div className="bg-card flex w-full flex-col gap-2 rounded-lg border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="bg-card flex w-full flex-row items-center justify-between gap-2 rounded-lg border p-4 shadow-sm">
       <div className="flex min-w-0 items-center gap-3">
-        <div
-          className={`rounded-full p-2 ${isEnabled ? 'bg-green-100' : 'bg-gray-100'}`}
-        >
-          <Wifi className={`h-4 w-4 ${getSyncStatusColor()}`} />
-        </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">Email Sync</span>
@@ -88,7 +66,7 @@ export function EmailSyncStatus({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                size="icon"
+                // size="icon"
                 onClick={onSyncClick}
                 disabled={isSyncing}
                 className="flex size-9 items-center justify-center sm:size-auto"
