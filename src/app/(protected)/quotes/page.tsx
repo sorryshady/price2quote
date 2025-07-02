@@ -280,9 +280,9 @@ export default function QuotesPage() {
       )}
 
       {/* Filters and Stats */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
             <span className="text-sm font-medium">Filter by status:</span>
             <Select
               value={statusFilter}
@@ -290,7 +290,7 @@ export default function QuotesPage() {
                 setStatusFilter(value as QuoteStatus | 'all')
               }
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -334,7 +334,7 @@ export default function QuotesPage() {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {/* Header */}
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
                       <h3 className="text-lg font-semibold">
                         {quote.projectTitle}
@@ -361,7 +361,7 @@ export default function QuotesPage() {
                   )}
 
                   {/* Quote Details */}
-                  <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 md:grid-cols-4">
                     <div>
                       <span className="text-muted-foreground">Amount:</span>
                       <div className="font-medium">
@@ -417,32 +417,38 @@ export default function QuotesPage() {
                   <Separator />
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-muted-foreground text-xs">
                       Last updated: {formatDate(quote.updatedAt)}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleViewQuote(quote)}
+                        className="flex-1 sm:flex-none"
                       >
-                        <Eye className="h-4 w-4" /> View Quote
+                        <Eye className="h-4 w-4" />
+                        <span className="ml-1 sm:ml-2">View</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleDownloadQuote(quote)}
+                        className="flex-1 sm:flex-none"
                       >
-                        <FileDown className="h-4 w-4" /> Download PDF
+                        <FileDown className="h-4 w-4" />
+                        <span className="ml-1 sm:ml-2">Download</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         disabled
                         title="Edit functionality coming soon"
+                        className="flex-1 sm:flex-none"
                       >
-                        <File className="h-4 w-4" /> Edit
+                        <File className="h-4 w-4" />
+                        <span className="ml-1 sm:ml-2">Edit</span>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -450,8 +456,10 @@ export default function QuotesPage() {
                             variant="outline"
                             size="sm"
                             disabled={deletingQuoteId === quote.id}
+                            className="flex-1 sm:flex-none"
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                            <Trash2 className="h-4 w-4" />
+                            <span className="ml-1 sm:ml-2">Delete</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -485,8 +493,8 @@ export default function QuotesPage() {
 
       {/* Quote Preview Modal */}
       {showQuotePreview && selectedQuote && (
-        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50">
-          <div className="bg-background max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg p-6">
+        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50 p-4">
+          <div className="bg-background max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg p-4 sm:p-6">
             {/* Show full AI-generated quote if available, otherwise show basic info */}
             {selectedQuote.quoteData &&
             typeof selectedQuote.quoteData === 'object' &&
@@ -521,7 +529,7 @@ export default function QuotesPage() {
 
                       <div>
                         <h4 className="mb-2 font-medium">Quote Details</h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                           <div>
                             <span className="text-muted-foreground">
                               Amount:
@@ -568,7 +576,7 @@ export default function QuotesPage() {
                               {selectedQuote.quoteServices.map((qs) => (
                                 <div
                                   key={qs.id}
-                                  className="bg-muted flex items-center justify-between rounded p-2"
+                                  className="bg-muted flex flex-col gap-2 rounded p-2 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                   <div>
                                     <div className="font-medium">
