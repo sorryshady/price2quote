@@ -40,22 +40,6 @@ export interface ConversationGroup {
   emails: EmailThread[]
 }
 
-// Helper function to normalize email addresses
-function normalizeEmail(email: string): string {
-  return email.toLowerCase().trim()
-}
-
-// Generate conversation ID based on grouping criteria
-function generateConversationId(
-  quoteId: string,
-  clientEmail: string,
-  companyId: string,
-): string {
-  const normalizedEmail = normalizeEmail(clientEmail)
-  // Use a separator that won't be URL-encoded and won't conflict with UUIDs
-  return `${quoteId}_${normalizedEmail}_${companyId}`
-}
-
 export async function getEmailThreadsAction(quoteId: string) {
   try {
     const session = await getSession()
@@ -160,11 +144,8 @@ function groupThreadsIntoConversations(
   const conversationMap = new Map<string, ConversationGroup>()
 
   for (const thread of threads) {
-    const conversationId = generateConversationId(
-      thread.quoteId,
-      thread.to,
-      thread.companyId,
-    )
+    // Use gmailThreadId as the conversation key
+    const conversationId = thread.gmailThreadId || thread.id
 
     if (!conversationMap.has(conversationId)) {
       conversationMap.set(conversationId, {
@@ -203,37 +184,43 @@ export async function getConversationEmailsAction(conversationId: string) {
       return { success: false, error: 'Unauthorized' }
     }
 
-    // Parse conversation ID to get quoteId, clientEmail, and companyId
-    const [quoteId, clientEmail, companyId] = conversationId.split('_')
+    // conversationId is now gmailThreadId
+    const gmailThreadId = conversationId
 
-    if (!quoteId || !clientEmail || !companyId) {
-      return { success: false, error: 'Invalid conversation ID' }
-    }
-
-    // Decode URL-encoded parts
-    const decodedClientEmail = decodeURIComponent(clientEmail)
-    const decodedCompanyId = decodeURIComponent(companyId)
-
-    // Get all emails for this conversation
+    // Get all emails for this thread
     const threads = await db.query.emailThreads.findMany({
       where: (emailThreads, { eq, and }) =>
         and(
-          eq(emailThreads.quoteId, quoteId),
-          eq(emailThreads.companyId, decodedCompanyId),
+          eq(emailThreads.gmailThreadId, gmailThreadId),
           eq(emailThreads.userId, session.user.id),
-          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${decodedClientEmail}))`,
         ),
       orderBy: (emailThreads, { asc }) => [asc(emailThreads.sentAt)],
     })
 
-    // Parse attachments JSON
-    const parsedThreads: EmailThread[] = threads.map((thread) => ({
+    // Parse attachments JSON and attach quote info
+    // Fetch quote for this thread (if any)
+    let quote = undefined
+    if (threads.length > 0 && threads[0].quoteId) {
+      quote = await db.query.quotes.findFirst({
+        where: (quotes, { eq }) => eq(quotes.id, threads[0].quoteId),
+        columns: {
+          projectTitle: true,
+          clientName: true,
+        },
+      })
+    }
+    const parsedThreads: (EmailThread & {
+      projectTitle?: string
+      clientName?: string
+    })[] = threads.map((thread) => ({
       ...thread,
       direction: thread.direction as 'inbound' | 'outbound',
       fromEmail: thread.fromEmail || undefined,
       attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
       gmailLabels: thread.gmailLabels ? JSON.parse(thread.gmailLabels) : null,
       isRead: thread.isRead ?? false,
+      projectTitle: quote?.projectTitle || undefined,
+      clientName: quote?.clientName || undefined,
     }))
 
     return { success: true, emails: parsedThreads }

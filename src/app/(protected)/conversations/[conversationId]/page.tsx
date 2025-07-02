@@ -68,16 +68,16 @@ export default function ConversationDetailPage() {
           }
         }
 
-        // Extract conversation info from conversation ID
+        // Extract conversation info from emails (prefer first outbound email)
         if (result.emails.length > 0) {
-          // Parse conversation ID to get better info
-          const [quoteId, clientEmail] = conversationId.split('_')
-          const decodedClientEmail = decodeURIComponent(clientEmail)
+          const outbound = result.emails.find((e) => e.direction === 'outbound')
+          const infoSource = outbound || result.emails[0]
           setConversationInfo({
-            projectTitle: `Quote: ${quoteId.slice(0, 8)}...`, // Show truncated quote ID
-            clientName: decodedClientEmail.split('@')[0], // Extract name from email
-            clientEmail: decodedClientEmail,
-            quoteStatus: 'sent', // We'll get this from quote data later
+            projectTitle:
+              infoSource.projectTitle || infoSource.subject || 'Conversation',
+            clientName: infoSource.clientName || '',
+            clientEmail: infoSource.to || '',
+            quoteStatus: infoSource.emailType || 'sent',
           })
         }
       } else {
@@ -119,8 +119,6 @@ export default function ConversationDetailPage() {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     })
   }
 
