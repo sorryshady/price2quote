@@ -119,10 +119,10 @@ export function QuoteSelector({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-3 sm:px-4">
         <CardTitle>Select a Quote</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-3 sm:px-4">
         {/* Search and Filters */}
         <div className="space-y-3">
           <div className="relative">

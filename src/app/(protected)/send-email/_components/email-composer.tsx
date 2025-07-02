@@ -286,7 +286,7 @@ export function EmailComposer({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-3 sm:px-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Compose Email</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -324,7 +324,7 @@ export function EmailComposer({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-3 sm:px-4">
         <div className="space-y-2">
           <Label htmlFor="to">To</Label>
           <Input
