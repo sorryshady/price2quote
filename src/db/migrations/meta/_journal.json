@@ -15,6 +15,20 @@
       "when": 1751440698890,
       "tag": "0001_hot_maggott",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1751441933251,
+      "tag": "0002_left_captain_cross",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1751442189061,
+      "tag": "0003_awesome_electro",
+      "breakpoints": true
     }
   ]
 }
