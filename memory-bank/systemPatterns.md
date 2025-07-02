@@ -505,6 +505,133 @@ const generateCompanySummary = async (companyId: string) => {
 }
 ```
 
+### 5. **Email Attachment Management Pattern**
+
+**Supabase Storage Integration:**
+
+```typescript
+// Storage helper with download functionality
+export const storage = {
+  upload: async (bucket: string, path: string, file: File) => {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file)
+    if (error) throw error
+    return data
+  },
+
+  download: async (bucket: string, path: string) => {
+    const { data, error } = await supabase.storage.from(bucket).download(path)
+    if (error) throw error
+    return data
+  },
+
+  getPublicUrl: (bucket: string, path: string) => {
+    return supabase.storage.from(bucket).getPublicUrl(path)
+  },
+}
+```
+
+**Download Utility Function:**
+
+```typescript
+// Browser download with proper error handling
+export async function downloadAttachment(
+  attachmentPath: string,
+  originalFilename?: string,
+): Promise<void> {
+  try {
+    const blob = await storage.download('email-attachments', attachmentPath)
+    const filename =
+      originalFilename || attachmentPath.split('/').pop() || 'attachment'
+
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Error downloading attachment:', error)
+    throw new Error('Failed to download attachment')
+  }
+}
+```
+
+**Interactive UI Components:**
+
+```typescript
+// Download button with loading state
+const [downloadingAttachments, setDownloadingAttachments] = useState<Set<string>>(new Set())
+
+<Button
+  variant="outline"
+  size="sm"
+  className="flex items-center gap-2"
+  disabled={downloadingAttachments.has(attachment)}
+  onClick={async () => {
+    setDownloadingAttachments(prev => new Set(prev).add(attachment))
+    try {
+      await downloadAttachment(attachment)
+      toast.custom(<CustomToast message="Downloaded successfully" type="success" />)
+    } catch (error) {
+      toast.custom(<CustomToast message="Download failed" type="error" />)
+    } finally {
+      setDownloadingAttachments(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(attachment)
+        return newSet
+      })
+    }
+  }}
+>
+  {downloadingAttachments.has(attachment) ? (
+    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+  ) : (
+    <Download className="h-4 w-4" />
+  )}
+  <span className="text-sm">{attachment.split('/').pop() || attachment}</span>
+</Button>
+```
+
+**Tooltip Integration for UX:**
+
+```typescript
+// Tooltip wrapper for better user guidance
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button /* download button props */ />
+    </TooltipTrigger>
+    <TooltipContent>
+      <p>Click to download attachment</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+**Database Schema for Attachment Tracking:**
+
+```typescript
+// Email threads table with attachment storage
+const emailThreads = pgTable('email_threads', {
+  // ... other fields
+  attachments: text('attachments'), // JSON array of attachment filenames
+  includeQuotePdf: boolean('include_quote_pdf').default(false),
+})
+```
+
+**Key Benefits:**
+
+- Secure file storage in Supabase with proper access control
+- Interactive download buttons with loading states
+- Comprehensive error handling with user feedback
+- Smart filename extraction for better UX
+- Tooltip integration for clarity
+- Proper cleanup of browser resources
+
 ## PDF Export & Quote Document Pattern
 
 - Letterhead-style header at the top with logo, company name, and contact info (website, phone, address)
