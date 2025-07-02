@@ -56,7 +56,7 @@ export function EmailSyncStatus({
     return 'text-green-500'
   }
 
-  const isEnabled = syncStatus?.syncEnabled ?? false
+  const isEnabled = syncStatus?.syncEnabled ?? true
 
   return (
     <div className="bg-card flex items-center justify-between rounded-lg border p-4 shadow-sm">
@@ -82,7 +82,7 @@ export function EmailSyncStatus({
         </div>
       </div>
 
-      {isEnabled && (
+      {isEnabled ? (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -103,6 +103,26 @@ export function EmailSyncStatus({
             </TooltipTrigger>
             <TooltipContent>
               <p>Manually sync incoming emails</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onSyncClick}
+                disabled={true}
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Sync Disabled
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Email sync is disabled for this company</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

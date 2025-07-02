@@ -52,7 +52,7 @@ function ProtectedContentComponent({ children }: ProtectedContentProps) {
   // Show skeleton loading for initial auth check only
   if (authLoading || !isInitialized) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <div className="space-y-4">
           <Skeleton className="h-4 w-32" />

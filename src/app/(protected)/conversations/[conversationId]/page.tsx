@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { ArrowLeft, Download, Mail, Paperclip } from 'lucide-react'
+import { ArrowLeft, Download, Mail, Paperclip, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +42,7 @@ export default function ConversationDetailPage() {
     clientEmail: string
     quoteStatus: string
   } | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     if (conversationId) {
@@ -86,6 +87,22 @@ export default function ConversationDetailPage() {
     }
   }
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await loadConversationEmails()
+      toast.custom(
+        <CustomToast message="Conversation refreshed" type="success" />,
+      )
+    } catch {
+      toast.custom(
+        <CustomToast message="Failed to refresh conversation" type="error" />,
+      )
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -121,7 +138,7 @@ export default function ConversationDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
@@ -130,6 +147,21 @@ export default function ConversationDetailPage() {
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Conversations
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="gap-2"
+        >
+          {isRefreshing ? (
+            <RefreshCw className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
 
@@ -145,8 +177,18 @@ export default function ConversationDetailPage() {
                 <p className="text-muted-foreground">
                   {conversationInfo.clientName} ({conversationInfo.clientEmail})
                 </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    {conversationInfo.quoteStatus}
+                  </Badge>
+                  {emails.filter((email) => !email.isRead).length > 0 && (
+                    <UnreadEmailBadge
+                      isRead={false}
+                      count={emails.filter((email) => !email.isRead).length}
+                    />
+                  )}
+                </div>
               </div>
-              <Badge variant="outline">{conversationInfo.quoteStatus}</Badge>
             </div>
           </CardContent>
         </Card>

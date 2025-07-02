@@ -146,7 +146,7 @@ export async function syncIncomingEmailsAction(companyId: string) {
     }
 
     const syncService = new EmailSyncService()
-    await syncService.syncCompanyEmails(companyId)
+    await syncService.syncCompanyEmails(companyId, session.user.id)
 
     return { success: true, message: 'Email sync completed' }
   } catch (error) {

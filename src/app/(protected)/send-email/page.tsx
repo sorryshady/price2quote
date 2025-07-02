@@ -160,7 +160,7 @@ export default function SendEmailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Send Email</h1>
           <p className="text-muted-foreground">
@@ -177,7 +177,7 @@ export default function SendEmailPage() {
 
   if (error) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Send Email</h1>
           <p className="text-muted-foreground">
@@ -197,7 +197,7 @@ export default function SendEmailPage() {
 
   if (!primaryCompany) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Send Email</h1>
           <p className="text-muted-foreground">

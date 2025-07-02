@@ -10,13 +10,21 @@ export async function POST(
 ) {
   try {
     const session = await getSession()
+    console.log('Session:', session)
+    console.log('Session user:', session?.user)
+    console.log('Session user id:', session?.user?.id)
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log(
+      `Syncing emails for company ${params.companyId} with user ${session.user.id}`,
+    )
+
     const { companyId } = params
     const syncService = new EmailSyncService()
-    await syncService.syncCompanyEmails(companyId)
+    await syncService.syncCompanyEmails(companyId, session.user.id)
 
     return NextResponse.json({
       success: true,

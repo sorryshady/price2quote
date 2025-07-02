@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 import { EmailSyncStatus } from '@/components/ui/email-sync-status'
 import { Input } from '@/components/ui/input'
+import { UnreadEmailBadge } from '@/components/ui/unread-email-badge'
 
 import {
   getEmailSyncStatusAction,
@@ -107,7 +108,18 @@ export default function ConversationsPage() {
       await syncIncomingEmailsAction(currentCompanyId)
       await loadConversations(currentCompanyId)
       await loadSyncStatus(currentCompanyId)
-      toast.custom(<CustomToast message="Email sync complete" type="success" />)
+
+      // Enhanced notification with sync details
+      const unreadCount = conversations.filter((conv) =>
+        conv.emails.some((email) => !email.isRead),
+      ).length
+
+      toast.custom(
+        <CustomToast
+          message={`Email sync complete! ${unreadCount > 0 ? `${unreadCount} unread emails found.` : 'No new emails.'}`}
+          type="success"
+        />,
+      )
     } catch {
       toast.custom(<CustomToast message="Failed to sync emails" type="error" />)
     } finally {
@@ -175,7 +187,7 @@ export default function ConversationsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Conversations</h1>
           <p className="text-muted-foreground">
@@ -196,7 +208,7 @@ export default function ConversationsPage() {
 
   if (error) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Conversations</h1>
           <p className="text-muted-foreground">
@@ -216,7 +228,7 @@ export default function ConversationsPage() {
 
   if (!primaryCompany) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Conversations</h1>
           <p className="text-muted-foreground">
@@ -305,99 +317,117 @@ export default function ConversationsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredConversations.map((conversation) => (
-            <Card
-              key={conversation.conversationId}
-              className="transition-shadow hover:shadow-lg"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-base">
-                      {conversation.projectTitle || 'Untitled Project'}
-                    </CardTitle>
-                    <p className="text-muted-foreground truncate text-sm">
-                      {conversation.clientName || conversation.clientEmail}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        router.push(
-                          `/conversations/${conversation.conversationId}`,
-                        )
-                      }
-                      className="hover:text-primary"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleDeleteConversation(conversation.conversationId)
-                      }
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Conversation Stats */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Mail className="text-muted-foreground h-4 w-4" />
-                    <span className="text-sm font-medium">
-                      {conversation.totalEmails} email
-                      {conversation.totalEmails !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {conversation.quoteStatus || 'draft'}
-                  </Badge>
-                </div>
+          {filteredConversations.map((conversation) => {
+            const unreadCount = conversation.emails.filter(
+              (email) => !email.isRead,
+            ).length
 
-                {/* Latest Email Preview */}
-                {conversation.emails.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground line-clamp-2 text-sm">
-                      {
-                        conversation.emails[conversation.emails.length - 1]
-                          .subject
-                      }
-                    </p>
-                    <p className="text-muted-foreground line-clamp-2 text-xs">
-                      {conversation.emails[conversation.emails.length - 1].body}
-                    </p>
+            return (
+              <Card
+                key={conversation.conversationId}
+                className="transition-shadow hover:shadow-lg"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="truncate text-base">
+                          {conversation.projectTitle || 'Untitled Project'}
+                        </CardTitle>
+                        {unreadCount > 0 && (
+                          <UnreadEmailBadge
+                            isRead={false}
+                            count={unreadCount}
+                          />
+                        )}
+                      </div>
+                      <p className="text-muted-foreground truncate text-sm">
+                        {conversation.clientName || conversation.clientEmail}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          router.push(
+                            `/conversations/${conversation.conversationId}`,
+                          )
+                        }
+                        className="hover:text-primary"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleDeleteConversation(conversation.conversationId)
+                        }
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {/* Conversation Stats */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Mail className="text-muted-foreground h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        {conversation.totalEmails} email
+                        {conversation.totalEmails !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {conversation.quoteStatus || 'draft'}
+                    </Badge>
+                  </div>
 
-                {/* Attachments Info */}
-                {conversation.emails.some(
-                  (email) => email.attachments && email.attachments.length > 0,
-                ) && (
+                  {/* Latest Email Preview */}
+                  {conversation.emails.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
+                        {
+                          conversation.emails[conversation.emails.length - 1]
+                            .subject
+                        }
+                      </p>
+                      <p className="text-muted-foreground line-clamp-2 text-xs">
+                        {
+                          conversation.emails[conversation.emails.length - 1]
+                            .body
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Attachments Info */}
+                  {conversation.emails.some(
+                    (email) =>
+                      email.attachments && email.attachments.length > 0,
+                  ) && (
+                    <div className="flex items-center gap-1">
+                      <Download className="text-muted-foreground h-3 w-3" />
+                      <span className="text-muted-foreground text-xs">
+                        Has downloadable attachments
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Date */}
                   <div className="flex items-center gap-1">
-                    <Download className="text-muted-foreground h-3 w-3" />
-                    <span className="text-muted-foreground text-xs">
-                      Has downloadable attachments
-                    </span>
+                    <Calendar className="text-muted-foreground h-3 w-3" />
+                    <p className="text-muted-foreground text-xs">
+                      Last: {formatRelativeDate(conversation.lastEmailAt)}
+                    </p>
                   </div>
-                )}
-
-                {/* Date */}
-                <div className="flex items-center gap-1">
-                  <Calendar className="text-muted-foreground h-3 w-3" />
-                  <p className="text-muted-foreground text-xs">
-                    Last: {formatRelativeDate(conversation.lastEmailAt)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>
