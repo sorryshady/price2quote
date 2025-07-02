@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
+import { EmailDirectionIndicator } from '@/components/ui/email-direction-indicator'
 import { Separator } from '@/components/ui/separator'
 import {
   Tooltip,
@@ -17,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { UnreadEmailBadge } from '@/components/ui/unread-email-badge'
 
 import {
   type EmailThread,
@@ -117,7 +119,7 @@ export default function ConversationDetailPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
@@ -173,6 +175,8 @@ export default function ConversationDetailPage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{email.subject}</h3>
+                      <EmailDirectionIndicator direction={email.direction} />
+                      <UnreadEmailBadge isRead={email.isRead} />
                       {email.includeQuotePdf && (
                         <Badge variant="secondary" className="text-xs">
                           Quote PDF

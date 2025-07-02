@@ -18,14 +18,20 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
+import { EmailSyncStatus } from '@/components/ui/email-sync-status'
 import { Input } from '@/components/ui/input'
 
+import {
+  getEmailSyncStatusAction,
+  syncIncomingEmailsAction,
+} from '@/app/server-actions/email-sync'
 import {
   type ConversationGroup,
   deleteConversationAction,
   getEmailThreadsByCompanyAction,
 } from '@/app/server-actions/email-threads'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
 export default function ConversationsPage() {
   const router = useRouter()
@@ -36,6 +42,8 @@ export default function ConversationsPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null,
   )
+  const [syncStatus, setSyncStatus] = useState<EmailSyncStatusType | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
 
   // Get the first company (for free users) or use selected company
   const primaryCompany = companies?.[0]
@@ -44,6 +52,7 @@ export default function ConversationsPage() {
   useEffect(() => {
     if (currentCompanyId) {
       loadConversations(currentCompanyId)
+      loadSyncStatus(currentCompanyId)
     }
   }, [currentCompanyId])
 
@@ -68,6 +77,41 @@ export default function ConversationsPage() {
       )
     } finally {
       setIsLoadingConversations(false)
+    }
+  }
+
+  const loadSyncStatus = async (companyId: string) => {
+    try {
+      const result = await getEmailSyncStatusAction(companyId)
+      if (result.success) {
+        const status = result.status
+          ? {
+              ...result.status,
+              lastSyncAt: result.status.lastSyncAt ?? undefined,
+              lastMessageId: result.status.lastMessageId ?? undefined,
+              syncEnabled: result.status.syncEnabled ?? false,
+              syncFrequencyMinutes: result.status.syncFrequencyMinutes ?? 15,
+            }
+          : null
+        setSyncStatus(status)
+      }
+    } catch {
+      setSyncStatus(null)
+    }
+  }
+
+  const handleManualSync = async () => {
+    if (!currentCompanyId) return
+    setIsSyncing(true)
+    try {
+      await syncIncomingEmailsAction(currentCompanyId)
+      await loadConversations(currentCompanyId)
+      await loadSyncStatus(currentCompanyId)
+      toast.custom(<CustomToast message="Email sync complete" type="success" />)
+    } catch {
+      toast.custom(<CustomToast message="Failed to sync emails" type="error" />)
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -198,6 +242,12 @@ export default function ConversationsPage() {
           View and manage your email conversations with clients
         </p>
       </div>
+
+      <EmailSyncStatus
+        syncStatus={syncStatus}
+        onSyncClick={handleManualSync}
+        isSyncing={isSyncing}
+      />
 
       {/* Search and Filters */}
       <div className="space-y-4">

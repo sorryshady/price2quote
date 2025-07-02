@@ -1,4 +1,4 @@
-import { RefreshCw, Settings, Wifi } from 'lucide-react'
+import { RefreshCw, Wifi } from 'lucide-react'
 
 import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
@@ -14,14 +14,12 @@ import {
 interface EmailSyncStatusProps {
   syncStatus: EmailSyncStatusType | null
   onSyncClick: () => void
-  onSettingsClick: () => void
   isSyncing?: boolean
 }
 
 export function EmailSyncStatus({
   syncStatus,
   onSyncClick,
-  onSettingsClick,
   isSyncing = false,
 }: EmailSyncStatusProps) {
   const formatLastSync = (date: Date | null) => {
@@ -42,7 +40,7 @@ export function EmailSyncStatus({
   }
 
   const getSyncStatusColor = () => {
-    if (!syncStatus?.syncEnabled) return 'text-gray-500'
+    if (!syncStatus?.syncEnabled) return 'text-gray-400'
     if (isSyncing) return 'text-blue-500'
 
     const lastSync = syncStatus.lastSyncAt
@@ -58,27 +56,33 @@ export function EmailSyncStatus({
     return 'text-green-500'
   }
 
+  const isEnabled = syncStatus?.syncEnabled ?? false
+
   return (
-    <div className="flex items-center gap-3 rounded-lg border p-3">
-      <div className="flex items-center gap-2">
-        <Wifi className={`h-4 w-4 ${getSyncStatusColor()}`} />
-        <div className="space-y-1">
+    <div className="bg-card flex items-center justify-between rounded-lg border p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div
+          className={`rounded-full p-2 ${isEnabled ? 'bg-green-100' : 'bg-gray-100'}`}
+        >
+          <Wifi className={`h-4 w-4 ${getSyncStatusColor()}`} />
+        </div>
+        <div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Email Sync</span>
+            <span className="font-medium">Email Sync</span>
             <Badge
-              variant={syncStatus?.syncEnabled ? 'default' : 'secondary'}
+              variant={isEnabled ? 'default' : 'secondary'}
               className="text-xs"
             >
-              {syncStatus?.syncEnabled ? 'Enabled' : 'Disabled'}
+              {isEnabled ? 'Active' : 'Inactive'}
             </Badge>
           </div>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground text-sm">
             Last sync: {formatLastSync(syncStatus?.lastSyncAt || null)}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      {isEnabled && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -86,15 +90,15 @@ export function EmailSyncStatus({
                 variant="outline"
                 size="sm"
                 onClick={onSyncClick}
-                disabled={isSyncing || !syncStatus?.syncEnabled}
-                className="gap-1"
+                disabled={isSyncing}
+                className="gap-2"
               >
                 {isSyncing ? (
-                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-4 w-4" />
                 )}
-                Sync Now
+                {isSyncing ? 'Syncing...' : 'Sync Now'}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -102,25 +106,7 @@ export function EmailSyncStatus({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onSettingsClick}
-                className="gap-1"
-              >
-                <Settings className="h-3 w-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Sync settings</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+      )}
     </div>
   )
 }
