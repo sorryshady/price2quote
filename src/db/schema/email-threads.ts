@@ -24,6 +24,8 @@ const emailThreads = pgTable('email_threads', {
     .references(() => quotes.id, { onDelete: 'cascade' }),
   gmailMessageId: varchar('gmail_message_id', { length: 255 }).notNull(),
   gmailThreadId: varchar('gmail_thread_id', { length: 255 }),
+  direction: varchar('direction', { length: 10 }).default('outbound').notNull(), // 'inbound' | 'outbound'
+  fromEmail: varchar('from_email', { length: 255 }), // For incoming emails
   to: varchar('to', { length: 255 }).notNull(),
   cc: varchar('cc', { length: 500 }),
   bcc: varchar('bcc', { length: 500 }),
@@ -31,6 +33,9 @@ const emailThreads = pgTable('email_threads', {
   body: text('body').notNull(),
   attachments: text('attachments'), // JSON array of attachment filenames
   includeQuotePdf: boolean('include_quote_pdf').default(false),
+  isRead: boolean('is_read').default(false), // For tracking read status
+  gmailLabels: text('gmail_labels'), // JSON array of Gmail labels
+  emailType: varchar('email_type', { length: 50 }), // 'quote_sent', 'client_response', 'follow_up', etc.
   sentAt: timestamp('sent_at').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

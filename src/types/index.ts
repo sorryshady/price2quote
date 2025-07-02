@@ -3,6 +3,12 @@ export type BusinessType = 'freelancer' | 'company'
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced'
 export type AISummaryStatus = 'pending' | 'generating' | 'completed' | 'failed'
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'revised'
+export type EmailDirection = 'inbound' | 'outbound'
+export type EmailType =
+  | 'quote_sent'
+  | 'client_response'
+  | 'follow_up'
+  | 'general'
 
 export interface User {
   id: string
@@ -90,4 +96,49 @@ export interface SubscriptionFeatures {
     maxCompanies: number
     features: string[]
   }
+}
+
+export interface EmailThread {
+  id: string
+  userId: string
+  companyId: string
+  quoteId: string
+  gmailMessageId: string
+  gmailThreadId?: string
+  direction: EmailDirection
+  fromEmail?: string
+  to: string
+  cc?: string
+  bcc?: string
+  subject: string
+  body: string
+  attachments?: string // JSON array of attachment filenames
+  includeQuotePdf: boolean
+  isRead: boolean
+  gmailLabels?: string // JSON array of Gmail labels
+  emailType?: EmailType
+  sentAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface EmailSyncStatus {
+  id: string
+  companyId: string
+  userId: string
+  lastSyncAt?: Date
+  lastMessageId?: string
+  syncEnabled: boolean
+  syncFrequencyMinutes: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface SyncConfig {
+  enabled: boolean
+  frequencyMinutes: number
+  maxEmailsPerSync: number
+  syncUnreadOnly: boolean
+  includeLabels: string[]
+  excludeLabels: string[]
 }

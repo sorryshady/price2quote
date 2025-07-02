@@ -12,6 +12,8 @@ export interface EmailThread {
   companyId: string
   gmailMessageId: string
   gmailThreadId: string | null
+  direction: 'inbound' | 'outbound'
+  fromEmail?: string
   to: string
   cc: string | null
   bcc: string | null
@@ -19,6 +21,9 @@ export interface EmailThread {
   body: string
   attachments: string[] | null
   includeQuotePdf: boolean | null
+  isRead: boolean
+  gmailLabels?: string[] | null
+  emailType?: string | null
   sentAt: Date
   createdAt: Date
 }
@@ -67,10 +72,14 @@ export async function getEmailThreadsAction(quoteId: string) {
       orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
     })
 
-    // Parse attachments JSON
+    // Parse attachments JSON and gmail labels
     const parsedThreads: EmailThread[] = threads.map((thread) => ({
       ...thread,
+      direction: thread.direction as 'inbound' | 'outbound',
+      fromEmail: thread.fromEmail || undefined,
       attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
+      gmailLabels: thread.gmailLabels ? JSON.parse(thread.gmailLabels) : null,
+      isRead: thread.isRead ?? false,
     }))
 
     return { success: true, threads: parsedThreads }
@@ -118,8 +127,12 @@ export async function getEmailThreadsByCompanyAction(companyId: string) {
     // Parse attachments JSON and add quote data
     const parsedThreads = threads.map((thread) => ({
       ...thread,
+      direction: thread.direction as 'inbound' | 'outbound',
+      fromEmail: thread.fromEmail || undefined,
       quote: quoteMap.get(thread.quoteId) || undefined,
       attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
+      gmailLabels: thread.gmailLabels ? JSON.parse(thread.gmailLabels) : null,
+      isRead: thread.isRead ?? false,
     }))
 
     // Group threads into conversations
@@ -216,7 +229,11 @@ export async function getConversationEmailsAction(conversationId: string) {
     // Parse attachments JSON
     const parsedThreads: EmailThread[] = threads.map((thread) => ({
       ...thread,
+      direction: thread.direction as 'inbound' | 'outbound',
+      fromEmail: thread.fromEmail || undefined,
       attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
+      gmailLabels: thread.gmailLabels ? JSON.parse(thread.gmailLabels) : null,
+      isRead: thread.isRead ?? false,
     }))
 
     return { success: true, emails: parsedThreads }
