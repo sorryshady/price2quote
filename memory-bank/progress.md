@@ -409,3 +409,15 @@ The application is now **production-ready** with a complete end-to-end workflow:
 - Comprehensive error handling and user feedback
 
 The system is ready for production deployment with all core features implemented and tested.
+
+- Full Gmail sync (inbound/outbound, thread-based)
+- Accurate direction and read status
+- Clean, grouped conversation UI
+- Quoted content toggle
+- Manual sync, sync status, error handling
+
+## What's Left
+
+- Email Sync Settings UI (sync frequency, enable/disable, label filtering)
+- Real-time updates (WebSocket/polling)
+- (AI quote status automation skipped for now)

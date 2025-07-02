@@ -11,6 +11,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 import { EmailDirectionIndicator } from '@/components/ui/email-direction-indicator'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import {
   Tooltip,
@@ -25,23 +32,39 @@ import {
   type EmailThread,
   getConversationEmailsAction,
 } from '@/app/server-actions/email-threads'
+import {
+  getQuoteWithServicesAction,
+  updateQuoteStatusAction,
+} from '@/app/server-actions/quote'
 import { downloadAttachment } from '@/lib/utils'
+import type { QuoteStatus } from '@/types'
 
 // Helper to split main and quoted content
 function splitBody(body: string): { main: string; quoted: string } {
+  // Find the first reply marker
   const replyMarker = body.match(/\nOn .+ wrote:/)
   if (replyMarker && replyMarker.index !== undefined) {
-    return {
-      main: body.slice(0, replyMarker.index).trim(),
-      quoted: body.slice(replyMarker.index).trim(),
-    }
+    const main = body.slice(0, replyMarker.index).trim()
+    // Get the first quoted block only (up to the next reply marker or end)
+    const quotedBlock = body.slice(replyMarker.index).trim()
+    // Remove any nested reply markers from the quoted block
+    const nestedMarker = quotedBlock.match(/\nOn .+ wrote:/)
+    const quoted =
+      nestedMarker && nestedMarker.index !== undefined
+        ? quotedBlock.slice(0, nestedMarker.index).trim()
+        : quotedBlock
+    return { main, quoted }
   }
   const firstQuote = body.indexOf('\n>')
   if (firstQuote !== -1) {
-    return {
-      main: body.slice(0, firstQuote).trim(),
-      quoted: body.slice(firstQuote).trim(),
-    }
+    const main = body.slice(0, firstQuote).trim()
+    const quotedBlock = body.slice(firstQuote).trim()
+    const nestedMarker = quotedBlock.match(/\nOn .+ wrote:/)
+    const quoted =
+      nestedMarker && nestedMarker.index !== undefined
+        ? quotedBlock.slice(0, nestedMarker.index).trim()
+        : quotedBlock
+    return { main, quoted }
   }
   return { main: body.trim(), quoted: '' }
 }
@@ -64,12 +87,26 @@ export default function ConversationDetailPage() {
   } | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showQuoted, setShowQuoted] = useState<{ [id: string]: boolean }>({})
+  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus | ''>('')
+  const [quoteId, setQuoteId] = useState<string | null>(null)
 
   useEffect(() => {
     if (conversationId) {
       loadConversationEmails()
     }
   }, [conversationId])
+
+  useEffect(() => {
+    if (emails.length > 0) {
+      setQuoteId(emails[0].quoteId)
+      // Fetch quote status from server
+      getQuoteWithServicesAction(emails[0].quoteId).then((res) => {
+        if (res.success && res.quote?.status) {
+          setQuoteStatus(res.quote.status)
+        }
+      })
+    }
+  }, [emails])
 
   const loadConversationEmails = async () => {
     setIsLoading(true)
@@ -149,6 +186,27 @@ export default function ConversationDetailPage() {
     })
   }
 
+  const handleStatusChange = async (newStatus: QuoteStatus) => {
+    if (!quoteId) return
+    setQuoteStatus(newStatus)
+    const result = await updateQuoteStatusAction(quoteId, newStatus)
+    if (result.success) {
+      toast.custom(
+        <CustomToast
+          message={`Quote status updated to "${newStatus}"`}
+          type="success"
+        />,
+      )
+    } else {
+      toast.custom(
+        <CustomToast
+          message={result.error || 'Failed to update status'}
+          type="error"
+        />,
+      )
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -221,6 +279,24 @@ export default function ConversationDetailPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Status Dropdown UI */}
+      {quoteId && (
+        <div className="mb-2 flex items-center gap-2">
+          <span className="font-medium">Quote Status:</span>
+          <Select value={quoteStatus} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="revised">Revised</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {/* Emails */}

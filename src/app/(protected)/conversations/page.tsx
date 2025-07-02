@@ -110,9 +110,11 @@ export default function ConversationsPage() {
       await loadSyncStatus(currentCompanyId)
 
       // Enhanced notification with sync details
-      const unreadCount = conversations.filter((conv) =>
-        conv.emails.some((email) => !email.isRead),
-      ).length
+      const unreadCount = conversations.reduce(
+        (sum, conv) =>
+          sum + conv.emails.filter((email) => !email.isRead).length,
+        0,
+      )
 
       toast.custom(
         <CustomToast
@@ -284,8 +286,9 @@ export default function ConversationsPage() {
                 }
                 size="sm"
                 onClick={() => setSelectedCompanyId(company.id)}
+                className="max-w-[200px] truncate"
               >
-                {company.name}
+                <span className="truncate">{company.name}</span>
               </Button>
             ))}
           </div>
@@ -294,7 +297,7 @@ export default function ConversationsPage() {
 
       {/* Conversations List */}
       {isLoadingConversations ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="bg-muted h-48 animate-pulse rounded" />
           ))}
@@ -316,7 +319,7 @@ export default function ConversationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredConversations.map((conversation) => {
             const unreadCount = conversation.emails.filter(
               (email) => !email.isRead,
@@ -325,12 +328,12 @@ export default function ConversationsPage() {
             return (
               <Card
                 key={conversation.conversationId}
-                className="transition-shadow hover:shadow-lg"
+                className="flex flex-col transition-shadow hover:shadow-lg"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
+                <CardHeader className="flex-shrink-0 pb-3">
+                  <div className="flex w-full flex-col items-start justify-between gap-1 sm:flex-row sm:items-center">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <CardTitle className="truncate text-base">
                           {conversation.projectTitle || 'Untitled Project'}
                         </CardTitle>
@@ -345,50 +348,52 @@ export default function ConversationsPage() {
                         {conversation.clientName || conversation.clientEmail}
                       </p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex w-full flex-shrink-0 flex-row gap-1 sm:w-auto">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() =>
                           router.push(
                             `/conversations/${conversation.conversationId}`,
                           )
                         }
-                        className="hover:text-primary"
+                        className="hover:text-primary h-8 w-8 p-2"
+                        aria-label="View Conversation"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() =>
                           handleDeleteConversation(conversation.conversationId)
                         }
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive h-8 w-8 p-2"
+                        aria-label="Delete Conversation"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="flex flex-1 flex-col space-y-3">
                   {/* Conversation Stats */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Mail className="text-muted-foreground h-4 w-4" />
-                      <span className="text-sm font-medium">
+                  <div className="flex flex-shrink-0 items-center justify-between">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Mail className="text-muted-foreground h-4 w-4 flex-shrink-0" />
+                      <span className="truncate text-sm font-medium">
                         {conversation.totalEmails} email
                         {conversation.totalEmails !== 1 ? 's' : ''}
                       </span>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="flex-shrink-0 text-xs">
                       {conversation.quoteStatus || 'draft'}
                     </Badge>
                   </div>
 
                   {/* Latest Email Preview */}
                   {conversation.emails.length > 0 && (
-                    <div className="space-y-1">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <p className="text-muted-foreground line-clamp-2 text-sm">
                         {
                           conversation.emails[conversation.emails.length - 1]
@@ -409,18 +414,18 @@ export default function ConversationsPage() {
                     (email) =>
                       email.attachments && email.attachments.length > 0,
                   ) && (
-                    <div className="flex items-center gap-1">
-                      <Download className="text-muted-foreground h-3 w-3" />
-                      <span className="text-muted-foreground text-xs">
+                    <div className="flex flex-shrink-0 items-center gap-1">
+                      <Download className="text-muted-foreground h-3 w-3 flex-shrink-0" />
+                      <span className="text-muted-foreground truncate text-xs">
                         Has downloadable attachments
                       </span>
                     </div>
                   )}
 
                   {/* Date */}
-                  <div className="flex items-center gap-1">
-                    <Calendar className="text-muted-foreground h-3 w-3" />
-                    <p className="text-muted-foreground text-xs">
+                  <div className="flex flex-shrink-0 items-center gap-1">
+                    <Calendar className="text-muted-foreground h-3 w-3 flex-shrink-0" />
+                    <p className="text-muted-foreground truncate text-xs">
                       Last: {formatRelativeDate(conversation.lastEmailAt)}
                     </p>
                   </div>

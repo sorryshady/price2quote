@@ -28,6 +28,9 @@
 - Database save functionality with background AI processing COMPLETED
 - Company profile management with AI summary status COMPLETED
 - Ready for Phase 4: PDF export and email integration
+- Gmail sync is direction-aware (outbound/inbound) using sender address
+- Outbound emails are only marked as read if client opens
+- UI improvements: quoted content toggle, accurate unread counts, conversation grouping by thread
 
 ## Recent Changes
 
@@ -299,6 +302,9 @@
 3. **User Feedback**: Gather feedback on email templates and AI generation
 4. **Enhancements**: Consider additional email features like scheduling or templates
 5. **Documentation**: Update user documentation for email features
+6. **Implement Email Sync Settings UI (sync frequency, enable/disable, label filtering)**
+7. **Add real-time updates (WebSocket/polling) for new emails, unread badges, etc.**
+8. **Review README.md for any further polish or missing features**
 
 ## Current Status
 

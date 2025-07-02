@@ -138,6 +138,7 @@ export class EmailSyncService {
             outboundEmail.gmailThreadId,
             companyId,
             userId,
+            gmailConnection.gmailEmail,
           )
         }
       }
@@ -159,14 +160,22 @@ export class EmailSyncService {
     accessToken: string,
     companyId: string,
     userId?: string,
+    gmailSenderEmail?: string,
   ): Promise<void> {
     try {
       // Get detailed email content
       const emailDetails = await getEmailDetails(accessToken, email.id)
       const parsedEmail = parseGmailMessage(emailDetails)
 
+      // Determine direction
+      const direction =
+        gmailSenderEmail &&
+        parsedEmail.fromEmail.toLowerCase() === gmailSenderEmail.toLowerCase()
+          ? 'outbound'
+          : 'inbound'
+
       console.log(
-        `Processing email: ${parsedEmail.subject} from ${parsedEmail.fromEmail}`,
+        `Processing email: ${parsedEmail.subject} from ${parsedEmail.fromEmail} [${direction}]`,
       )
 
       // Check if we should process this email
@@ -186,17 +195,20 @@ export class EmailSyncService {
           companyId,
           matchResult.quoteId,
           userId,
+          direction,
         )
 
         // Update quote status if needed
         await this.updateQuoteStatusFromEmail(parsedEmail, matchResult.quoteId)
 
-        // Mark email as read in Gmail
-        try {
-          await markEmailAsRead(accessToken, email.id)
-        } catch (error) {
-          console.warn(`Could not mark email as read in Gmail: ${error}`)
-          // Continue processing even if marking as read fails
+        // Only mark as read in Gmail for inbound
+        if (direction === 'inbound') {
+          try {
+            await markEmailAsRead(accessToken, email.id)
+          } catch (error) {
+            console.warn(`Could not mark email as read in Gmail: ${error}`)
+            // Continue processing even if marking as read fails
+          }
         }
 
         console.log(
@@ -498,6 +510,7 @@ export class EmailSyncService {
     companyId: string,
     quoteId: string,
     userId?: string,
+    direction: 'inbound' | 'outbound' = 'inbound',
   ): Promise<void> {
     await db.insert(emailThreads).values({
       userId: userId || '',
@@ -505,7 +518,7 @@ export class EmailSyncService {
       quoteId,
       gmailMessageId: email.id,
       gmailThreadId: email.threadId,
-      direction: 'inbound',
+      direction,
       fromEmail: email.fromEmail,
       to: email.toEmail,
       subject: email.subject,
@@ -514,7 +527,7 @@ export class EmailSyncService {
         email.attachments.length > 0
           ? JSON.stringify(email.attachments.map((a) => a.filename))
           : null,
-      isRead: false,
+      isRead: direction === 'outbound' ? false : false, // Outbound: only mark as read if client opens
       gmailLabels: JSON.stringify(email.labelIds),
       emailType: 'client_response',
     })
@@ -590,6 +603,7 @@ export class EmailSyncService {
     threadId: string,
     companyId: string,
     userId: string,
+    gmailSenderEmail?: string,
   ): Promise<void> {
     try {
       console.log(`Checking thread ${threadId} for new emails`)
@@ -626,7 +640,13 @@ export class EmailSyncService {
 
       // Process only the new messages
       for (const message of newMessages) {
-        await this.processIncomingEmail(message, accessToken, companyId, userId)
+        await this.processIncomingEmail(
+          message,
+          accessToken,
+          companyId,
+          userId,
+          gmailSenderEmail,
+        )
       }
     } catch (error) {
       console.error(`Error checking thread ${threadId} for new emails:`, error)
