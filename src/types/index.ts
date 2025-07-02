@@ -64,16 +64,17 @@ export interface Quote {
   userId: string
   companyId: string
   projectTitle: string
-  projectDescription?: string
-  amount?: string
+  projectDescription?: string | null
+  amount?: string | null
   currency: string
   status: QuoteStatus
-  clientEmail?: string
+  clientEmail?: string | null
   clientName?: string
   sentAt?: Date
   createdAt: Date
   updatedAt: Date
-  company?: Company // Include the full company details
+  quoteData?: JSON
+  company?: Company | null // Include the full company details
   quoteServices?: QuoteService[] // Include the selected services
 }
 

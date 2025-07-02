@@ -145,6 +145,10 @@ export async function getQuotesAction(userId: string) {
           name: companies.name,
           businessType: companies.businessType,
           country: companies.country,
+          address: companies.address,
+          phone: companies.phone,
+          website: companies.website,
+          logoUrl: companies.logoUrl,
         },
       })
       .from(quotes)

@@ -1,0 +1,57 @@
+{
+    "quoteDocument": {
+        "executiveSummary": "This quote details the cost for creating a custom cake and assorted pastries for Sarah's 30th birthday celebration, themed as an elegant garden party. Jikky's Bake House will provide a stunning, nut-free cake and 40 pastries, delivered to your San Francisco venue two hours before the event. Our 15 years of experience ensures a high-quality product that perfectly complements your special occasion.",
+        "serviceBreakdown": [
+            {
+                "serviceName": "Custom Birthday Cake",
+                "description": "One (1) custom-designed cake tailored to the 'Elegant Garden Party' theme with pastel colors. Nut-free.",
+                "quantity": 1,
+                "unitPrice": 600,
+                "totalPrice": 600,
+                "deliverables": [
+                    "One (1) custom-designed cake",
+                    "Cake stand",
+                    "Serving utensils"
+                ]
+            },
+            {
+                "serviceName": "Assorted Pastries",
+                "description": "Forty (40) assorted pastries, nut-free, complementing the cake's theme.",
+                "quantity": 40,
+                "unitPrice": 10,
+                "totalPrice": 400,
+                "deliverables": [
+                    "40 assorted nut-free pastries"
+                ]
+            }
+        ],
+        "termsAndConditions": [
+            "A 50% deposit is required upon acceptance of this quote to secure the order.",
+            "The remaining 50% balance is due upon delivery.",
+            "Jikky's Bake House is not responsible for any damages to the cake or pastries after delivery.",
+            "Cancellations made less than 7 days prior to the event will result in forfeiture of the deposit.",
+            "All prices are in USD and include applicable taxes.",
+            "Delivery is included within the San Francisco, CA area. Additional fees may apply for areas outside of this region.",
+            "We require the precise delivery address and event start time to ensure timely delivery."
+        ],
+        "paymentTerms": "50% deposit is due upon acceptance of the quote. The remaining balance is due upon delivery of the cake and pastries.",
+        "deliveryTimeline": "The cake and pastries will be delivered to the specified venue in San Francisco, CA, two hours prior to the event start time, within one week of order confirmation.",
+        "nextSteps": "Please review this quote carefully. If you have any questions, please contact us at [Contact Information]. To accept this quote, please confirm your acceptance and provide the required 50% deposit via [Payment Method(s)]. Once we receive confirmation and deposit, we will commence production of your order."
+    },
+    "presentation": {
+        "keyHighlights": [
+            "Custom-designed cake tailored to your specific theme and requirements.",
+            "High-quality, delicious pastries to complement your cake.",
+            "Nut-free options to accommodate guest allergies.",
+            "Reliable and timely delivery to your chosen venue.",
+            "15+ years of experience in creating exquisite baked goods."
+        ],
+        "valueProposition": "Jikky's Bake House will provide a memorable culinary experience for Sarah's 30th birthday, creating a visually stunning and delicious centerpiece for your elegant garden party celebration. Our expertise ensures the highest quality and attention to detail, exceeding your expectations and making your event truly special.",
+        "competitiveAdvantages": [
+            "15 years of experience and established reputation.",
+            "Exceptional custom cake design capabilities.",
+            "Commitment to high-quality ingredients and meticulous craftsmanship.",
+            "Flexible and reliable service tailored to meet your specific needs."
+        ]
+    }
+}

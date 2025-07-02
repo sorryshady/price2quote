@@ -52,7 +52,7 @@ import { deleteQuoteAction } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
-import type { QuoteStatus } from '@/types'
+import type { Quote, QuoteStatus } from '@/types'
 
 // Type for the AI-generated quote data
 type QuoteData = {
@@ -165,10 +165,33 @@ export default function QuotesPage() {
     setShowQuotePreview(true)
   }
 
-  const handleDownloadQuote = (quote: (typeof quotes)[0]) => {
-    // TODO: Implement PDF download
-    console.log('Download quote:', quote.id)
-    // This would generate and download a PDF
+  const handleDownloadQuote = async (quote: (typeof quotes)[0]) => {
+    try {
+      // Show loading state
+      toast.custom(<CustomToast message="Generating PDF..." type="info" />)
+
+      // Import PDF utilities dynamically to avoid SSR issues
+      const { generateQuotePDF, downloadPDF, generateQuoteFilename } =
+        await import('@/lib/pdf-utils')
+
+      // Transform quote to match expected type (convert null to undefined)
+
+      // Generate PDF blob
+      const blob = await generateQuotePDF(quote as unknown as Quote)
+
+      // Download the PDF
+      const filename = generateQuoteFilename(quote as unknown as Quote)
+      downloadPDF(blob, filename)
+
+      toast.custom(
+        <CustomToast message="PDF downloaded successfully" type="success" />,
+      )
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      toast.custom(
+        <CustomToast message="Failed to download PDF" type="error" />,
+      )
+    }
   }
 
   const handleDeleteQuote = async (quoteId: string) => {
@@ -243,6 +266,8 @@ export default function QuotesPage() {
 
   return (
     <div className="space-y-6">
+      {/* PDF Preview for the first quote */}
+
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">My Quotes</h1>
         <p className="text-muted-foreground">Manage and track your quotes</p>
