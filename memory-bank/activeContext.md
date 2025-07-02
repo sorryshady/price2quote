@@ -36,6 +36,9 @@
    - **Server Actions**: `getGmailConnectionAction`, `disconnectGmailAction`, `refreshGmailTokenAction`
    - **Frontend Integration**: Updated send-email page with connect/disconnect functionality
    - **Error Handling**: Comprehensive error handling with user-friendly messages
+   - **Database Constraints**: Added unique constraint on (userId, companyId) for proper conflict resolution
+   - **UI Design**: Clean green label with email display and disconnect button in top right
+   - **API Organization**: Properly organized Gmail endpoints under `/api/auth/gmail/` structure
    - **Benefits**: Users can now connect Gmail accounts to specific companies for email sending
 
 2. **NEW: AI Unit Price Recommendation System COMPLETED:**

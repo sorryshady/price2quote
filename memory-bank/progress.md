@@ -81,6 +81,8 @@
 - **NEW: Quote status enum (draft, sent, accepted, rejected, revised)**
 - **NEW: Quote services junction table for detailed service tracking**
 - **NEW: quoteData JSON field for AI-generated content storage**
+- **NEW: Gmail connections table with OAuth token storage**
+- **NEW: Unique constraints for proper conflict resolution**
 - Supabase storage for company logos
 - Proper relationships and constraints
 - AI summary fields (aiSummary, aiSummaryStatus)
@@ -208,6 +210,40 @@
   - Real-time usage display
   - Upgrade prompts for free users
   - Professional subscription UI
+
+### ✅ **Gmail OAuth Integration System**
+
+- **OAuth Endpoints**:
+
+  - `/api/auth/gmail` - Gmail OAuth initiation with specific scopes
+  - `/api/auth/callback/gmail` - OAuth callback handling and token storage
+  - `/api/auth/gmail/disconnect` - Gmail account disconnection
+
+- **Database Integration**:
+
+  - Gmail connections table with OAuth token storage
+  - Company email field auto-update on connection
+  - Unique constraints for proper conflict resolution
+  - Token expiration and refresh management
+
+- **Server Actions**:
+
+  - `getGmailConnectionAction` - Check connection status
+  - `disconnectGmailAction` - Remove Gmail connection
+  - `refreshGmailTokenAction` - Refresh expired tokens
+
+- **Frontend Integration**:
+
+  - Send-email page with connect/disconnect functionality
+  - Clean green label UI showing connected email
+  - Proper loading states and error handling
+  - Success/error feedback with toast notifications
+
+- **Security Features**:
+  - CSRF protection with state parameters
+  - Secure cookie handling for OAuth flow
+  - Company-specific Gmail connections
+  - Proper token storage and management
 
 ### ✅ **Complete Quote Management System**
 
