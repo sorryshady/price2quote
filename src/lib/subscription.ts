@@ -1,4 +1,4 @@
-import { and, eq, gte } from 'drizzle-orm'
+import { and, eq, gte, isNull } from 'drizzle-orm'
 
 import db from '@/db'
 import { companies, quotes } from '@/db/schema'
@@ -8,12 +8,24 @@ export const subscriptionFeatures: SubscriptionFeatures = {
   free: {
     maxQuotesPerMonth: 3,
     maxCompanies: 1,
-    features: ['3 free quotes per month', '1 company', 'Email support'],
+    maxRevisionsPerQuote: 2,
+    features: [
+      '3 free quotes per month',
+      '1 company',
+      '2 revisions per quote',
+      'Email support',
+    ],
   },
   pro: {
     maxQuotesPerMonth: -1, // Unlimited
     maxCompanies: 5,
-    features: ['Unlimited quotes', 'Up to 5 companies', 'Priority support'],
+    maxRevisionsPerQuote: -1, // Unlimited
+    features: [
+      'Unlimited quotes',
+      'Up to 5 companies',
+      'Unlimited revisions',
+      'Priority support',
+    ],
   },
 }
 
@@ -55,6 +67,56 @@ export async function getCurrentMonthQuotes(userId: string): Promise<number> {
     .where(and(eq(quotes.userId, userId), gte(quotes.createdAt, startOfMonth)))
 
   return result.length
+}
+
+// Count only original quotes (not revisions) for monthly limits
+export async function getCurrentMonthOriginalQuotes(
+  userId: string,
+): Promise<number> {
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
+
+  const result = await db
+    .select({ count: quotes.id })
+    .from(quotes)
+    .where(
+      and(
+        eq(quotes.userId, userId),
+        gte(quotes.createdAt, startOfMonth),
+        // Only count quotes that are NOT revisions (no parentQuoteId)
+        isNull(quotes.parentQuoteId),
+      ),
+    )
+
+  return result.length
+}
+
+// Count revisions for a specific original quote
+export async function getQuoteRevisionCount(
+  originalQuoteId: string,
+): Promise<number> {
+  const result = await db
+    .select({ count: quotes.id })
+    .from(quotes)
+    .where(eq(quotes.parentQuoteId, originalQuoteId))
+
+  return result.length
+}
+
+// Check if user can create a revision for a specific quote
+export async function canCreateQuoteRevision(
+  originalQuoteId: string,
+  userTier: SubscriptionTier,
+): Promise<boolean> {
+  const tier = userTier && subscriptionFeatures[userTier] ? userTier : 'free'
+  const maxRevisions = subscriptionFeatures[tier].maxRevisionsPerQuote
+
+  // Unlimited revisions for pro tier
+  if (maxRevisions === -1) return true
+
+  const currentRevisions = await getQuoteRevisionCount(originalQuoteId)
+  return currentRevisions < maxRevisions
 }
 
 export async function getCurrentCompanies(userId: string): Promise<number> {

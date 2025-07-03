@@ -13,8 +13,16 @@ import {
   services,
 } from '@/db/schema'
 import { generateAIAssistedQuote } from '@/lib/gemini'
-import { generateFinalQuoteWithAI, negotiatePriceWithAI } from '@/lib/gemini'
-import { canUserCreateQuote } from '@/lib/subscription'
+import {
+  generateFinalQuoteWithAI,
+  generateQuoteRevisionAnalysis,
+  negotiatePriceWithAI,
+} from '@/lib/gemini'
+import {
+  canCreateQuote,
+  canCreateQuoteRevision,
+  getCurrentMonthOriginalQuotes,
+} from '@/lib/subscription'
 import type { QuoteStatus } from '@/types'
 
 export interface CreateQuoteData {
@@ -62,8 +70,11 @@ export interface CreateQuoteData {
 
 export async function createQuoteAction(data: CreateQuoteData) {
   try {
-    // Check subscription limit
-    const canCreate = await canUserCreateQuote(data.userId, 'free') // TODO: Get actual user tier
+    // Check subscription limit - only count original quotes, not revisions
+    const currentOriginalQuotes = await getCurrentMonthOriginalQuotes(
+      data.userId,
+    )
+    const canCreate = canCreateQuote('free', currentOriginalQuotes) // TODO: Get actual user tier
 
     if (!canCreate) {
       return {
@@ -661,6 +672,16 @@ export async function createRevisedQuoteAction(data: {
       }
     }
 
+    // Check revision limit for free tier
+    const canRevise = await canCreateQuoteRevision(data.originalQuoteId, 'free') // TODO: Get actual user tier
+    if (!canRevise) {
+      return {
+        success: false,
+        error:
+          'Revision limit reached. Upgrade to Pro for unlimited revisions.',
+      }
+    }
+
     // Calculate the next version number
     const nextVersionNumber = Number(originalQuote.versionNumber) + 1
 
@@ -829,6 +850,90 @@ export async function compareQuotesAction(
     return {
       success: false,
       error: 'Failed to compare quotes',
+    }
+  }
+}
+
+export async function generateQuoteRevisionAnalysisAction(data: {
+  companyId: string
+  projectTitle: string
+  projectDescription?: string
+  complexity: string
+  deliveryTimeline: string
+  customTimeline?: string
+  clientLocation: string
+  clientBudget?: number
+  clientFeedback: string
+  revisionNotes: string
+  currentServices: Array<{
+    serviceId: string
+    serviceName: string
+    skillLevel: string
+    quantity: number
+    currentPrice: number
+  }>
+  previousQuoteData: {
+    amount: string
+    services: Array<{
+      serviceName: string
+      quantity: number
+      unitPrice: number
+      totalPrice: number
+    }>
+    status: string
+    versionNumber?: number
+  }
+}) {
+  try {
+    // Get company data
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, data.companyId))
+
+    if (!company) {
+      return {
+        success: false,
+        error: 'Company not found',
+      }
+    }
+
+    // Generate quote revision analysis
+    const aiResponse = await generateQuoteRevisionAnalysis({
+      companyData: {
+        name: company.name,
+        description: company.description || '',
+        businessType: company.businessType,
+        country: company.country,
+        currency: 'USD',
+        aiSummary: company.aiSummary || undefined,
+      },
+      projectData: {
+        title: data.projectTitle,
+        description: data.projectDescription,
+        complexity: data.complexity,
+        deliveryTimeline: data.deliveryTimeline,
+        customTimeline: data.customTimeline,
+        clientLocation: data.clientLocation,
+        clientBudget: data.clientBudget,
+      },
+      revisionContext: {
+        clientFeedback: data.clientFeedback,
+        revisionNotes: data.revisionNotes,
+        previousQuoteData: data.previousQuoteData,
+        currentServices: data.currentServices,
+      },
+    })
+
+    return {
+      success: true,
+      aiResponse,
+    }
+  } catch (error) {
+    console.error('Error generating quote revision analysis:', error)
+    return {
+      success: false,
+      error: 'Failed to generate quote revision analysis',
     }
   }
 }

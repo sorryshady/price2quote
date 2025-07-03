@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   checkCompanyLimitAction,
   checkQuoteLimitAction,
+  checkRevisionLimitAction,
 } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -58,6 +59,39 @@ export function useCompanyLimit() {
     canCreate: companyLimit?.success ? companyLimit.canCreate : false,
     currentCompanies: companyLimit?.success ? companyLimit.currentCompanies : 0,
     upgradeMessage: companyLimit?.success ? companyLimit.upgradeMessage : '',
+    isLoading,
+    error: error?.message || null,
+    refetch,
+  }
+}
+
+export function useRevisionLimit(originalQuoteId: string | null) {
+  const { user } = useAuth()
+
+  const {
+    data: revisionLimit,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['revision-limit', user?.id, originalQuoteId],
+    queryFn: async () => {
+      if (!user || !originalQuoteId) return null
+      return await checkRevisionLimitAction(
+        originalQuoteId,
+        user.subscriptionTier,
+      )
+    },
+    enabled: !!user && !!originalQuoteId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  })
+
+  return {
+    canCreate: revisionLimit?.success ? revisionLimit.canCreate : false,
+    currentRevisions: revisionLimit?.success
+      ? revisionLimit.currentRevisions
+      : 0,
+    upgradeMessage: revisionLimit?.success ? revisionLimit.upgradeMessage : '',
     isLoading,
     error: error?.message || null,
     refetch,

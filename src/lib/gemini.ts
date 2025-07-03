@@ -587,3 +587,201 @@ RESPONSE FORMAT (JSON only):
     }
   }
 }
+
+// Quote revision analysis types
+interface QuoteRevisionAnalysis {
+  marketAnalysis: {
+    locationFactor: string
+    marketConditions: string
+    competitivePosition: string
+    revisionContext: string
+  }
+  serviceRecommendations: Array<{
+    serviceName: string
+    currentPrice: number
+    recommendedPrice: number
+    confidenceLevel: 'high' | 'medium' | 'low'
+    reasoning: string
+    priceRange: {
+      min: number
+      max: number
+    }
+    revisionImpact: string
+  }>
+  negotiationTips: string[]
+  revisionStrategy: string
+}
+
+// Generate AI analysis for quote revisions
+export async function generateQuoteRevisionAnalysis(data: {
+  companyData: {
+    name: string
+    description: string
+    businessType: string
+    country: string
+    currency: string
+    aiSummary?: string
+  }
+  projectData: {
+    title: string
+    description?: string
+    complexity: string
+    deliveryTimeline: string
+    customTimeline?: string
+    clientLocation: string
+    clientBudget?: number
+  }
+  revisionContext: {
+    clientFeedback: string
+    revisionNotes: string
+    previousQuoteData: {
+      amount: string
+      services: Array<{
+        serviceName: string
+        quantity: number
+        unitPrice: number
+        totalPrice: number
+      }>
+      status: string
+      versionNumber?: number
+    }
+    currentServices: Array<{
+      serviceName: string
+      skillLevel: string
+      quantity: number
+      currentPrice: number
+    }>
+  }
+}): Promise<QuoteRevisionAnalysis> {
+  try {
+    const prompt = `You are an expert pricing consultant helping a business revise a quote based on client feedback and market changes. This is a REVISION of an existing quote, so consider the context carefully.
+
+COMPANY CONTEXT:
+${data.companyData.name} - ${data.companyData.businessType} in ${data.companyData.country}
+${data.companyData.aiSummary ? `AI Business Summary: ${data.companyData.aiSummary}` : ''}
+
+PROJECT DETAILS:
+Title: ${data.projectData.title}
+Description: ${data.projectData.description || 'Not provided'}
+Complexity: ${data.projectData.complexity}
+Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
+Client Location: ${data.projectData.clientLocation}
+Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
+
+REVISION CONTEXT:
+Previous Quote Amount: $${data.revisionContext.previousQuoteData.amount}
+Previous Quote Status: ${data.revisionContext.previousQuoteData.status}
+Version: ${data.revisionContext.previousQuoteData.versionNumber || 1}
+
+Client Feedback: "${data.revisionContext.clientFeedback || 'No feedback provided'}"
+Revision Notes: "${data.revisionContext.revisionNotes || 'No revision notes'}"
+Previous Services: ${data.revisionContext.previousQuoteData.services.map((s) => `${s.serviceName}: ${s.quantity} units at $${s.unitPrice}/unit (total: $${s.totalPrice})`).join(', ')}
+
+CURRENT SERVICES (TO BE REVISED):
+${data.revisionContext.currentServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at $${s.currentPrice}/unit (total: $${s.quantity * s.currentPrice})`).join('\n')}
+
+TASK: Provide a comprehensive revision analysis considering:
+1. How client feedback affects pricing strategy
+2. Market changes since the original quote
+3. Competitive positioning adjustments
+4. Service-specific recommendations with revision impact
+5. Negotiation strategies based on revision context
+6. Overall revision strategy
+
+IMPORTANT: 
+- The "recommendedPrice" should be the PER UNIT price, not the total price
+- Consider if the revision should be more competitive, maintain pricing, or increase pricing based on feedback
+- Provide specific reasoning for each service recommendation
+- Include revision impact analysis for each service
+
+RESPONSE FORMAT (JSON only):
+{
+  "marketAnalysis": {
+    "locationFactor": "string explaining location impact on revision",
+    "marketConditions": "string about current market vs original quote",
+    "competitivePosition": "string about competitive adjustments",
+    "revisionContext": "string about how feedback affects pricing"
+  },
+  "serviceRecommendations": [
+    {
+      "serviceName": "string",
+      "currentPrice": number,
+      "recommendedPrice": number,
+      "confidenceLevel": "high|medium|low",
+      "reasoning": "string explaining the revision recommendation",
+      "priceRange": {
+        "min": number,
+        "max": number
+      },
+      "revisionImpact": "string about how this service revision addresses feedback"
+    }
+  ],
+  "negotiationTips": [
+    "string with revision-specific negotiation strategy"
+  ],
+  "revisionStrategy": "string summarizing the overall revision approach"
+}`
+
+    const result = await geminiModel.generateContent(prompt)
+    const response = await result.response
+    const text = response.text().trim()
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error('Invalid AI response format')
+    }
+
+    const aiResponse = JSON.parse(jsonMatch[0]) as QuoteRevisionAnalysis
+
+    // Validate and process the response
+    const validatedResponse: QuoteRevisionAnalysis = {
+      ...aiResponse,
+      serviceRecommendations: aiResponse.serviceRecommendations.map(
+        (service) => {
+          // Find the corresponding service data to get quantity
+          const serviceData = data.revisionContext.currentServices.find(
+            (s) => s.serviceName === service.serviceName,
+          )
+
+          // Validate and potentially fix unit price if AI returned total price
+          let recommendedPrice = service.recommendedPrice
+          let priceRange = {
+            min: Math.max(0, service.priceRange.min),
+            max: Math.max(service.priceRange.min, service.priceRange.max),
+          }
+
+          // If AI might have returned total price instead of unit price, convert it
+          if (serviceData && serviceData.quantity > 1) {
+            const currentTotal = serviceData.currentPrice * serviceData.quantity
+            const recommendedTotal = service.recommendedPrice
+
+            // If recommended price is much higher than current total, it might be a total price
+            if (recommendedTotal > currentTotal * 2) {
+              recommendedPrice = recommendedTotal / serviceData.quantity
+              priceRange = {
+                min: priceRange.min / serviceData.quantity,
+                max: priceRange.max / serviceData.quantity,
+              }
+            }
+          }
+
+          return {
+            ...service,
+            recommendedPrice: Math.round(recommendedPrice * 100) / 100, // Round to 2 decimal places
+            priceRange: {
+              min: Math.round(priceRange.min * 100) / 100,
+              max: Math.round(priceRange.max * 100) / 100,
+            },
+            confidenceLevel: validateConfidenceLevel(service.confidenceLevel),
+          }
+        },
+      ),
+    }
+
+    return validatedResponse
+  } catch (error) {
+    console.error('Error generating quote revision analysis:', error)
+    throw new Error('Failed to generate quote revision analysis')
+  }
+}

@@ -12,7 +12,13 @@ import { z } from 'zod'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 import {
   Form,
@@ -37,9 +43,11 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   CreateQuoteData,
   createRevisedQuoteAction,
+  generateQuoteRevisionAnalysisAction,
   getQuoteForEditingAction,
 } from '@/app/server-actions/quote'
 import { useAuth } from '@/hooks/use-auth'
+import { useRevisionLimit } from '@/hooks/use-subscription-limits'
 import type { Quote, QuoteService, QuoteStatus, Service } from '@/types'
 
 const editQuoteSchema = z.object({
@@ -113,6 +121,13 @@ export default function EditQuotePage() {
   const params = useParams()
   const quoteId = params?.quoteId as string
 
+  // Check revision limits
+  const {
+    canCreate: canRevise,
+    currentRevisions,
+    upgradeMessage: revisionUpgradeMessage,
+  } = useRevisionLimit(quoteId)
+
   const [loading, setLoading] = useState(true)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -127,6 +142,30 @@ export default function EditQuotePage() {
     }[]
   >([])
   const [allServices, setAllServices] = useState<Service[]>([])
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    marketAnalysis: {
+      locationFactor: string
+      marketConditions: string
+      competitivePosition: string
+      revisionContext: string
+    }
+    serviceRecommendations: Array<{
+      serviceName: string
+      currentPrice: number
+      recommendedPrice: number
+      confidenceLevel: 'high' | 'medium' | 'low'
+      reasoning: string
+      priceRange: {
+        min: number
+        max: number
+      }
+      revisionImpact: string
+    }>
+    negotiationTips: string[]
+    revisionStrategy: string
+  } | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showAIRecommendations, setShowAIRecommendations] = useState(false)
 
   const form = useForm<EditQuoteFormData>({
     resolver: zodResolver(editQuoteSchema),
@@ -321,6 +360,122 @@ export default function EditQuotePage() {
     return editableServices.reduce(
       (sum, s) => sum + s.quantity * s.unitPrice,
       0,
+    )
+  }
+
+  // AI Re-analysis function
+  const handleReanalyzeWithAI = async () => {
+    if (!quote || editableServices.length === 0) return
+
+    setIsAnalyzing(true)
+    try {
+      const formData = form.getValues()
+
+      // Get previous quote services for context
+      const previousServices = (quote.quoteServices as QuoteService[])
+        .filter((qs) => qs.service)
+        .map((qs) => ({
+          serviceName: (qs.service as Service).name,
+          quantity: Number(qs.quantity),
+          unitPrice: qs.unitPrice ? Number(qs.unitPrice) : 0,
+          totalPrice: qs.totalPrice ? Number(qs.totalPrice) : 0,
+        }))
+
+      const result = await generateQuoteRevisionAnalysisAction({
+        companyId: quote.companyId,
+        projectTitle: formData.projectTitle,
+        projectDescription: formData.projectDescription,
+        complexity: formData.projectComplexity,
+        deliveryTimeline: formData.deliveryTimeline,
+        customTimeline: formData.customTimeline,
+        clientLocation: formData.clientLocation,
+        clientBudget: formData.clientBudget,
+        clientFeedback: formData.clientFeedback || '',
+        revisionNotes: formData.revisionNotes || '',
+        currentServices: editableServices.map((s) => ({
+          serviceId: s.serviceId,
+          serviceName: s.service.name,
+          skillLevel: s.service.skillLevel,
+          quantity: s.quantity,
+          currentPrice: s.unitPrice,
+        })),
+        previousQuoteData: {
+          amount: quote.amount || '0',
+          services: previousServices,
+          status: quote.status,
+          versionNumber: quote.versionNumber
+            ? Number(quote.versionNumber)
+            : undefined,
+        },
+      })
+
+      if (result.success && result.aiResponse) {
+        setAiAnalysis(result.aiResponse)
+        setShowAIRecommendations(true)
+        toast.custom(
+          <CustomToast
+            message="AI revision analysis completed! Review recommendations below."
+            type="success"
+          />,
+        )
+      } else {
+        toast.custom(
+          <CustomToast
+            message={result.error || 'Failed to generate AI revision analysis'}
+            type="error"
+          />,
+        )
+      }
+    } catch (error) {
+      console.error('Error generating AI revision analysis:', error)
+      toast.custom(
+        <CustomToast
+          message="Failed to generate AI revision analysis"
+          type="error"
+        />,
+      )
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  // Apply AI recommendations
+  const handleApplyAIRecommendations = () => {
+    if (!aiAnalysis) return
+
+    setEditableServices((prev) => {
+      const updated = prev.map((service) => {
+        const recommendation = aiAnalysis.serviceRecommendations.find((r) => {
+          // Try exact match first
+          if (r.serviceName === service.service.name) return true
+          // Try matching without skill level suffix
+          const serviceNameWithoutSuffix = service.service.name
+          const recommendationNameWithoutSuffix = r.serviceName
+            .replace(/\s*\([^)]+\)$/, '')
+            .toLowerCase()
+          return (
+            serviceNameWithoutSuffix.toLowerCase() ===
+            recommendationNameWithoutSuffix.toLowerCase()
+          )
+        })
+
+        if (recommendation) {
+          return {
+            ...service,
+            unitPrice: recommendation.recommendedPrice,
+          }
+        }
+        return service
+      })
+      return updated
+    })
+
+    setShowAIRecommendations(false)
+    toast.custom(
+      <CustomToast
+        message="AI recommendations applied to service prices!"
+        type="success"
+      />,
     )
   }
 
@@ -813,7 +968,24 @@ export default function EditQuotePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Revision Information</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Revision Information</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    {currentRevisions}/2 revisions
+                  </Badge>
+                  {!canRevise && (
+                    <Badge variant="destructive" className="text-xs">
+                      Limit reached
+                    </Badge>
+                  )}
+                </div>
+              </CardTitle>
+              {!canRevise && revisionUpgradeMessage && (
+                <CardDescription className="text-red-600">
+                  {revisionUpgradeMessage}
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -854,6 +1026,156 @@ export default function EditQuotePage() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Re-analysis</CardTitle>
+              <CardDescription>
+                Get updated AI recommendations based on client feedback and
+                revision context
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                type="button"
+                onClick={handleReanalyzeWithAI}
+                disabled={isAnalyzing || editableServices.length === 0}
+                className="w-full"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing with AI...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Re-analyze with AI
+                  </>
+                )}
+              </Button>
+
+              {aiAnalysis && showAIRecommendations && (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">AI Revision Analysis</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleApplyAIRecommendations}
+                    >
+                      Apply All Recommendations
+                    </Button>
+                  </div>
+
+                  {/* Revision Strategy */}
+                  {aiAnalysis.revisionStrategy && (
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium">Revision Strategy</h5>
+                      <p className="text-muted-foreground text-sm">
+                        {aiAnalysis.revisionStrategy}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Market Analysis */}
+                  <div className="space-y-2">
+                    <h5 className="text-sm font-medium">Market Analysis</h5>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <strong>Location Factor:</strong>{' '}
+                        {aiAnalysis.marketAnalysis.locationFactor}
+                      </p>
+                      <p>
+                        <strong>Market Conditions:</strong>{' '}
+                        {aiAnalysis.marketAnalysis.marketConditions}
+                      </p>
+                      <p>
+                        <strong>Competitive Position:</strong>{' '}
+                        {aiAnalysis.marketAnalysis.competitivePosition}
+                      </p>
+                      <p>
+                        <strong>Revision Context:</strong>{' '}
+                        {aiAnalysis.marketAnalysis.revisionContext}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Service Recommendations */}
+                  <div className="space-y-2">
+                    <h5 className="text-sm font-medium">
+                      Service Recommendations
+                    </h5>
+                    <div className="space-y-2">
+                      {aiAnalysis.serviceRecommendations.map((rec, index) => (
+                        <div key={index} className="rounded-lg border p-3">
+                          <div className="mb-2 flex items-center justify-between">
+                            <span className="font-medium">
+                              {rec.serviceName}
+                            </span>
+                            <Badge
+                              variant={
+                                rec.confidenceLevel === 'high'
+                                  ? 'default'
+                                  : rec.confidenceLevel === 'medium'
+                                    ? 'secondary'
+                                    : 'outline'
+                              }
+                            >
+                              {rec.confidenceLevel} confidence
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">
+                                Current:
+                              </span>
+                              <span className="ml-2 font-medium">
+                                ${rec.currentPrice}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">
+                                Recommended:
+                              </span>
+                              <span className="ml-2 font-medium text-green-600">
+                                ${rec.recommendedPrice}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-muted-foreground mt-2 text-sm">
+                            {rec.reasoning}
+                          </p>
+                          {rec.revisionImpact && (
+                            <p className="text-muted-foreground mt-1 text-sm">
+                              <strong>Revision Impact:</strong>{' '}
+                              {rec.revisionImpact}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Negotiation Tips */}
+                  {aiAnalysis.negotiationTips.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium">Negotiation Tips</h5>
+                      <ul className="space-y-1 text-sm">
+                        {aiAnalysis.negotiationTips.map((tip, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="mt-1 text-blue-500">•</span>
+                            <span>{tip}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Separator />
 
           {/* Action Buttons */}
@@ -865,7 +1187,7 @@ export default function EditQuotePage() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting || !canRevise}>
               {submitting ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />

@@ -106,11 +106,13 @@ export interface SubscriptionFeatures {
   free: {
     maxQuotesPerMonth: number
     maxCompanies: number
+    maxRevisionsPerQuote: number
     features: string[]
   }
   pro: {
     maxQuotesPerMonth: number
     maxCompanies: number
+    maxRevisionsPerQuote: number
     features: string[]
   }
 }
