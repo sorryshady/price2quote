@@ -9,6 +9,7 @@ import {
   Eye,
   File,
   FileDown,
+  FilePenLine,
   GitBranch,
   Mail,
   RefreshCcw,
@@ -147,7 +148,6 @@ export default function QuotesPage() {
     data: quotesData,
     isLoading: quotesLoading,
     error,
-    refetch: refetchQuotes,
   } = useLatestQuotesQuery(user?.id || '')
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
   const [selectedQuote, setSelectedQuote] = useState<(typeof quotes)[0] | null>(
@@ -204,8 +204,10 @@ export default function QuotesPage() {
   ) => {
     const result = await updateQuoteStatusAction(quoteId, newStatus)
     if (result.success) {
-      // Invalidate quotes query to refresh the list
-      await queryClient.invalidateQueries({ queryKey: ['quotes'] })
+      // Invalidate latest quotes query to refresh the list
+      await queryClient.invalidateQueries({
+        queryKey: ['latest-quotes', user?.id || ''],
+      })
       toast.custom(
         <CustomToast
           message={`Quote status updated to "${newStatus}"`}
@@ -234,10 +236,12 @@ export default function QuotesPage() {
         toast.custom(
           <CustomToast message="Quote deleted successfully" type="success" />,
         )
-        // Invalidate quote limit cache and refetch quotes
+        // Invalidate quote limit cache and latest quotes cache
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['quote-limit', user.id] }),
-          refetchQuotes(),
+          queryClient.invalidateQueries({
+            queryKey: ['latest-quotes', user.id],
+          }),
         ])
       } else {
         toast.custom(
@@ -529,7 +533,7 @@ export default function QuotesPage() {
                           className="flex-1 sm:flex-none"
                         >
                           <Link href={`/quotes/${quote.id}/edit`}>
-                            <File className="h-4 w-4" />
+                            <FilePenLine className="h-4 w-4" />
                             <span className="ml-1 sm:ml-2">Edit</span>
                           </Link>
                         </Button>

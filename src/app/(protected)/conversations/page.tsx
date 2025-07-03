@@ -27,18 +27,19 @@ import {
   syncIncomingEmailsAction,
 } from '@/app/server-actions/email-sync'
 import {
-  type ConversationGroup,
+  type EmailThread,
   deleteConversationAction,
-  getEmailThreadsByCompanyAction,
 } from '@/app/server-actions/email-threads'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import {
+  useConversationsQuery,
+  useConversationsQueryClient,
+} from '@/hooks/use-conversations-query'
 import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
 export default function ConversationsPage() {
   const router = useRouter()
   const { companies, isLoading, error } = useCompaniesQuery()
-  const [conversations, setConversations] = useState<ConversationGroup[]>([])
-  const [isLoadingConversations, setIsLoadingConversations] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null,
@@ -50,36 +51,21 @@ export default function ConversationsPage() {
   const primaryCompany = companies?.[0]
   const currentCompanyId = selectedCompanyId || primaryCompany?.id
 
+  // Use React Query for conversations caching
+  const { data: conversationsData, isLoading: isLoadingConversations } =
+    useConversationsQuery(currentCompanyId)
+  const { invalidateConversations } = useConversationsQueryClient()
+
+  const conversations = conversationsData?.success
+    ? conversationsData.conversations || []
+    : []
+
+  // Load sync status when company changes
   useEffect(() => {
     if (currentCompanyId) {
-      loadConversations(currentCompanyId)
       loadSyncStatus(currentCompanyId)
     }
   }, [currentCompanyId])
-
-  const loadConversations = async (companyId: string) => {
-    setIsLoadingConversations(true)
-    try {
-      const result = await getEmailThreadsByCompanyAction(companyId)
-      if (result.success && result.conversations) {
-        setConversations(result.conversations)
-      } else {
-        toast.custom(
-          <CustomToast
-            message={result.error || 'Failed to load conversations'}
-            type="error"
-          />,
-        )
-      }
-    } catch (error) {
-      console.error('Error loading conversations:', error)
-      toast.custom(
-        <CustomToast message="Failed to load conversations" type="error" />,
-      )
-    } finally {
-      setIsLoadingConversations(false)
-    }
-  }
 
   const loadSyncStatus = async (companyId: string) => {
     try {
@@ -106,13 +92,15 @@ export default function ConversationsPage() {
     setIsSyncing(true)
     try {
       await syncIncomingEmailsAction(currentCompanyId)
-      await loadConversations(currentCompanyId)
+      // Invalidate conversations cache to refresh data
+      invalidateConversations(currentCompanyId)
       await loadSyncStatus(currentCompanyId)
 
       // Enhanced notification with sync details
       const unreadCount = conversations.reduce(
         (sum, conv) =>
-          sum + conv.emails.filter((email) => !email.isRead).length,
+          sum +
+          conv.emails.filter((email: EmailThread) => !email.isRead).length,
         0,
       )
 
@@ -133,9 +121,10 @@ export default function ConversationsPage() {
     try {
       const result = await deleteConversationAction(conversationId)
       if (result.success) {
-        setConversations((prev) =>
-          prev.filter((conv) => conv.conversationId !== conversationId),
-        )
+        // Invalidate conversations cache to refresh data
+        if (currentCompanyId) {
+          invalidateConversations(currentCompanyId)
+        }
         toast.custom(
           <CustomToast message="Conversation deleted" type="success" />,
         )

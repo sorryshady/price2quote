@@ -20,6 +20,7 @@ import { CustomToast } from '@/components/ui/custom-toast'
 import { env } from '@/env/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import { useConversationsQueryClient } from '@/hooks/use-conversations-query'
 import type { Quote } from '@/types'
 
 import { EmailComposer, type EmailData } from './_components/email-composer'
@@ -29,6 +30,7 @@ export default function SendEmailPage() {
   const { user } = useAuth()
   const { companies, isLoading, error, refetch } = useCompaniesQuery()
   const queryClient = useQueryClient()
+  const { invalidateConversations } = useConversationsQueryClient()
   const searchParams = useSearchParams()
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -145,6 +147,10 @@ export default function SendEmailPage() {
         queryClient.invalidateQueries({
           queryKey: ['latest-quotes', user?.id || ''],
         })
+        // Invalidate conversations cache to show new email in conversations
+        if (primaryCompany?.id) {
+          invalidateConversations(primaryCompany.id)
+        }
       } else {
         toast.custom(
           <CustomToast

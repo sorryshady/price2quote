@@ -566,33 +566,32 @@ export default function EditQuotePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl py-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Edit Quote</h1>
-              <p className="text-muted-foreground">
-                Revise quote for {quote.clientName || quote.clientEmail}
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/conversations?quoteId=${quote.id}`}>
-              View Conversation
-            </Link>
-          </Button>
-        </div>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Quotes
+        </Button>
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold">Edit Quote</h1>
+        <p className="text-muted-foreground">
+          Revise quote for {quote.clientName || quote.clientEmail}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/conversations?quoteId=${quote.id}`}>
+            View Conversation
+          </Link>
+        </Button>
       </div>
 
       {/* Quote Information Header */}

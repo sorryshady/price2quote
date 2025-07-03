@@ -22,6 +22,23 @@ export const quoteStatusEnum = pgEnum('quote_status', [
   'revised',
 ])
 
+// Define delivery timeline enum
+export const deliveryTimelineEnum = pgEnum('delivery_timeline', [
+  '1_week',
+  '2_weeks',
+  '1_month',
+  '2_months',
+  '3_months',
+  'custom',
+])
+
+// Define project complexity enum
+export const projectComplexityEnum = pgEnum('project_complexity', [
+  'simple',
+  'moderate',
+  'complex',
+])
+
 const quotes = pgTable('quotes', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
@@ -39,6 +56,14 @@ const quotes = pgTable('quotes', {
   clientName: varchar('client_name', { length: 255 }),
   clientLocation: varchar('client_location', { length: 255 }),
   clientBudget: decimal('client_budget', { precision: 10, scale: 2 }),
+  // New timeline and complexity fields
+  deliveryTimeline: deliveryTimelineEnum('delivery_timeline')
+    .default('1_month')
+    .notNull(),
+  customTimeline: text('custom_timeline'),
+  projectComplexity: projectComplexityEnum('project_complexity')
+    .default('moderate')
+    .notNull(),
   quoteData: json('quote_data'),
   sentAt: timestamp('sent_at'),
   // Revision fields for quote editing system

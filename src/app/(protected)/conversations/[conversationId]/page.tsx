@@ -32,16 +32,14 @@ import {
 import { UnreadEmailBadge } from '@/components/ui/unread-email-badge'
 
 import { markEmailAsReadAction } from '@/app/server-actions/email-sync'
-import {
-  type EmailThread,
-  getConversationEmailsAction,
-} from '@/app/server-actions/email-threads'
+import { type EmailThread } from '@/app/server-actions/email-threads'
 import {
   getQuoteRevisionHistoryForConversationAction,
   getQuoteWithServicesAction,
   updateQuoteStatusAction,
 } from '@/app/server-actions/quote'
 import { useAuth } from '@/hooks/use-auth'
+import { useConversationQuery } from '@/hooks/use-conversation-query'
 import { downloadAttachment } from '@/lib/utils'
 import type { QuoteStatus } from '@/types'
 
@@ -82,8 +80,6 @@ export default function ConversationDetailPage() {
   const { user } = useAuth()
   const conversationId = params.conversationId as string
 
-  const [emails, setEmails] = useState<EmailThread[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [downloadingAttachments, setDownloadingAttachments] = useState<
     Set<string>
   >(new Set())
@@ -109,6 +105,11 @@ export default function ConversationDetailPage() {
     }>
   >([])
 
+  // Use React Query for conversation caching
+  const { data: conversationData, isLoading } =
+    useConversationQuery(conversationId)
+  const emails = conversationData?.success ? conversationData.emails || [] : []
+
   // React Query for revision history
   const revisionHistoryQuery = useQuery({
     queryKey: ['revision-history', quoteId],
@@ -122,11 +123,32 @@ export default function ConversationDetailPage() {
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 
+  // Mark unread emails as read when conversation is loaded
   useEffect(() => {
-    if (conversationId) {
-      loadConversationEmails()
+    if (emails.length > 0) {
+      const unreadEmails = emails.filter((email: EmailThread) => !email.isRead)
+      for (const email of unreadEmails) {
+        try {
+          markEmailAsReadAction(email.gmailMessageId)
+        } catch (error) {
+          console.error('Error marking email as read:', error)
+        }
+      }
+
+      // Extract conversation info from emails (prefer first outbound email)
+      const outbound = emails.find(
+        (e: EmailThread) => e.direction === 'outbound',
+      )
+      const infoSource = outbound || emails[0]
+      setConversationInfo({
+        projectTitle:
+          infoSource.projectTitle || infoSource.subject || 'Conversation',
+        clientName: infoSource.clientName || '',
+        clientEmail: infoSource.to || '',
+        quoteStatus: infoSource.emailType || 'sent',
+      })
     }
-  }, [conversationId])
+  }, [emails])
 
   useEffect(() => {
     if (emails.length > 0) {
@@ -165,57 +187,13 @@ export default function ConversationDetailPage() {
     }
   }, [revisionHistoryQuery.data])
 
-  const loadConversationEmails = async () => {
-    setIsLoading(true)
-    try {
-      const result = await getConversationEmailsAction(conversationId)
-      if (result.success && result.emails) {
-        setEmails(result.emails)
-
-        // Mark unread emails as read when conversation is opened
-        const unreadEmails = result.emails.filter((email) => !email.isRead)
-        for (const email of unreadEmails) {
-          try {
-            await markEmailAsReadAction(email.gmailMessageId)
-          } catch (error) {
-            console.error('Error marking email as read:', error)
-          }
-        }
-
-        // Extract conversation info from emails (prefer first outbound email)
-        if (result.emails.length > 0) {
-          const outbound = result.emails.find((e) => e.direction === 'outbound')
-          const infoSource = outbound || result.emails[0]
-          setConversationInfo({
-            projectTitle:
-              infoSource.projectTitle || infoSource.subject || 'Conversation',
-            clientName: infoSource.clientName || '',
-            clientEmail: infoSource.to || '',
-            quoteStatus: infoSource.emailType || 'sent',
-          })
-        }
-      } else {
-        toast.custom(
-          <CustomToast
-            message={result.error || 'Failed to load conversation'}
-            type="error"
-          />,
-        )
-      }
-    } catch (error) {
-      console.error('Error loading conversation emails:', error)
-      toast.custom(
-        <CustomToast message="Failed to load conversation" type="error" />,
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
-      await loadConversationEmails()
+      // Invalidate conversation cache to refresh data
+      await queryClient.invalidateQueries({
+        queryKey: ['conversation', conversationId],
+      })
       toast.custom(
         <CustomToast message="Conversation refreshed" type="success" />,
       )
