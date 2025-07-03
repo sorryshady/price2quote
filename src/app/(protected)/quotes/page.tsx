@@ -9,6 +9,7 @@ import {
   Eye,
   File,
   FileDown,
+  GitBranch,
   Mail,
   RefreshCcw,
   Trash2,
@@ -53,7 +54,7 @@ import {
   updateQuoteStatusAction,
 } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
-import { useQuotesQuery } from '@/hooks/use-quotes-query'
+import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 import type { Quote, QuoteStatus } from '@/types'
 
@@ -147,7 +148,7 @@ export default function QuotesPage() {
     isLoading: quotesLoading,
     error,
     refetch: refetchQuotes,
-  } = useQuotesQuery(user?.id || '')
+  } = useLatestQuotesQuery(user?.id || '')
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
   const [selectedQuote, setSelectedQuote] = useState<(typeof quotes)[0] | null>(
     null,
@@ -403,6 +404,13 @@ export default function QuotesPage() {
                         >
                           {getStatusIcon(quote.status)} {quote.status}
                         </Badge>
+                        {/* Version indicator */}
+                        {quote.versionNumber &&
+                          Number(quote.versionNumber) > 1 && (
+                            <Badge variant="secondary" className="text-xs">
+                              v{quote.versionNumber}
+                            </Badge>
+                          )}
                         <Select
                           value={quote.status}
                           onValueChange={(value) =>
@@ -524,6 +532,24 @@ export default function QuotesPage() {
                           </Link>
                         </Button>
                       ) : null}
+                      {/* View Versions button - show if this quote has revisions or is a revision */}
+                      {(quote.parentQuoteId ||
+                        (quote.versionNumber &&
+                          Number(quote.versionNumber) > 1)) && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Link
+                            href={`/quotes/${quote.parentQuoteId || quote.id}/versions`}
+                          >
+                            <GitBranch className="h-4 w-4" />
+                            <span className="ml-1 sm:ml-2">Versions</span>
+                          </Link>
+                        </Button>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button

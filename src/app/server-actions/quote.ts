@@ -937,3 +937,112 @@ export async function generateQuoteRevisionAnalysisAction(data: {
     }
   }
 }
+
+export async function getLatestQuotesAction(userId: string) {
+  try {
+    // First, get all quotes for the user
+    const allQuotes = await db
+      .select({
+        id: quotes.id,
+        userId: quotes.userId,
+        companyId: quotes.companyId,
+        projectTitle: quotes.projectTitle,
+        projectDescription: quotes.projectDescription,
+        amount: quotes.amount,
+        currency: quotes.currency,
+        status: quotes.status,
+        clientEmail: quotes.clientEmail,
+        clientName: quotes.clientName,
+        quoteData: quotes.quoteData,
+        sentAt: quotes.sentAt,
+        parentQuoteId: quotes.parentQuoteId,
+        revisionNotes: quotes.revisionNotes,
+        clientFeedback: quotes.clientFeedback,
+        versionNumber: quotes.versionNumber,
+        createdAt: quotes.createdAt,
+        updatedAt: quotes.updatedAt,
+        company: {
+          id: companies.id,
+          name: companies.name,
+          businessType: companies.businessType,
+          country: companies.country,
+          address: companies.address,
+          phone: companies.phone,
+          website: companies.website,
+          logoUrl: companies.logoUrl,
+        },
+      })
+      .from(quotes)
+      .leftJoin(companies, eq(quotes.companyId, companies.id))
+      .where(eq(quotes.userId, userId))
+      .orderBy(quotes.createdAt)
+
+    // Group quotes by their quote family (original quote or revision chain)
+    const quoteFamilies = new Map<string, typeof allQuotes>()
+
+    allQuotes.forEach((quote) => {
+      // For original quotes (no parentQuoteId), use the quote ID as the family key
+      // For revisions, use the parentQuoteId as the family key
+      const familyKey = quote.parentQuoteId || quote.id
+
+      if (!quoteFamilies.has(familyKey)) {
+        quoteFamilies.set(familyKey, [])
+      }
+      quoteFamilies.get(familyKey)!.push(quote)
+    })
+
+    // For each family, get the latest version (highest version number or most recent)
+    const latestQuotes = Array.from(quoteFamilies.values()).map((family) => {
+      // Sort by version number (convert to number, handle '1' vs '2' etc.)
+      const sorted = family.sort((a, b) => {
+        const versionA = parseInt(a.versionNumber || '1')
+        const versionB = parseInt(b.versionNumber || '1')
+        return versionB - versionA // Latest first
+      })
+      return sorted[0] // Return the latest version
+    })
+
+    // Fetch quote services for each latest quote
+    const latestQuotesWithServices = await Promise.all(
+      latestQuotes.map(async (quote) => {
+        const quoteServicesData = await db
+          .select({
+            id: quoteServices.id,
+            quoteId: quoteServices.quoteId,
+            serviceId: quoteServices.serviceId,
+            quantity: quoteServices.quantity,
+            unitPrice: quoteServices.unitPrice,
+            totalPrice: quoteServices.totalPrice,
+            notes: quoteServices.notes,
+            service: {
+              id: services.id,
+              name: services.name,
+              description: services.description,
+              skillLevel: services.skillLevel,
+              basePrice: services.basePrice,
+              currency: services.currency,
+            },
+          })
+          .from(quoteServices)
+          .leftJoin(services, eq(quoteServices.serviceId, services.id))
+          .where(eq(quoteServices.quoteId, quote.id))
+
+        return {
+          ...quote,
+          quoteServices: quoteServicesData,
+        }
+      }),
+    )
+
+    return {
+      success: true,
+      quotes: latestQuotesWithServices,
+    }
+  } catch (error) {
+    console.error('Error fetching latest quotes:', error)
+    return {
+      success: false,
+      error: 'Failed to fetch latest quotes',
+    }
+  }
+}
