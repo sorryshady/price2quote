@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 import { EmailDirectionIndicator } from '@/components/ui/email-direction-indicator'
+import { RevisionTimeline } from '@/components/ui/revision-timeline'
 import {
   Select,
   SelectContent,
@@ -35,9 +36,11 @@ import {
   getConversationEmailsAction,
 } from '@/app/server-actions/email-threads'
 import {
+  getQuoteRevisionHistoryForConversationAction,
   getQuoteWithServicesAction,
   updateQuoteStatusAction,
 } from '@/app/server-actions/quote'
+import { useAuth } from '@/hooks/use-auth'
 import { downloadAttachment } from '@/lib/utils'
 import type { QuoteStatus } from '@/types'
 
@@ -75,6 +78,7 @@ export default function ConversationDetailPage() {
   const params = useParams()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const conversationId = params.conversationId as string
 
   const [emails, setEmails] = useState<EmailThread[]>([])
@@ -92,6 +96,17 @@ export default function ConversationDetailPage() {
   const [showQuoted, setShowQuoted] = useState<{ [id: string]: boolean }>({})
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus | ''>('')
   const [quoteId, setQuoteId] = useState<string | null>(null)
+  const [revisionHistory, setRevisionHistory] = useState<
+    Array<{
+      id: string
+      versionNumber: string
+      revisionNotes?: string
+      sentAt: Date
+      subject: string
+      isRevision: boolean
+      hasEmail?: boolean
+    }>
+  >([])
 
   useEffect(() => {
     if (conversationId) {
@@ -101,11 +116,36 @@ export default function ConversationDetailPage() {
 
   useEffect(() => {
     if (emails.length > 0) {
-      setQuoteId(emails[0].quoteId)
-      // Fetch quote status from server
-      getQuoteWithServicesAction(emails[0].quoteId).then((res) => {
+      // Find the most recent outbound email (latest sent quote)
+      const outboundEmails = emails.filter(
+        (email) => email.direction === 'outbound',
+      )
+      const latestSentEmail =
+        outboundEmails.length > 0
+          ? outboundEmails[outboundEmails.length - 1]
+          : emails[emails.length - 1] // Fallback to last email if no outbound
+
+      setQuoteId(latestSentEmail.quoteId)
+
+      // Fetch quote status from server for the latest sent quote
+      getQuoteWithServicesAction(latestSentEmail.quoteId).then((res) => {
         if (res.success && res.quote?.status) {
           setQuoteStatus(res.quote.status)
+        }
+      })
+
+      // Fetch revision history
+      getQuoteRevisionHistoryForConversationAction(
+        latestSentEmail.quoteId,
+        user?.id || '',
+      ).then((res) => {
+        if (res.success && res.revisions) {
+          setRevisionHistory(
+            res.revisions.map((rev) => ({
+              ...rev,
+              revisionNotes: rev.revisionNotes || undefined,
+            })),
+          )
         }
       })
     }
@@ -194,8 +234,9 @@ export default function ConversationDetailPage() {
     setQuoteStatus(newStatus)
     const result = await updateQuoteStatusAction(quoteId, newStatus)
     if (result.success) {
-      // Invalidate quotes query to refresh the quotes list
+      // Invalidate quotes queries to refresh the quotes list
       await queryClient.invalidateQueries({ queryKey: ['quotes'] })
+      await queryClient.invalidateQueries({ queryKey: ['latest-quotes'] })
       toast.custom(
         <CustomToast
           message={`Quote status updated to "${newStatus}"`}
@@ -286,6 +327,11 @@ export default function ConversationDetailPage() {
         </Card>
       )}
 
+      {/* Revision Timeline */}
+      {revisionHistory.length > 1 && (
+        <RevisionTimeline revisions={revisionHistory} />
+      )}
+
       {/* Status Dropdown UI */}
       {quoteId && (
         <div className="mb-2 flex items-center gap-2">
@@ -344,6 +390,11 @@ export default function ConversationDetailPage() {
                         {email.includeQuotePdf && (
                           <Badge variant="secondary" className="text-xs">
                             Quote PDF
+                          </Badge>
+                        )}
+                        {email.emailType === 'quote_revision_sent' && (
+                          <Badge variant="outline" className="text-xs">
+                            Revision
                           </Badge>
                         )}
                       </div>

@@ -140,7 +140,7 @@ export default function SendEmailPage() {
         )
         // Reset form after successful send
         setSelectedQuote(null)
-        // Invalidate quotes queries to update status from 'draft' to 'sent'
+        // Invalidate quotes queries to update status from 'draft' or 'revised' to 'sent'
         queryClient.invalidateQueries({ queryKey: ['quotes', user?.id || ''] })
         queryClient.invalidateQueries({
           queryKey: ['latest-quotes', user?.id || ''],

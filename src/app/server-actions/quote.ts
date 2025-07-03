@@ -1021,6 +1021,78 @@ export async function generateQuoteRevisionAnalysisAction(data: {
   }
 }
 
+export async function getQuoteRevisionHistoryForConversationAction(
+  quoteId: string,
+  userId: string,
+) {
+  try {
+    // Get the quote to determine if it's a revision
+    const quote = await db.query.quotes.findFirst({
+      where: (quotes, { eq }) => eq(quotes.id, quoteId),
+    })
+
+    if (!quote) {
+      return { success: false, error: 'Quote not found' }
+    }
+
+    // Get the original quote ID for threading
+    const originalQuoteId = quote.parentQuoteId || quote.id
+
+    // Get all quotes in this family (original + revisions)
+    const quoteFamily = await db.query.quotes.findMany({
+      where: (quotes, { or, eq }) =>
+        or(
+          eq(quotes.id, originalQuoteId),
+          eq(quotes.parentQuoteId, originalQuoteId),
+        ),
+      orderBy: (quotes, { asc }) => [asc(quotes.createdAt)],
+    })
+
+    // Get email threads for each quote in the family
+    const revisionHistory = await Promise.all(
+      quoteFamily.map(async (quoteVersion) => {
+        const emailThread = await db.query.emailThreads.findFirst({
+          where: (emailThreads, { eq, and }) =>
+            and(
+              eq(emailThreads.quoteId, quoteVersion.id),
+              eq(emailThreads.userId, userId),
+              eq(emailThreads.direction, 'outbound'),
+            ),
+          orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
+        })
+
+        return {
+          id: quoteVersion.id,
+          versionNumber: quoteVersion.versionNumber || '1',
+          revisionNotes: quoteVersion.revisionNotes,
+          sentAt: emailThread?.sentAt || quoteVersion.createdAt,
+          subject:
+            emailThread?.subject || `Quote - ${quoteVersion.projectTitle}`,
+          isRevision: quoteVersion.parentQuoteId !== null,
+          hasEmail: !!emailThread,
+        }
+      }),
+    )
+
+    // Filter out quotes that haven't been sent yet
+    const sentRevisions = revisionHistory.filter(
+      (revision) => revision.hasEmail,
+    )
+
+    return {
+      success: true,
+      revisions: sentRevisions,
+      originalQuoteId,
+    }
+  } catch (error) {
+    console.error('Error fetching quote revision history:', error)
+    return {
+      success: false,
+      error: 'Failed to fetch quote revision history',
+    }
+  }
+}
+
 export async function getLatestQuotesAction(userId: string) {
   try {
     // First, get all quotes for the user

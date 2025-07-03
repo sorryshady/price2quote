@@ -239,8 +239,8 @@ export async function POST(req: NextRequest) {
         // Continue even if thread saving fails
       }
 
-      // Update quote status to 'sent' if it was 'draft'
-      if (quoteData.status === 'draft') {
+      // Update quote status to 'sent' if it was 'draft' or 'revised'
+      if (quoteData.status === 'draft' || quoteData.status === 'revised') {
         await db
           .update(quotes)
           .set({ status: 'sent' })
