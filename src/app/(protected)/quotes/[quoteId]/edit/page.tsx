@@ -40,7 +40,7 @@ import {
   getQuoteForEditingAction,
 } from '@/app/server-actions/quote'
 import { useAuth } from '@/hooks/use-auth'
-import type { Quote, QuoteStatus } from '@/types'
+import type { Quote, QuoteService, QuoteStatus, Service } from '@/types'
 
 const editQuoteSchema = z.object({
   projectTitle: z.string().min(1, 'Project title is required'),
@@ -117,6 +117,16 @@ export default function EditQuotePage() {
   const [quote, setQuote] = useState<Quote | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [editableServices, setEditableServices] = useState<
+    {
+      serviceId: string
+      service: Service
+      quantity: number
+      unitPrice: number
+      notes: string
+    }[]
+  >([])
+  const [allServices, setAllServices] = useState<Service[]>([])
 
   const form = useForm<EditQuoteFormData>({
     resolver: zodResolver(editQuoteSchema),
@@ -233,6 +243,87 @@ export default function EditQuotePage() {
     fetchQuote()
   }, [user?.id, quoteId, form])
 
+  // Fetch all services for the company (for Add Service)
+  useEffect(() => {
+    async function fetchServices() {
+      if (!quote?.companyId) return
+      // Fetch all services for the company (reuse logic from new-quote)
+      const res = await fetch(`/api/services?companyId=${quote.companyId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAllServices(data.services)
+      }
+    }
+    if (quote) fetchServices()
+  }, [quote])
+
+  // Initialize editableServices from quote
+  useEffect(() => {
+    if (quote && quote.quoteServices) {
+      setEditableServices(
+        (quote.quoteServices as QuoteService[])
+          .filter((qs) => qs.service)
+          .map((qs) => ({
+            serviceId: qs.serviceId,
+            service: qs.service as Service,
+            quantity: Number(qs.quantity),
+            unitPrice: qs.unitPrice ? Number(qs.unitPrice) : 0,
+            notes: qs.notes || '',
+          })),
+      )
+    }
+  }, [quote])
+
+  // Add Service
+  const handleAddService = (service: Service) => {
+    setEditableServices((prev) => [
+      ...prev,
+      {
+        serviceId: service.id,
+        service,
+        quantity: 1,
+        unitPrice: parseFloat(service.basePrice || '0'),
+        notes: '',
+      },
+    ])
+  }
+
+  // Remove Service
+  const handleRemoveService = (serviceId: string) => {
+    setEditableServices((prev) => prev.filter((s) => s.serviceId !== serviceId))
+  }
+
+  // Update Service Quantity
+  const updateServiceQuantity = (serviceId: string, quantity: number) => {
+    setEditableServices((prev) =>
+      prev.map((s) => (s.serviceId === serviceId ? { ...s, quantity } : s)),
+    )
+  }
+
+  // Update Service Price
+  const updateServicePrice = (serviceId: string, price: number) => {
+    setEditableServices((prev) =>
+      prev.map((s) =>
+        s.serviceId === serviceId ? { ...s, unitPrice: price } : s,
+      ),
+    )
+  }
+
+  // Update Service Notes
+  const updateServiceNotes = (serviceId: string, notes: string) => {
+    setEditableServices((prev) =>
+      prev.map((s) => (s.serviceId === serviceId ? { ...s, notes } : s)),
+    )
+  }
+
+  // Calculate total
+  const calculateTotal = () => {
+    return editableServices.reduce(
+      (sum, s) => sum + s.quantity * s.unitPrice,
+      0,
+    )
+  }
+
   const onSubmit = async (data: EditQuoteFormData) => {
     if (!user?.id || !quote) return
     setSubmitting(true)
@@ -251,13 +342,12 @@ export default function EditQuotePage() {
       clientBudget: data.clientBudget,
       projectComplexity: data.projectComplexity,
       currency: quote.currency,
-      selectedServices:
-        quote.quoteServices?.map((qs) => ({
-          serviceId: qs.serviceId,
-          quantity: Number(qs.quantity),
-          unitPrice: qs.unitPrice ? Number(qs.unitPrice) : undefined,
-          notes: qs.notes,
-        })) || [],
+      selectedServices: editableServices.map((s) => ({
+        serviceId: s.serviceId,
+        quantity: s.quantity,
+        unitPrice: s.unitPrice,
+        notes: s.notes,
+      })),
       revisionNotes: data.revisionNotes || '',
       clientFeedback: data.clientFeedback || '',
       quoteData: quote.quoteData as CreateQuoteData['quoteData'],
@@ -528,6 +618,115 @@ export default function EditQuotePage() {
                   )}
                 />
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Services</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {editableServices.map((s) => (
+                <div key={s.serviceId} className="mb-4 space-y-2 border-b pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">{s.service.name}</div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveService(s.serviceId)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <Label className="text-sm">Quantity</Label>
+                      <Input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={s.quantity}
+                        onChange={(e) =>
+                          updateServiceQuantity(
+                            s.serviceId,
+                            parseFloat(e.target.value) || 1,
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Unit Price</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={s.unitPrice}
+                        onChange={(e) =>
+                          updateServicePrice(
+                            s.serviceId,
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Total</Label>
+                      <Input
+                        value={(s.quantity * s.unitPrice).toFixed(2)}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm">Notes</Label>
+                    <Textarea
+                      value={s.notes}
+                      onChange={(e) =>
+                        updateServiceNotes(s.serviceId, e.target.value)
+                      }
+                      className="min-h-[60px]"
+                    />
+                  </div>
+                </div>
+              ))}
+              {/* Add Service Dropdown */}
+              {allServices.filter(
+                (s) => !editableServices.some((es) => es.serviceId === s.id),
+              ).length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Select
+                    onValueChange={(serviceId) => {
+                      const service = allServices.find(
+                        (s) => s.id === serviceId,
+                      )
+                      if (service) handleAddService(service)
+                    }}
+                  >
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Add a service..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allServices
+                        .filter(
+                          (s) =>
+                            !editableServices.some(
+                              (es) => es.serviceId === s.id,
+                            ),
+                        )
+                        .map((service) => (
+                          <SelectItem key={service.id} value={service.id}>
+                            {service.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="mt-4 flex justify-end text-lg font-semibold">
+                Total: {calculateTotal().toFixed(2)} {quote.currency}
+              </div>
             </CardContent>
           </Card>
 
