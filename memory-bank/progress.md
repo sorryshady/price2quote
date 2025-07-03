@@ -199,6 +199,54 @@
   - Next steps for client
   - Clean, professional layout ready for client delivery
 
+### ✅ **Complete Quote Editing System**
+
+- **Database Schema:**
+
+  - Added revision fields to quotes table (revisionNotes, clientFeedback, originalQuoteId, versionNumber)
+  - Created quote_versions table for version history tracking
+  - Added clientLocation and clientBudget fields for enhanced client data
+  - Proper relationships between original quotes and revisions
+
+- **Server Actions:**
+
+  - `getQuoteForEditingAction`: Fetches quote with all services and company data
+  - `createRevisedQuoteAction`: Creates new revision with proper version tracking
+  - `getQuoteVersionHistoryAction`: Retrieves complete version history
+  - `generateQuoteRevisionAnalysisAction`: AI-powered revision analysis with client feedback
+
+- **Edit Quote Page:**
+
+  - Pre-populated form with all existing quote data
+  - Service management (add, remove, edit services with live total calculation)
+  - Client information updates (location, budget, feedback)
+  - Revision notes and client feedback integration
+  - AI re-analysis with updated pricing recommendations
+  - Subscription limit enforcement (free: 2 revisions per quote, Pro: unlimited)
+
+- **Version History:**
+
+  - Versions page showing original and all revisions
+  - Version badges and revision information display
+  - Service count and pricing accuracy
+  - Original quote marked as non-editable (only latest version editable)
+  - "View Details" links to edit page for latest version
+
+- **AI Re-analysis:**
+
+  - Context-aware analysis including client feedback
+  - Updated pricing recommendations based on revision context
+  - Market analysis with revision impact assessment
+  - Negotiation tips for revised quotes
+  - Revision strategy recommendations
+
+- **Subscription Integration:**
+
+  - Revision limits enforced through hooks and UI
+  - Free tier: 3 original quotes/month, 2 revisions per quote
+  - Pro tier: Unlimited quotes and revisions
+  - Real-time limit checking and upgrade prompts
+
 - **Database Integration:**
 
   - Complete quotes table with all fields
@@ -323,6 +371,7 @@
   - **NEW: Smart filename extraction from storage paths**
 
 - **Gmail Integration:**
+
   - OAuth connection system per company
   - Token management with automatic refresh
   - Secure storage of access and refresh tokens
@@ -333,9 +382,38 @@
   - Comprehensive error handling
   - Database constraints for proper conflict resolution
 
+- **Quote Revision Integration (Planned):**
+  - Show only latest versions in quote selector
+  - Conversation threading with original quote IDs
+  - Revision context in email bodies
+  - Version history in conversation view
+  - Action plan created and ready for implementation
+
 ## What's Left to Build
 
-### Phase 4: Advanced Features (Future)
+### Phase 1: Send Email Quote Revision Integration (Next Priority)
+
+- **Quote Selector Updates:**
+
+  - Update to show only latest versions of each quote family
+  - Add version indicators and badges
+  - Implement conversation threading with original quote IDs
+  - Test quote selection functionality
+
+- **Email Threading Implementation:**
+
+  - Implement email threading logic
+  - Update email composition with revision context
+  - Add revision information to email bodies
+  - Test email sending and threading
+
+- **Conversation Page Updates:**
+  - Update conversation page to show revision history
+  - Add version navigation in conversations
+  - Implement visual timeline of quote revisions
+  - Test full conversation flow
+
+### Phase 2: Advanced Features (Future)
 
 - **Quote Analytics & Reporting:**
 
@@ -366,7 +444,6 @@
   - Multi-language support
 
 - **Quote Management Enhancements:**
-  - Quote editing and versioning
   - Quote approval workflows
   - Quote collaboration features
   - Advanced filtering and search
