@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 
 import db from '@/db'
 import { emailThreads } from '@/db/schema'
@@ -40,28 +40,39 @@ export async function findExistingEmailThread(
   // Get the original quote ID for threading
   const originalQuoteId = getOriginalQuoteIdForThreading(quote)
 
-  // Find existing thread using the original quote ID
-  const existingThread = await db.query.emailThreads.findFirst({
-    where: (emailThreads, { eq, and }) =>
+  // Get all quotes in this family (original + revisions)
+  const quoteFamily = await db.query.quotes.findMany({
+    where: (quotes, { or, eq }) =>
+      or(
+        eq(quotes.id, originalQuoteId),
+        eq(quotes.parentQuoteId, originalQuoteId),
+      ),
+  })
+
+  const quoteIds = quoteFamily.map((q) => q.id)
+
+  // Find the most recent email sent for any quote in this family
+  const mostRecentEmail = await db.query.emailThreads.findFirst({
+    where: (emailThreads, { eq, and, inArray }) =>
       and(
-        eq(emailThreads.quoteId, originalQuoteId),
+        inArray(emailThreads.quoteId, quoteIds),
         eq(emailThreads.userId, userId),
         eq(emailThreads.to, to),
       ),
     orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
   })
 
-  if (!existingThread) {
+  if (!mostRecentEmail) {
     return { threadId: null, lastSentAt: null, threadCount: 0 }
   }
 
-  // Count total emails in this thread
+  // Count total emails in this thread (all quotes in family)
   const threadCountResult = await db
     .select()
     .from(emailThreads)
     .where(
       and(
-        eq(emailThreads.quoteId, originalQuoteId),
+        inArray(emailThreads.quoteId, quoteIds),
         eq(emailThreads.userId, userId),
         eq(emailThreads.to, to),
       ),
@@ -70,8 +81,8 @@ export async function findExistingEmailThread(
   const threadCount = threadCountResult.length
 
   return {
-    threadId: existingThread.gmailThreadId,
-    lastSentAt: existingThread.sentAt,
+    threadId: mostRecentEmail.gmailThreadId,
+    lastSentAt: mostRecentEmail.sentAt,
     threadCount,
   }
 }
@@ -150,11 +161,22 @@ export async function getConversationHistory(
 
   const originalQuoteId = getOriginalQuoteIdForThreading(quote)
 
-  // Get all emails in the conversation thread
+  // Get all quotes in this family (original + revisions)
+  const quoteFamily = await db.query.quotes.findMany({
+    where: (quotes, { or, eq }) =>
+      or(
+        eq(quotes.id, originalQuoteId),
+        eq(quotes.parentQuoteId, originalQuoteId),
+      ),
+  })
+
+  const quoteIds = quoteFamily.map((q) => q.id)
+
+  // Get all emails in the conversation thread (all quotes in family)
   const emails = await db.query.emailThreads.findMany({
-    where: (emailThreads, { eq, and }) =>
+    where: (emailThreads, { eq, and, inArray }) =>
       and(
-        eq(emailThreads.quoteId, originalQuoteId),
+        inArray(emailThreads.quoteId, quoteIds),
         eq(emailThreads.userId, userId),
       ),
     orderBy: (emailThreads, { asc }) => [asc(emailThreads.sentAt)],

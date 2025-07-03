@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Mail, Paperclip, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -108,6 +109,19 @@ export default function ConversationDetailPage() {
     }>
   >([])
 
+  // React Query for revision history
+  const revisionHistoryQuery = useQuery({
+    queryKey: ['revision-history', quoteId],
+    queryFn: async () => {
+      if (!quoteId || !user?.id) {
+        return { success: false, revisions: [] }
+      }
+      return getQuoteRevisionHistoryForConversationAction(quoteId, user.id)
+    },
+    enabled: !!quoteId && !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  })
+
   useEffect(() => {
     if (conversationId) {
       loadConversationEmails()
@@ -133,23 +147,23 @@ export default function ConversationDetailPage() {
           setQuoteStatus(res.quote.status)
         }
       })
-
-      // Fetch revision history
-      getQuoteRevisionHistoryForConversationAction(
-        latestSentEmail.quoteId,
-        user?.id || '',
-      ).then((res) => {
-        if (res.success && res.revisions) {
-          setRevisionHistory(
-            res.revisions.map((rev) => ({
-              ...rev,
-              revisionNotes: rev.revisionNotes || undefined,
-            })),
-          )
-        }
-      })
     }
   }, [emails])
+
+  // Update revision history when query data changes
+  useEffect(() => {
+    if (
+      revisionHistoryQuery.data?.success &&
+      revisionHistoryQuery.data.revisions
+    ) {
+      setRevisionHistory(
+        revisionHistoryQuery.data.revisions.map((rev) => ({
+          ...rev,
+          revisionNotes: rev.revisionNotes || undefined,
+        })),
+      )
+    }
+  }, [revisionHistoryQuery.data])
 
   const loadConversationEmails = async () => {
     setIsLoading(true)
@@ -237,6 +251,7 @@ export default function ConversationDetailPage() {
       // Invalidate quotes queries to refresh the quotes list
       await queryClient.invalidateQueries({ queryKey: ['quotes'] })
       await queryClient.invalidateQueries({ queryKey: ['latest-quotes'] })
+      await queryClient.invalidateQueries({ queryKey: ['revision-history'] })
       toast.custom(
         <CustomToast
           message={`Quote status updated to "${newStatus}"`}

@@ -271,3 +271,5 @@ Revision context included in email → Conversation shows full history
 - **Data Migration**: No database changes required initially
 - **Performance**: Latest quotes query should be optimized for speed
 - **Accessibility**: Version indicators should be screen reader friendly
+
+In conversations page use tanstak query to client side hold the version history thing. And when we create a new version in the future then we can revalidate this.

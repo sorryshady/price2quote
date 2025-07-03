@@ -57,6 +57,23 @@ interface AttachmentFile {
   type: string
 }
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'draft':
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+    case 'sent':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+    case 'accepted':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+    case 'rejected':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+    case 'revised':
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+  }
+}
+
 const emailTemplates = {
   draft: {
     subject: 'Project Quote - {projectTitle}',
@@ -492,7 +509,9 @@ export function EmailComposer({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Compose Email</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Badge variant="outline">{selectedQuote.status}</Badge>
+            <Badge className={getStatusColor(selectedQuote.status)}>
+              {selectedQuote.status}
+            </Badge>
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
