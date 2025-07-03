@@ -14,7 +14,44 @@ The application follows a modern Next.js 14 architecture with App Router, featur
 
 ## Key Design Patterns
 
-### 1. **Quote Creation Pattern**
+### 1. **Auth State Management Pattern**
+
+**Problem**: Hydration mismatches in production builds due to auth state initialization timing
+
+**Solution**:
+
+- **Complete User Data**: Login API returns full user object including `subscriptionTier`
+- **State Persistence**: Persist `isInitialized` flag to localStorage to prevent re-initialization
+- **Loading States**: Wait for auth initialization before rendering protected content
+- **State Synchronization**: Ensure `setUser` immediately sets `isInitialized: true`
+
+**Implementation**:
+
+```typescript
+// Auth hook with proper state management
+const { user, isLoading, isInitialized } = useAuth()
+
+// Protected layout waits for initialization
+if (!isInitialized || isLoading) {
+  return <LoadingSpinner />
+}
+
+// Login API returns complete user data
+return NextResponse.json({
+  success: true,
+  user: {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    subscriptionTier: user.subscriptionTier,
+    // ... other fields
+  },
+})
+```
+
+**Benefits**: Eliminates hydration mismatches, ensures consistent state across environments
+
+### 2. **Quote Creation Pattern**
 
 **Comprehensive Form Management:**
 
@@ -81,7 +118,7 @@ const result = await generateAIAssistedQuoteAction({
 })
 ```
 
-### 2. **Quote Preview Pattern**
+### 3. **Quote Preview Pattern**
 
 **Professional Layout Structure:**
 
@@ -116,7 +153,7 @@ const result = await generateAIAssistedQuoteAction({
 ))}
 ```
 
-### 3. **AI Integration Pattern**
+### 4. **AI Integration Pattern**
 
 **Company Summary Generation:**
 
@@ -172,7 +209,7 @@ interface AIQuoteResponse {
 }
 ```
 
-### 4. **Subscription Management Pattern**
+### 5. **Subscription Management Pattern**
 
 **Real-time Usage Tracking:**
 
