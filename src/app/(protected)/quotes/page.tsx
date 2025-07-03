@@ -465,16 +465,19 @@ export default function QuotesPage() {
                         <FileDown className="h-4 w-4" />
                         <span className="ml-1 sm:ml-2">Download</span>
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled
-                        title="Edit functionality coming soon"
-                        className="flex-1 sm:flex-none"
-                      >
-                        <File className="h-4 w-4" />
-                        <span className="ml-1 sm:ml-2">Edit</span>
-                      </Button>
+                      {['revised', 'rejected'].includes(quote.status) ? (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Link href={`/quotes/${quote.id}/edit`}>
+                            <File className="h-4 w-4" />
+                            <span className="ml-1 sm:ml-2">Edit</span>
+                          </Link>
+                        </Button>
+                      ) : null}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button

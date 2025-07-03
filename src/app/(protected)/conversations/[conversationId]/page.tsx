@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -296,6 +297,11 @@ export default function ConversationDetailPage() {
               <SelectItem value="revised">Revised</SelectItem>
             </SelectContent>
           </Select>
+          {['revised', 'rejected'].includes(quoteStatus) && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/quotes/${quoteId}/edit`}>Edit Quote</Link>
+            </Button>
+          )}
         </div>
       )}
 

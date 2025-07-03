@@ -17,7 +17,7 @@ import { generateFinalQuoteWithAI, negotiatePriceWithAI } from '@/lib/gemini'
 import { canUserCreateQuote } from '@/lib/subscription'
 import type { QuoteStatus } from '@/types'
 
-interface CreateQuoteData {
+export interface CreateQuoteData {
   userId: string
   companyId: string
   projectTitle: string
@@ -147,6 +147,10 @@ export async function getQuotesAction(userId: string) {
         clientName: quotes.clientName,
         quoteData: quotes.quoteData,
         sentAt: quotes.sentAt,
+        parentQuoteId: quotes.parentQuoteId,
+        revisionNotes: quotes.revisionNotes,
+        clientFeedback: quotes.clientFeedback,
+        versionNumber: quotes.versionNumber,
         createdAt: quotes.createdAt,
         updatedAt: quotes.updatedAt,
         company: {
@@ -258,6 +262,11 @@ export async function getQuoteWithServicesAction(quoteId: string) {
         clientName: quotes.clientName,
         quoteData: quotes.quoteData,
         sentAt: quotes.sentAt,
+        // Revision fields for quote editing system
+        parentQuoteId: quotes.parentQuoteId,
+        revisionNotes: quotes.revisionNotes,
+        clientFeedback: quotes.clientFeedback,
+        versionNumber: quotes.versionNumber,
         createdAt: quotes.createdAt,
         updatedAt: quotes.updatedAt,
         company: {
