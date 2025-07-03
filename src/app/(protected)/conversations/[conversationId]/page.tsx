@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, Mail, Paperclip, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -73,6 +74,7 @@ function splitBody(body: string): { main: string; quoted: string } {
 export default function ConversationDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const conversationId = params.conversationId as string
 
   const [emails, setEmails] = useState<EmailThread[]>([])
@@ -192,6 +194,8 @@ export default function ConversationDetailPage() {
     setQuoteStatus(newStatus)
     const result = await updateQuoteStatusAction(quoteId, newStatus)
     if (result.success) {
+      // Invalidate quotes query to refresh the quotes list
+      await queryClient.invalidateQueries({ queryKey: ['quotes'] })
       toast.custom(
         <CustomToast
           message={`Quote status updated to "${newStatus}"`}

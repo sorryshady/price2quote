@@ -6,10 +6,11 @@ import { EmailSyncService } from '@/lib/email-sync'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
     const session = await getSession()
+    const { companyId } = await params
     console.log('Session:', session)
     console.log('Session user:', session?.user)
     console.log('Session user id:', session?.user?.id)
@@ -22,7 +23,6 @@ export async function POST(
       `Syncing emails for company ${params.companyId} with user ${session.user.id}`,
     )
 
-    const { companyId } = params
     const syncService = new EmailSyncService()
     await syncService.syncCompanyEmails(companyId, session.user.id)
 

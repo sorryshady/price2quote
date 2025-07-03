@@ -48,7 +48,10 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 
-import { deleteQuoteAction } from '@/app/server-actions'
+import {
+  deleteQuoteAction,
+  updateQuoteStatusAction,
+} from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
@@ -190,6 +193,30 @@ export default function QuotesPage() {
       console.error('Error downloading PDF:', error)
       toast.custom(
         <CustomToast message="Failed to download PDF" type="error" />,
+      )
+    }
+  }
+
+  const handleStatusChange = async (
+    quoteId: string,
+    newStatus: QuoteStatus,
+  ) => {
+    const result = await updateQuoteStatusAction(quoteId, newStatus)
+    if (result.success) {
+      // Invalidate quotes query to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['quotes'] })
+      toast.custom(
+        <CustomToast
+          message={`Quote status updated to "${newStatus}"`}
+          type="success"
+        />,
+      )
+    } else {
+      toast.custom(
+        <CustomToast
+          message={result.error || 'Failed to update status'}
+          type="error"
+        />,
       )
     }
   }
@@ -369,12 +396,31 @@ export default function QuotesPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={getStatusColor(quote.status)}
-                      >
-                        {getStatusIcon(quote.status)} {quote.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={getStatusColor(quote.status)}
+                        >
+                          {getStatusIcon(quote.status)} {quote.status}
+                        </Badge>
+                        <Select
+                          value={quote.status}
+                          onValueChange={(value) =>
+                            handleStatusChange(quote.id, value as QuoteStatus)
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="sent">Sent</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="revised">Revised</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
 
