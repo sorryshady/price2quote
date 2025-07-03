@@ -18,8 +18,20 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user } = useAuth()
+  const { user, isLoading, isInitialized } = useAuth()
   const { currentQuotes } = useQuoteLimit()
+
+  // Don't render until auth is initialized to prevent hydration issues
+  if (!isInitialized || isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Don't render if user is not available
   if (!user) return null

@@ -137,7 +137,7 @@ function formatCurrency(amount: string | null, currency: string) {
 }
 
 export default function QuotesPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading, isInitialized } = useAuth()
   const queryClient = useQueryClient()
   const {
     currentQuotes,
@@ -272,7 +272,8 @@ export default function QuotesPage() {
     setSelectedQuote(null)
   }
 
-  if (limitLoading || quotesLoading) {
+  // Wait for auth to be initialized and all data to load
+  if (!isInitialized || authLoading || limitLoading || quotesLoading) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">

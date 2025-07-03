@@ -9,12 +9,19 @@ import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useCompanyLimit, useQuoteLimit } from '@/hooks/use-subscription-limits'
 
 export default function DashboardPage() {
-  const { user } = useAuth()
-  const { companies, isLoading } = useCompaniesQuery()
-  const { currentQuotes } = useQuoteLimit()
-  const { currentCompanies } = useCompanyLimit()
+  const { user, isLoading: authLoading, isInitialized } = useAuth()
+  const { companies, isLoading: companiesLoading } = useCompaniesQuery()
+  const { currentQuotes, isLoading: quoteLimitLoading } = useQuoteLimit()
+  const { currentCompanies, isLoading: companyLimitLoading } = useCompanyLimit()
 
-  if (isLoading) {
+  // Wait for auth to be initialized and all data to load
+  if (
+    !isInitialized ||
+    authLoading ||
+    companiesLoading ||
+    quoteLimitLoading ||
+    companyLimitLoading
+  ) {
     return <DashboardSkeleton />
   }
 
