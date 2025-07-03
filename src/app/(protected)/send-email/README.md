@@ -1,298 +1,273 @@
-# Send Email Functionality
+# Send Email - Quote Revision Action Plan
 
-## Overview
+## 🎯 Problem Statement
 
-The send-email page provides a complete email management system for sending quotes to clients via Gmail integration. Users can select quotes, compose emails with AI assistance, and track conversations.
+The current send-email page shows ALL quotes (including revisions), which creates a cluttered experience and potential confusion for users. We need to implement a solution that:
 
-## Features
+1. **Shows only relevant quotes** for email sending
+2. **Maintains conversation continuity** across quote revisions
+3. **Provides clear context** about which version is being sent
+4. **Handles email threading** properly with Gmail
 
-### 🔐 Gmail OAuth Integration
+## 📊 Current State Analysis
 
-- **Connection Management**: Connect/disconnect Gmail accounts per company
-- **Token Storage**: Secure storage of OAuth tokens with refresh capability
-- **Status Display**: Visual indicator showing connected email address
-- **Security**: CSRF protection and secure cookie handling
+### Issues Identified:
 
-### 📧 Email Composition System
+- **Quote Selector**: Shows all quotes including revisions (v1, v2, v3, etc.)
+- **Conversation Threading**: Each revision creates a new quote record, potentially breaking email threads
+- **User Confusion**: Users might accidentally send old versions instead of latest
+- **Cluttered UI**: Too many quote options in the selector
 
-- **Quote Selection**: Searchable quote cards with filtering by status
-- **Smart Subject Lines**: AI-generated subjects based on quote status
-- **AI Email Generation**: Context-aware email content generation
-- **Manual Editing**: Full control over email content
-- **CC/BCC Support**: Optional carbon copy and blind carbon copy fields
-
-### 🎯 Status-Based Email Types
-
-#### 1. Draft → First Time Sending
-
-- **Subject**: "Quote for [Project Name] - [Company Name]"
-- **Content**: Professional quote presentation with executive summary
-- **Purpose**: Initial quote delivery
-
-#### 2. Sent → Follow-up
-
-- **Subject**: "Follow-up: Quote for [Project Name]"
-- **Content**: Polite follow-up asking for feedback/decision
-- **Purpose**: Check on quote status and encourage response
-
-#### 3. Revised → Updated Quote
-
-- **Subject**: "Updated Quote for [Project Name] - Revised"
-- **Content**: Explanation of changes and new pricing
-- **Purpose**: Deliver revised quote with context
-
-#### 4. Accepted → Thank You
-
-- **Subject**: "Thank You - Project Confirmation"
-- **Content**: Gratitude, next steps, and project kickoff details
-- **Purpose**: Confirm acceptance and outline next steps
-
-#### 5. Rejected → Feedback Request
-
-- **Subject**: "Thank You for Your Consideration"
-- **Content**: Professional response, request for feedback on rejection reasons
-- **Purpose**: Maintain relationship and gather feedback
-
-### 💬 Conversation Tracking
-
-- **Email Threading**: Save all sent emails for conversation history
-- **Chat Interface**: Conversations route with chat-like interface
-- **Reply Instructions**: Every email includes "Please reply to this email for smoother conversations"
-
-## UI Components
-
-### Quote Selection Interface
+### Current Data Flow:
 
 ```
-┌─────────────────────────────────────────────────┐
-│ 🔍 Search quotes...                             │
-├─────────────────────────────────────────────────┤
-│ [Filter: All] [Draft] [Sent] [Accepted] [Rejected]
-├─────────────────────────────────────────────────┤
-│ ┌─────────────────┐ ┌─────────────────┐         │
-│ │ Project: Birthday│ │ Project: Website│         │
-│ │ Client: John Doe│ │ Client: Jane Co │         │
-│ │ Amount: $500    │ │ Amount: $1,200  │         │
-│ │ Status: Draft   │ │ Status: Sent    │         │
-│ │ [Select]        │ │ [Select]        │         │
-│ └─────────────────┘ └─────────────────┘         │
-└─────────────────────────────────────────────────┘
+Original Quote (v1) → Revision (v2) → Revision (v3)
+Each revision = new quote record with new ID
+Email conversations tied to specific quote IDs
 ```
 
-### Email Composition Form
+## 🎯 Proposed Solution: Option 1 - Latest Versions Only
 
-```
-┌─────────────────────────────────────────────────┐
-│ To: [client@email.com]                          │
-│ Subject: [AI-generated subject] [Edit]          │
-│ CC: [optional]                                  │
-│ BCC: [optional]                                 │
-├─────────────────────────────────────────────────┤
-│ Message:                                        │
-│ [AI-generated content]                          │
-│                                                 │
-│ [Generate Email Body with AI] [Send Email]      │
-└─────────────────────────────────────────────────┘
-```
+### **Recommended Approach: Show Only Latest Versions**
 
-## Database Schema
+**Why this approach:**
 
-### Gmail Connections Table
+- ✅ Cleaner UX - users see only the most relevant quotes
+- ✅ Conversation continuity - all emails reference the same original quote
+- ✅ Simpler logic - easier to implement and maintain
+- ✅ Professional - clients see the latest version, not revision history
 
-```sql
-CREATE TABLE gmail_connections (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  company_id UUID REFERENCES companies(id),
-  gmail_email VARCHAR(255) NOT NULL,
-  access_token VARCHAR(2048) NOT NULL,
-  refresh_token VARCHAR(2048),
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(user_id, company_id)
-);
-```
+## 🔧 Implementation Plan
 
-### Email Threads Table (Future)
+### **Phase 1: Update Quote Selector (Priority 1)**
 
-```sql
-CREATE TABLE email_threads (
-  id UUID PRIMARY KEY,
-  quote_id UUID REFERENCES quotes(id),
-  user_id UUID REFERENCES users(id),
-  client_email VARCHAR(255) NOT NULL,
-  subject VARCHAR(500) NOT NULL,
-  message TEXT NOT NULL,
-  sent_at TIMESTAMP DEFAULT NOW(),
-  status VARCHAR(50) DEFAULT 'sent',
-  thread_id VARCHAR(255) -- For Gmail thread tracking
-);
+#### 1.1 Update Quote Data Source
+
+- **File**: `src/app/(protected)/send-email/_components/quote-selector.tsx`
+- **Change**: Use `getLatestQuotesAction` instead of `getQuotesAction`
+- **Benefit**: Only shows latest version of each quote family
+
+#### 1.2 Add Version Indicators
+
+- **Display**: Show version number (v1, v2, v3) in quote cards
+- **Context**: Add "Latest Version" badge for clarity
+- **Status**: Show current status of the latest version
+
+#### 1.3 Update Quote Cards UI
+
+```tsx
+// Example quote card structure
+<Card>
+  <CardHeader>
+    <div className="flex justify-between">
+      <h3>{quote.projectTitle}</h3>
+      <div className="flex gap-2">
+        <Badge>{quote.status}</Badge>
+        {quote.versionNumber && Number(quote.versionNumber) > 1 && (
+          <Badge variant="secondary">v{quote.versionNumber}</Badge>
+        )}
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>{/* Quote details */}</CardContent>
+</Card>
 ```
 
-## API Endpoints
+### **Phase 2: Email Threading Implementation (Priority 2)**
 
-### Gmail OAuth
+#### 2.1 Conversation Context
 
-- `GET /api/auth/gmail` - Initiate Gmail OAuth
-- `GET /api/auth/callback/gmail` - Handle OAuth callback
-- `POST /api/auth/gmail/disconnect` - Disconnect Gmail account
+- **Original Quote ID**: Always use the original quote ID for conversation threading
+- **Revision Context**: Include revision information in email body
+- **Thread Continuity**: Maintain single conversation thread per quote family
 
-### Email Management (Future)
-
-- `POST /api/gmail/send` - Send email via Gmail API
-- `GET /api/email/threads` - Get email conversation history
-- `POST /api/email/generate` - Generate AI email content
-
-## Server Actions
-
-### Gmail Management
-
-- `getGmailConnectionAction(companyId)` - Get connection status
-- `disconnectGmailAction(companyId)` - Disconnect Gmail
-- `refreshGmailTokenAction(companyId)` - Refresh expired tokens
-
-### Email Actions (Future)
-
-- `sendEmailAction(data)` - Send email and update quote status
-- `generateEmailContentAction(quoteId, type)` - Generate AI email content
-- `getEmailThreadsAction(quoteId)` - Get conversation history
-
-## State Management
-
-### Local State
+#### 2.2 Email Body Updates
 
 ```typescript
-interface EmailState {
-  selectedQuote: Quote | null
-  clientEmail: string
-  subject: string
-  cc: string
-  bcc: string
-  message: string
-  isGenerating: boolean
-  isSending: boolean
-}
+// When sending from a revision, include context
+const emailBody = `
+${revisionContext}
+
+${aiGeneratedContent}
+
+---
+This is revision ${versionNumber} of the original quote.
+Original quote reference: ${originalQuoteId}
+`
 ```
 
-### Quote Selection State
+#### 2.3 Database Schema Updates
 
-```typescript
-interface QuoteSelectionState {
-  searchQuery: string
-  statusFilter: QuoteStatus | 'all'
-  selectedQuoteId: string | null
-}
-```
+- **Email Threads**: Link to original quote ID, not revision ID
+- **Revision Tracking**: Store revision number in email metadata
+- **Conversation History**: Show all emails in chronological order
 
-## AI Integration
+### **Phase 3: Conversation Page Updates (Priority 3)**
 
-### Email Content Generation
+#### 3.1 Conversation View Enhancements
 
-- **Context**: Quote data, company info, client details
-- **Status Awareness**: Different content based on quote status
-- **Tone**: Professional, friendly, and appropriate for each situation
-- **Customization**: Users can edit AI-generated content
+- **Original Quote Display**: Show the original quote details
+- **Revision History**: Display revision timeline in conversation
+- **Version Navigation**: Allow switching between versions in conversation
 
-### Prompt Examples
+#### 3.2 Email Context
 
-```
-For Draft quotes:
-"Generate a professional email introducing the quote for [project] to [client]. Include the executive summary and key highlights."
+- **Quote Version**: Show which version was sent in each email
+- **Revision Notes**: Display revision notes and client feedback
+- **Timeline**: Visual timeline of quote evolution
 
-For Follow-ups:
-"Generate a polite follow-up email for the quote sent to [client] for [project]. Ask for feedback and next steps."
+## 🗂️ File Structure Changes
 
-For Accepted quotes:
-"Generate a thank you email for the accepted quote for [project]. Include next steps and project kickoff details."
-```
+### **Files to Modify:**
 
-## Error Handling
+1. **`src/app/(protected)/send-email/_components/quote-selector.tsx`**
 
-### Gmail Connection Errors
+   - Update to use `getLatestQuotesAction`
+   - Add version indicators
+   - Improve quote card layout
 
-- OAuth flow failures
-- Token expiration
-- Network connectivity issues
-- Invalid permissions
+2. **`src/app/(protected)/send-email/page.tsx`**
 
-### Email Sending Errors
+   - Update email sending logic
+   - Add revision context handling
+   - Improve conversation threading
 
-- Gmail API rate limits
-- Invalid email addresses
-- Message size limits
-- Network timeouts
+3. **`src/app/server-actions/quote.ts`**
 
-### User Feedback
+   - Ensure `getLatestQuotesAction` includes version info
+   - Add conversation threading helpers
 
-- Toast notifications for success/error states
-- Loading states during operations
-- Clear error messages with actionable steps
+4. **`src/app/(protected)/conversations/[conversationId]/page.tsx`**
+   - Update to show revision history
+   - Add version navigation
+   - Improve conversation context
 
-## Security Considerations
+### **New Files to Create:**
 
-### OAuth Security
+1. **`src/lib/email-threading.ts`**
 
-- CSRF protection with state parameters
-- Secure cookie handling
-- Token encryption in database
-- Automatic token refresh
+   - Email threading utilities
+   - Conversation context helpers
+   - Version management functions
 
-### Email Security
+2. **`src/components/ui/quote-version-indicator.tsx`**
+   - Reusable version indicator component
+   - Version badge with tooltips
+   - Revision history display
 
-- Input validation for email addresses
-- Content sanitization
-- Rate limiting for email sending
-- Audit logging for sent emails
+## 🎨 UI/UX Improvements
 
-## Future Enhancements
+### **Quote Selector Enhancements:**
 
-### Email Templates
+- **Version Badges**: Clear version indicators (v1, v2, v3)
+- **Latest Version Highlight**: Prominent display of latest version
+- **Search Improvements**: Search by version number
+- **Filter Options**: Filter by "Latest Versions Only" vs "All Versions"
 
-- Customizable email templates
-- Template library for common scenarios
-- Branded email signatures
+### **Email Composition:**
 
-### Advanced Features
+- **Revision Context**: Auto-include revision notes in email
+- **Version Reference**: Clear indication of which version is being sent
+- **Conversation Threading**: Maintain thread continuity
 
-- Email scheduling
-- Read receipts
-- Email analytics
-- Bulk email sending
+### **Conversation View:**
 
-### Integration Features
+- **Version Timeline**: Visual timeline of quote revisions
+- **Email Context**: Show which version was sent in each email
+- **Revision Navigation**: Easy switching between versions
 
-- Calendar integration for project scheduling
-- CRM integration for client management
-- Invoice generation from accepted quotes
+## 🔄 Data Flow Changes
 
-## Development Notes
-
-### File Structure
+### **Before:**
 
 ```
-src/app/(protected)/send-email/
-├── page.tsx              # Main page component
-├── README.md             # This documentation
-├── _components/          # Page-specific components
-│   ├── quote-selector.tsx
-│   ├── email-form.tsx
-│   └── email-preview.tsx
-└── _hooks/               # Custom hooks
-    ├── use-email-state.ts
-    └── use-quote-selection.ts
+User selects quote → Send email → Conversation tied to quote ID
 ```
 
-### Key Dependencies
+### **After:**
 
-- Gmail API for email sending
-- Gemini AI for content generation
-- TanStack Query for data fetching
-- React Hook Form for form management
+```
+User selects latest quote → Send email → Conversation tied to original quote ID
+Revision context included in email → Conversation shows full history
+```
 
-### Testing Strategy
+## 🧪 Testing Strategy
 
-- Unit tests for AI content generation
-- Integration tests for Gmail API
-- E2E tests for complete email flow
-- Accessibility testing for form components
+### **Unit Tests:**
+
+- Quote selector shows only latest versions
+- Version indicators display correctly
+- Email threading uses original quote ID
+
+### **Integration Tests:**
+
+- Email sending with revision context
+- Conversation continuity across revisions
+- Version navigation in conversations
+
+### **User Acceptance Tests:**
+
+- Users can easily identify latest versions
+- Email conversations remain coherent
+- Revision history is clear and accessible
+
+## 📈 Success Metrics
+
+### **User Experience:**
+
+- Reduced confusion in quote selection
+- Faster email composition process
+- Clearer conversation context
+
+### **Technical:**
+
+- Proper email threading maintained
+- Conversation history preserved
+- Version tracking accuracy
+
+## 🚀 Implementation Timeline
+
+### **Week 1: Phase 1**
+
+- Update quote selector to use latest quotes
+- Add version indicators
+- Test quote selection functionality
+
+### **Week 2: Phase 2**
+
+- Implement email threading logic
+- Update email composition with revision context
+- Test email sending and threading
+
+### **Week 3: Phase 3**
+
+- Update conversation page
+- Add revision history display
+- Test full conversation flow
+
+### **Week 4: Testing & Polish**
+
+- Comprehensive testing
+- UI/UX refinements
+- Documentation updates
+
+## 🔮 Future Considerations
+
+### **Advanced Features:**
+
+- **Version Comparison**: Side-by-side comparison of versions
+- **Bulk Operations**: Send multiple versions to different recipients
+- **Template Management**: Save email templates for different revision scenarios
+
+### **Analytics:**
+
+- **Revision Tracking**: Track how often revisions are sent
+- **Response Rates**: Compare response rates between versions
+- **Conversion Metrics**: Measure impact of revisions on acceptance rates
+
+## 📝 Notes
+
+- **Backward Compatibility**: Ensure existing conversations continue to work
+- **Data Migration**: No database changes required initially
+- **Performance**: Latest quotes query should be optimized for speed
+- **Accessibility**: Version indicators should be screen reader friendly
