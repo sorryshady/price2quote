@@ -1,11 +1,8 @@
 Password:uY5sGbZhabgRt4cv
-
-Generated AI Summary: Ernyg is an Indian digital solutions company that evolved from a creative web development studio specializing in unique UI/UX design, custom illustrations, and website art. It now offers a comprehensive suite of services including advanced UI/UX design (from INR 40,000), advanced digital marketing (from INR 50,000), intermediate web development (from INR 20,000), advanced custom illustrations (from INR 10,000), and advanced brand kit development (from INR 100,000). Operating primarily in India, Ernyg leverages its foundational artistic expertise to deliver visually rich, end-to-end digital experiences and strategic market solutions for businesses of all sizes. The company functions as a service-based entity, conducting all financial transactions exclusively in Indian Rupees (INR), providing a distinct blend of technical proficiency and creative artistry in its operational scope.
-
-Generated AI Summary: Ernyg, initially established as a creative web development studio specializing in UI/UX design, custom illustrations, and website art, has strategically evolved into a comprehensive digital solutions provider. Based in India, the company now offers a broad spectrum of services, including full-stack web development (from SPAs to SaaS), advanced UI/UX design for web and mobile applications, and end-to-end digital marketing solutions for diverse companies, from small businesses to established brands. Their expertise further extends to creating bespoke custom illustrations and developing holistic brand kits, with service engagements typically ranging from ₹10,000 to ₹100,000 INR for base projects. Operating as a project-based B2B service company, Ernyg is positioned to deliver high-level digital experiences and strategic branding outcomes, utilizing INR as its primary operational currency.
-
-
-
-
-
-email id and quote id, if same will come under same thread. any one changes will result in a new thread
+BUGS:
+changing status inside conversation should invalidate tanstack cache for quotes in quotes page
+view conversation needs to be connected
+revision quote when service removed should show add service.
+quotes badge needs to be that of latest quote (it shows rejected when we make new revised quote).
+toast is having issues when trying.
+Revised quotes number not being updated. So cant enforce limit for revisions. When in the revision screen it shows 0/2 for the new quote when editing. What we want is overall revisions 2 not per quote 2 revisions.

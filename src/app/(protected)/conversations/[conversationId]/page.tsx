@@ -229,6 +229,7 @@ export default function ConversationDetailPage() {
       // Invalidate quotes queries to refresh the quotes list
       await queryClient.invalidateQueries({ queryKey: ['quotes'] })
       await queryClient.invalidateQueries({ queryKey: ['latest-quotes'] })
+      await queryClient.invalidateQueries({ queryKey: ['conversations'] })
       await queryClient.invalidateQueries({ queryKey: ['revision-history'] })
       toast.custom(
         <CustomToast
