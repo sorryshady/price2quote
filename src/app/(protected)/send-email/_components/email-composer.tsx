@@ -549,9 +549,11 @@ export function EmailComposer({
       {/* Thread Context Display */}
       {threadContext?.hasExistingThread && (
         <div className="bg-muted/30 border-b px-3 py-2 sm:px-4">
-          <div className="flex items-center gap-2 text-sm">
-            <MessageSquare className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-blue-600">Follow-up Email</span>
+          <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-blue-600" />
+              <span className="font-medium text-blue-600">Follow-up Email</span>
+            </div>
             <span className="text-muted-foreground">
               • Previous email sent{' '}
               {threadContext.lastSentAt
@@ -648,12 +650,10 @@ export function EmailComposer({
                     includeQuotePdf: !prev.includeQuotePdf,
                   }))
                 }
-                className="flex-1 sm:flex-none"
+                className="flex-1"
               >
                 <Paperclip className="mr-1 h-4 w-4" />
-                {emailData.includeQuotePdf
-                  ? 'Remove Quote PDF'
-                  : 'Add Quote PDF'}
+                {emailData.includeQuotePdf ? 'Remove Quote ' : 'Add Quote '}
               </Button>
 
               <div className="relative">
@@ -668,7 +668,7 @@ export function EmailComposer({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 cursor-pointer sm:flex-none"
+                  className="flex-1 cursor-pointer"
                   disabled={!isEditing}
                 >
                   <Paperclip className="mr-1 h-4 w-4" />

@@ -180,7 +180,7 @@ export function QuoteSelector({
               >
                 <CardContent className="flex h-full flex-col px-6 py-4">
                   <div className="flex-1 space-y-4">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col items-start justify-between gap-2 sm:flex-row">
                       <h3 className="line-clamp-2 text-lg font-semibold">
                         {quote.projectTitle}
                       </h3>

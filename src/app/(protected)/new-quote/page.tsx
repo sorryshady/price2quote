@@ -1187,7 +1187,7 @@ export default function NewQuotePage() {
             )}
 
             {/* Submit Buttons */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-center gap-3 sm:justify-end">
               <Button
                 type="button"
                 variant="outline"

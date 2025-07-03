@@ -314,11 +314,11 @@ export default function QuotesPage() {
       {/* Subscription Limit for Free Users */}
       {user?.subscriptionTier === 'free' && (
         <Card className="max-w-md">
-          <CardHeader>
+          <CardHeader className="px-4 sm:px-6">
             <CardTitle className="text-lg">Quote Usage</CardTitle>
             <CardDescription>Track your monthly quote usage</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Current Usage</span>
@@ -394,7 +394,7 @@ export default function QuotesPage() {
         <div className="space-y-4">
           {filteredQuotes.map((quote) => (
             <Card key={quote.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-4">
                   {/* Header */}
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -407,20 +407,22 @@ export default function QuotesPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={getStatusColor(quote.status)}
-                        >
-                          {getStatusIcon(quote.status)} {quote.status}
-                        </Badge>
-                        {/* Version indicator */}
-                        {quote.versionNumber &&
-                          Number(quote.versionNumber) > 1 && (
-                            <Badge variant="secondary" className="text-xs">
-                              v{quote.versionNumber}
-                            </Badge>
-                          )}
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="flex gap-2 sm:items-center">
+                          <Badge
+                            variant="outline"
+                            className={getStatusColor(quote.status)}
+                          >
+                            {getStatusIcon(quote.status)} {quote.status}
+                          </Badge>
+                          {/* Version indicator */}
+                          {quote.versionNumber &&
+                            Number(quote.versionNumber) > 1 && (
+                              <Badge variant="secondary" className="text-xs">
+                                v{quote.versionNumber}
+                              </Badge>
+                            )}
+                        </div>
                         <Select
                           value={quote.status}
                           onValueChange={(value) =>
