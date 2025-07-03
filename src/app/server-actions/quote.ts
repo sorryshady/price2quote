@@ -103,8 +103,11 @@ export async function createQuoteAction(data: CreateQuoteData) {
         clientName: data.clientName,
         clientLocation: data.clientLocation,
         clientBudget: data.clientBudget?.toString(),
+        deliveryTimeline: data.deliveryTimeline,
+        customTimeline: data.customTimeline,
+        projectComplexity: data.projectComplexity,
         quoteData: data.quoteData || null,
-      })
+      } as typeof quotes.$inferInsert)
       .returning()
 
     // Insert quote services
@@ -158,6 +161,11 @@ export async function getQuotesAction(userId: string) {
         status: quotes.status,
         clientEmail: quotes.clientEmail,
         clientName: quotes.clientName,
+        clientLocation: quotes.clientLocation,
+        clientBudget: quotes.clientBudget,
+        deliveryTimeline: quotes.deliveryTimeline,
+        customTimeline: quotes.customTimeline,
+        projectComplexity: quotes.projectComplexity,
         quoteData: quotes.quoteData,
         sentAt: quotes.sentAt,
         parentQuoteId: quotes.parentQuoteId,
@@ -275,6 +283,9 @@ export async function getQuoteWithServicesAction(quoteId: string) {
         clientName: quotes.clientName,
         clientLocation: quotes.clientLocation,
         clientBudget: quotes.clientBudget,
+        deliveryTimeline: quotes.deliveryTimeline,
+        customTimeline: quotes.customTimeline,
+        projectComplexity: quotes.projectComplexity,
         quoteData: quotes.quoteData,
         sentAt: quotes.sentAt,
         // Revision fields for quote editing system
@@ -761,8 +772,11 @@ export async function createRevisedQuoteAction(data: {
         revisionNotes: data.revisionNotes,
         clientFeedback: data.clientFeedback,
         versionNumber: nextVersionNumber.toString(),
+        deliveryTimeline: data.deliveryTimeline,
+        customTimeline: data.customTimeline,
+        projectComplexity: data.projectComplexity,
         quoteData: updatedQuoteData || null,
-      })
+      } as typeof quotes.$inferInsert)
       .returning()
 
     // Insert quote services

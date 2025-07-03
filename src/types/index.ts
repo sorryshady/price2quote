@@ -59,11 +59,11 @@ export interface QuoteService {
   quoteId: string
   serviceId: string
   quantity: string
-  unitPrice?: string
-  totalPrice?: string
-  notes?: string
+  unitPrice?: string | null
+  totalPrice?: string | null
+  notes?: string | null
   createdAt: Date
-  service?: Service // Include the full service details
+  service?: Service | null // Include the full service details
 }
 
 export interface Quote {
@@ -79,6 +79,9 @@ export interface Quote {
   clientName?: string | null
   clientLocation?: string | null
   clientBudget?: number | null
+  deliveryTimeline: string
+  customTimeline?: string | null
+  projectComplexity: string
   sentAt?: Date | null
   createdAt: Date
   updatedAt: Date

@@ -148,27 +148,25 @@ export default function QuoteVersionsPage() {
   const revisions = versions.filter((v) => v.parentQuoteId)
 
   return (
-    <div className="mx-auto max-w-4xl py-8">
+    <div className="space-y-6">
       {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold">Quote Versions</h1>
+        <p className="text-muted-foreground">{originalQuote.projectTitle}</p>
+      </div>
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Quote Versions</h1>
-              <p className="text-muted-foreground">
-                {originalQuote.projectTitle}
-              </p>
-            </div>
-          </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/quotes">View All Quotes</Link>
           </Button>
@@ -352,15 +350,17 @@ export default function QuoteVersionsPage() {
                     >
                       View Preview
                     </Button>
-                    {/* Only show Edit button for the latest version */}
+                    {/* Only show Edit button for the latest version with rejected or revised status */}
                     {revision.versionNumber ===
                       Math.max(
                         ...revisions.map((r) => Number(r.versionNumber)),
-                      ).toString() && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/quotes/${revision.id}/edit`}>Edit</Link>
-                      </Button>
-                    )}
+                      ).toString() &&
+                      (revision.status === 'rejected' ||
+                        revision.status === 'revised') && (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/quotes/${revision.id}/edit`}>Edit</Link>
+                        </Button>
+                      )}
                   </div>
                 </CardContent>
               </Card>

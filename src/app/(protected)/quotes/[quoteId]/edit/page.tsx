@@ -192,7 +192,7 @@ export default function EditQuotePage() {
       if (result.success && result.quote) {
         setQuote(result.quote as Quote)
 
-        // Extract data from quoteData if it exists
+        // Extract data from top-level columns first, fallback to quoteData if needed
         const extractedData: {
           clientLocation: string
           deliveryTimeline:
@@ -206,14 +206,16 @@ export default function EditQuotePage() {
           clientBudget: number | undefined
           projectComplexity: 'simple' | 'moderate' | 'complex'
         } = {
-          clientLocation: '',
-          deliveryTimeline: '1_month',
-          customTimeline: '',
-          clientBudget: undefined,
-          projectComplexity: 'moderate',
+          clientLocation: result.quote.clientLocation || '',
+          deliveryTimeline: result.quote.deliveryTimeline || '1_month',
+          customTimeline: result.quote.customTimeline || '',
+          clientBudget: result.quote.clientBudget
+            ? Number(result.quote.clientBudget)
+            : undefined,
+          projectComplexity: result.quote.projectComplexity || 'moderate',
         }
 
-        // Try to extract data from quoteData if it exists
+        // Fallback: Try to extract data from quoteData if not present in columns
         if (result.quote.quoteData) {
           try {
             const quoteData =
@@ -221,10 +223,12 @@ export default function EditQuotePage() {
                 ? JSON.parse(result.quote.quoteData)
                 : result.quote.quoteData
 
-            // Extract delivery timeline from quote document
-            if (quoteData.quoteDocument?.deliveryTimeline) {
+            // Extract delivery timeline from quote document if not present in columns
+            if (
+              !result.quote.deliveryTimeline &&
+              quoteData.quoteDocument?.deliveryTimeline
+            ) {
               const timeline = quoteData.quoteDocument.deliveryTimeline
-              // Map timeline text to enum values
               if (
                 timeline.includes('1 week') ||
                 timeline.includes('1-2 weeks')
@@ -576,7 +580,7 @@ export default function EditQuotePage() {
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Quotes
+          Back
         </Button>
       </div>
       <div>

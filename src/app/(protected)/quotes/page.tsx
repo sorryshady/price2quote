@@ -208,6 +208,12 @@ export default function QuotesPage() {
       await queryClient.invalidateQueries({
         queryKey: ['latest-quotes', user?.id || ''],
       })
+
+      // Invalidate conversations cache to refresh conversation status
+      await queryClient.invalidateQueries({
+        queryKey: ['conversations'],
+      })
+
       toast.custom(
         <CustomToast
           message={`Quote status updated to "${newStatus}"`}
