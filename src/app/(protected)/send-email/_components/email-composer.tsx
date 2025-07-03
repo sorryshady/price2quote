@@ -640,7 +640,7 @@ export function EmailComposer({
         <div className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Label>Attachments</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -650,13 +650,13 @@ export function EmailComposer({
                     includeQuotePdf: !prev.includeQuotePdf,
                   }))
                 }
-                className="flex-1"
+                className="w-full sm:w-auto"
               >
                 <Paperclip className="mr-1 h-4 w-4" />
-                {emailData.includeQuotePdf ? 'Remove Quote ' : 'Add Quote '}
+                {emailData.includeQuotePdf ? 'Remove Quote' : 'Add Quote'}
               </Button>
 
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <input
                   type="file"
                   multiple
@@ -668,7 +668,7 @@ export function EmailComposer({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 cursor-pointer"
+                  className="w-full cursor-pointer"
                   disabled={!isEditing}
                 >
                   <Paperclip className="mr-1 h-4 w-4" />
@@ -681,8 +681,8 @@ export function EmailComposer({
           {/* Quote PDF Attachment */}
           {emailData.includeQuotePdf && (
             <div className="bg-muted flex items-center justify-between rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4" />
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+                <Paperclip className="hidden h-4 w-4 sm:inline-block" />
                 <span className="text-sm font-medium">
                   {selectedQuote.projectTitle} - Quote.pdf
                 </span>
