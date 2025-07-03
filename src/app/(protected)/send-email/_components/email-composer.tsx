@@ -114,6 +114,8 @@ I've attached the revised quote for your review. Please let me know if this bett
 
 {contactMethod}
 
+{versionInfo}
+
 Best regards,
 {companyName}`,
   },
@@ -248,6 +250,10 @@ export function EmailComposer({
         ),
         '{companyName}': companyName,
         '{revisionNotes}': 'Updated scope and pricing based on your feedback',
+        '{versionInfo}':
+          selectedQuote.versionNumber && Number(selectedQuote.versionNumber) > 1
+            ? `\n\nThis is revision ${selectedQuote.versionNumber} of the original quote.`
+            : '',
         '{contactMethod}': companyPhone
           ? `I'm available for a call to walk through the details or address any concerns you might have. Feel free to reach out to me at ${companyPhone}.`
           : `Please feel free to reach out via email if you have any questions or would like to discuss any aspects of the proposal.`,
@@ -381,7 +387,13 @@ export function EmailComposer({
           selectedQuote.currency,
         ),
         '{companyName}': companyName,
-        '{revisionNotes}': 'Updated scope and pricing based on your feedback',
+        '{revisionNotes}':
+          selectedQuote.revisionNotes ||
+          'Updated scope and pricing based on your feedback',
+        '{versionInfo}':
+          selectedQuote.versionNumber && Number(selectedQuote.versionNumber) > 1
+            ? `\n\nThis is revision ${selectedQuote.versionNumber} of the original quote.`
+            : '',
         '{contactMethod}': companyPhone
           ? `I'm available for a call to walk through the details or address any concerns you might have. Feel free to reach out to me at ${companyPhone}.`
           : `Please feel free to reach out via email if you have any questions or would like to discuss any aspects of the proposal.`,

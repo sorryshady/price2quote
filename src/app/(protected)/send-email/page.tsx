@@ -140,8 +140,11 @@ export default function SendEmailPage() {
         )
         // Reset form after successful send
         setSelectedQuote(null)
-        // Invalidate quotes query to update status from 'draft' to 'sent'
+        // Invalidate quotes queries to update status from 'draft' to 'sent'
         queryClient.invalidateQueries({ queryKey: ['quotes', user?.id || ''] })
+        queryClient.invalidateQueries({
+          queryKey: ['latest-quotes', user?.id || ''],
+        })
       } else {
         toast.custom(
           <CustomToast

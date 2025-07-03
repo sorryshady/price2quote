@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { QuoteVersionIndicator } from '@/components/ui/quote-version-indicator'
 import {
   Select,
   SelectContent,
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/select'
 
 import { useAuth } from '@/hooks/use-auth'
-import { useQuotesQuery } from '@/hooks/use-quotes-query'
+import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
 import type { Quote } from '@/types'
 
 interface QuoteSelectorProps {
@@ -39,7 +40,7 @@ export function QuoteSelector({
   onQuoteSelect,
 }: QuoteSelectorProps) {
   const { user } = useAuth()
-  const { data, isLoading, error } = useQuotesQuery(user?.id || '')
+  const { data, isLoading, error } = useLatestQuotesQuery(user?.id || '')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] =
     useState<(typeof statusFilters)[number]['value']>('all')
@@ -120,7 +121,7 @@ export function QuoteSelector({
   return (
     <Card>
       <CardHeader className="px-3 sm:px-4">
-        <CardTitle>Select a Quote</CardTitle>
+        <CardTitle>Select a Quote (Latest Versions)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 px-3 sm:px-4">
         {/* Search and Filters */}
@@ -183,9 +184,16 @@ export function QuoteSelector({
                       <h3 className="line-clamp-2 text-lg font-semibold">
                         {quote.projectTitle}
                       </h3>
-                      <Badge className={getStatusColor(quote.status)}>
-                        {quote.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <QuoteVersionIndicator
+                          versionNumber={quote.versionNumber}
+                          isLatest={true}
+                          revisionNotes={quote.revisionNotes || undefined}
+                        />
+                        <Badge className={getStatusColor(quote.status)}>
+                          {quote.status}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="text-muted-foreground space-y-2 text-sm">
                       <p>
