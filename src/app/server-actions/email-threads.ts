@@ -5,6 +5,7 @@ import { and, eq, sql } from 'drizzle-orm'
 import db from '@/db'
 import { emailThreads } from '@/db/schema'
 import { getSession } from '@/lib/auth'
+import { findExistingEmailThread } from '@/lib/email-threading'
 
 export interface EmailThread {
   id: string
@@ -47,10 +48,22 @@ export async function getEmailThreadsAction(quoteId: string) {
       return { success: false, error: 'Unauthorized' }
     }
 
+    // Get the quote to determine original quote ID for threading
+    const quote = await db.query.quotes.findFirst({
+      where: (quotes, { eq }) => eq(quotes.id, quoteId),
+    })
+
+    if (!quote) {
+      return { success: false, error: 'Quote not found' }
+    }
+
+    // Use original quote ID for threading (parentQuoteId or quoteId)
+    const originalQuoteId = quote.parentQuoteId || quote.id
+
     const threads = await db.query.emailThreads.findMany({
       where: (emailThreads, { eq, and }) =>
         and(
-          eq(emailThreads.quoteId, quoteId),
+          eq(emailThreads.quoteId, originalQuoteId),
           eq(emailThreads.userId, session.user.id),
         ),
       orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
@@ -306,21 +319,18 @@ export async function getExistingThreadForQuoteAction(
       return { success: false, error: 'Unauthorized' }
     }
 
-    const existingThread = await db.query.emailThreads.findFirst({
-      where: (emailThreads, { eq, and }) =>
-        and(
-          eq(emailThreads.quoteId, quoteId),
-          eq(emailThreads.userId, session.user.id),
-          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${clientEmail}))`,
-        ),
-      orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
-    })
+    // Use the new threading logic that considers quote families
+    const { threadId, lastSentAt, threadCount } = await findExistingEmailThread(
+      session.user.id,
+      quoteId,
+      clientEmail,
+    )
 
     return {
       success: true,
-      hasExistingThread: !!existingThread,
-      threadCount: existingThread ? 1 : 0,
-      lastSentAt: existingThread?.sentAt || null,
+      hasExistingThread: !!threadId,
+      threadCount,
+      lastSentAt,
     }
   } catch (error) {
     console.error('Error checking existing thread:', error)

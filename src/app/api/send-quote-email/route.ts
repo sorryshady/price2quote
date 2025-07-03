@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 
 import db from '@/db'
-import { emailThreads, quotes } from '@/db/schema'
+import { quotes } from '@/db/schema'
 import { getSession } from '@/lib/auth'
+import {
+  findExistingEmailThread,
+  getOriginalQuoteIdForThreading,
+  saveEmailThreadWithRevisionContext,
+} from '@/lib/email-threading'
 import { getValidGmailToken } from '@/lib/gmail'
 import { generateQuotePDF } from '@/lib/pdf-utils'
 import { supabase } from '@/lib/supabase'
@@ -143,16 +148,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Get the original quote ID for conversation threading
+    const originalQuoteId = getOriginalQuoteIdForThreading(quoteData)
+
     // Check for existing email thread to continue conversation
-    const existingThread = await db.query.emailThreads.findFirst({
-      where: (emailThreads, { eq, and }) =>
-        and(
-          eq(emailThreads.quoteId, quoteId),
-          eq(emailThreads.userId, session.user.id),
-          eq(emailThreads.to, to),
-        ),
-      orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
-    })
+    const { threadId: existingThreadId } = await findExistingEmailThread(
+      session.user.id,
+      quoteId,
+      to,
+    )
 
     // Get valid access token (refresh if needed)
     const validAccessToken = await getValidGmailToken(
@@ -182,8 +186,8 @@ export async function POST(req: NextRequest) {
               from: gmailConnection.gmailEmail,
             }),
             // Include thread ID if this is a follow-up email
-            ...(existingThread?.gmailThreadId && {
-              threadId: existingThread.gmailThreadId,
+            ...(existingThreadId && {
+              threadId: existingThreadId,
             }),
           }),
         },
@@ -202,25 +206,33 @@ export async function POST(req: NextRequest) {
       const messageId = gmailResult.id
       const threadId = gmailResult.threadId
 
-      // Save email thread for conversation tracking
+      // Save email thread for conversation tracking with revision context
       try {
-        await db.insert(emailThreads).values({
+        const isRevision = quoteData.parentQuoteId !== null
+        await saveEmailThreadWithRevisionContext({
           userId: session.user.id,
           companyId: quoteData.companyId,
           quoteId: quoteId,
+          originalQuoteId: originalQuoteId,
           gmailMessageId: messageId,
-          // Use existing thread ID if this is a follow-up, otherwise use new thread ID
-          gmailThreadId: existingThread?.gmailThreadId || threadId,
+          gmailThreadId: existingThreadId || threadId,
           to: to,
-          cc: cc || null,
-          bcc: bcc || null,
+          cc: cc || undefined,
+          bcc: bcc || undefined,
           subject: subject,
           body: body,
           attachments:
             uploadedAttachments.length > 0
               ? JSON.stringify(uploadedAttachments)
-              : null,
+              : undefined,
           includeQuotePdf: includeQuotePdf,
+          revisionContext: isRevision
+            ? {
+                versionNumber: quoteData.versionNumber,
+                revisionNotes: quoteData.revisionNotes || undefined,
+                isRevision: true,
+              }
+            : undefined,
         })
       } catch (error) {
         console.error('Error saving email thread:', error)
