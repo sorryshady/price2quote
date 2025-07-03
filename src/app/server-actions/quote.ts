@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 
 import db from '@/db'
 import {
@@ -692,6 +692,56 @@ export async function createRevisedQuoteAction(data: {
       return sum + quantity * unitPrice
     }, 0)
 
+    // Get service details for updating quoteData
+    const serviceDetails = await db
+      .select({
+        id: services.id,
+        name: services.name,
+        description: services.description,
+      })
+      .from(services)
+      .where(
+        inArray(
+          services.id,
+          data.selectedServices.map((s) => s.serviceId),
+        ),
+      )
+
+    // Update quoteData with new prices if it exists
+    let updatedQuoteData = data.quoteData
+    if (data.quoteData && data.quoteData.quoteDocument) {
+      // Create a deep copy of the quote data
+      updatedQuoteData = {
+        ...data.quoteData,
+        quoteDocument: {
+          ...data.quoteData.quoteDocument,
+          serviceBreakdown: data.selectedServices.map((service) => {
+            const serviceDetail = serviceDetails.find(
+              (s) => s.id === service.serviceId,
+            )
+            // Find the corresponding service in the original breakdown by name
+            const originalService =
+              data.quoteData!.quoteDocument.serviceBreakdown.find(
+                (s) => s.serviceName === serviceDetail?.name,
+              )
+
+            return {
+              serviceName:
+                serviceDetail?.name || `Service ${service.serviceId}`,
+              description:
+                originalService?.description ||
+                serviceDetail?.description ||
+                '',
+              quantity: service.quantity,
+              unitPrice: service.unitPrice || 0,
+              totalPrice: service.quantity * (service.unitPrice || 0),
+              deliverables: originalService?.deliverables || [],
+            }
+          }),
+        },
+      }
+    }
+
     // Create the revised quote
     const [revisedQuote] = await db
       .insert(quotes)
@@ -711,7 +761,7 @@ export async function createRevisedQuoteAction(data: {
         revisionNotes: data.revisionNotes,
         clientFeedback: data.clientFeedback,
         versionNumber: nextVersionNumber.toString(),
-        quoteData: data.quoteData || null,
+        quoteData: updatedQuoteData || null,
       })
       .returning()
 
@@ -739,10 +789,10 @@ export async function createRevisedQuoteAction(data: {
       clientFeedback: data.clientFeedback,
     })
 
-    // Update the original quote status to 'revised'
+    // Update the original quote status to 'rejected' since it's been revised
     await db
       .update(quotes)
-      .set({ status: 'revised' })
+      .set({ status: 'rejected' })
       .where(eq(quotes.id, data.originalQuoteId))
 
     // Fetch the complete revised quote
@@ -801,9 +851,42 @@ export async function getQuoteVersionHistoryAction(
       .where(eq(quoteVersions.originalQuoteId, quoteId))
       .orderBy(quoteVersions.versionNumber)
 
+    // Fetch quote services for all versions
+    const allVersions = [quote, ...versions]
+    const versionsWithServices = await Promise.all(
+      allVersions.map(async (version) => {
+        const quoteServicesData = await db
+          .select({
+            id: quoteServices.id,
+            quoteId: quoteServices.quoteId,
+            serviceId: quoteServices.serviceId,
+            quantity: quoteServices.quantity,
+            unitPrice: quoteServices.unitPrice,
+            totalPrice: quoteServices.totalPrice,
+            notes: quoteServices.notes,
+            service: {
+              id: services.id,
+              name: services.name,
+              description: services.description,
+              skillLevel: services.skillLevel,
+              basePrice: services.basePrice,
+              currency: services.currency,
+            },
+          })
+          .from(quoteServices)
+          .leftJoin(services, eq(quoteServices.serviceId, services.id))
+          .where(eq(quoteServices.quoteId, version.id))
+
+        return {
+          ...version,
+          quoteServices: quoteServicesData,
+        }
+      }),
+    )
+
     return {
       success: true,
-      versions: [quote, ...versions], // Include original quote
+      versions: versionsWithServices,
       versionHistory,
     }
   } catch (error) {

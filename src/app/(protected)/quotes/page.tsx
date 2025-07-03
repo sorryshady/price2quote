@@ -59,7 +59,7 @@ import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 import type { Quote, QuoteStatus } from '@/types'
 
 // Type for the AI-generated quote data
-type QuoteData = {
+export type QuoteData = {
   quoteDocument: {
     executiveSummary: string
     serviceBreakdown: Array<{
@@ -519,6 +519,8 @@ export default function QuotesPage() {
                         <FileDown className="h-4 w-4" />
                         <span className="ml-1 sm:ml-2">Download</span>
                       </Button>
+                      {/* Show Edit button for revised/rejected quotes - since we're using getLatestQuotesAction, 
+                          these are already the latest versions */}
                       {['revised', 'rejected'].includes(quote.status) ? (
                         <Button
                           asChild
@@ -603,6 +605,8 @@ export default function QuotesPage() {
               <QuotePreview
                 quoteData={selectedQuote.quoteData as QuoteData}
                 onClose={handleClosePreview}
+                versionNumber={selectedQuote.versionNumber}
+                isRevision={!!selectedQuote.parentQuoteId}
               />
             ) : (
               <div className="space-y-4">

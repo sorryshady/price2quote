@@ -15,10 +15,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { QuotePreview } from '@/components/ui/quote-preview'
 
 import { getQuoteVersionHistoryAction } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import type { Quote, QuoteStatus } from '@/types'
+
+import { QuoteData } from '../../page'
 
 function getStatusColor(status: QuoteStatus) {
   switch (status) {
@@ -74,6 +77,8 @@ function formatCurrency(amount: string | null, currency: string) {
 }
 
 export default function QuoteVersionsPage() {
+  const [showPreview, setShowPreview] = useState(false)
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -227,14 +232,17 @@ export default function QuoteVersionsPage() {
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/quotes/${originalQuote.id}`}>View Details</Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedQuote(originalQuote)
+                setShowPreview(true)
+              }}
+            >
+              View Preview
             </Button>
-            {['revised', 'rejected'].includes(originalQuote.status) && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/quotes/${originalQuote.id}/edit`}>Edit</Link>
-              </Button>
-            )}
+            {/* Original quote should not be editable - only latest version can be edited */}
           </div>
         </CardContent>
       </Card>
@@ -334,10 +342,21 @@ export default function QuoteVersionsPage() {
                   )}
 
                   <div className="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/quotes/${revision.id}`}>View Details</Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedQuote(revision)
+                        setShowPreview(true)
+                      }}
+                    >
+                      View Preview
                     </Button>
-                    {['revised', 'rejected'].includes(revision.status) && (
+                    {/* Only show Edit button for the latest version */}
+                    {revision.versionNumber ===
+                      Math.max(
+                        ...revisions.map((r) => Number(r.versionNumber)),
+                      ).toString() && (
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/quotes/${revision.id}/edit`}>Edit</Link>
                       </Button>
@@ -348,6 +367,22 @@ export default function QuoteVersionsPage() {
             ))}
           </div>
         </>
+      )}
+      {/* Quote Preview Modal */}
+      {showPreview && selectedQuote && (
+        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/50 p-4">
+          <div className="bg-background max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg p-4 sm:p-6">
+            <QuotePreview
+              quoteData={selectedQuote.quoteData as unknown as QuoteData}
+              onClose={() => {
+                setShowPreview(false)
+                setSelectedQuote(null)
+              }}
+              versionNumber={selectedQuote.versionNumber}
+              isRevision={!!selectedQuote.parentQuoteId}
+            />
+          </div>
+        </div>
       )}
 
       {/* No Revisions Message */}

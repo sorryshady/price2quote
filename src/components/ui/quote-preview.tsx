@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,9 +35,16 @@ interface QuotePreviewProps {
     }
   }
   onClose: () => void
+  versionNumber?: string
+  isRevision?: boolean
 }
 
-export function QuotePreview({ quoteData, onClose }: QuotePreviewProps) {
+export function QuotePreview({
+  quoteData,
+  onClose,
+  versionNumber,
+  isRevision,
+}: QuotePreviewProps) {
   const totalAmount = quoteData.quoteDocument.serviceBreakdown.reduce(
     (sum, service) => sum + service.totalPrice,
     0,
@@ -44,15 +53,38 @@ export function QuotePreview({ quoteData, onClose }: QuotePreviewProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-row items-center justify-between gap-2">
+        <div className="flex flex-col gap-1 sm:gap-2">
           <h2 className="text-2xl font-bold">Quote Preview</h2>
-          <p className="text-muted-foreground">
-            AI-generated professional quote document
-          </p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <p className="text-muted-foreground text-sm">
+              AI-generated professional quote document
+            </p>
+            {versionNumber && (
+              <Badge variant="secondary" className="w-fit text-xs">
+                {isRevision
+                  ? `Revision ${versionNumber}`
+                  : `Version ${versionNumber}`}
+              </Badge>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex items-center gap-2">
+          {/* Show icon button on mobile, text button on desktop */}
+          <Button
+            variant={'outline'}
+            size={'icon'}
+            onClick={onClose}
+            className="text-muted-foreground hover:bg-muted focus:ring-ring inline-flex items-center justify-center rounded-md p-2 focus:ring-2 focus:outline-none sm:hidden"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="hidden sm:inline-flex"
+          >
             Close
           </Button>
         </div>
