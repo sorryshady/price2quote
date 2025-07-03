@@ -5,7 +5,13 @@ import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 
 import db from '@/db'
-import { companies, quoteServices, quotes, services } from '@/db/schema'
+import {
+  companies,
+  quoteServices,
+  quoteVersions,
+  quotes,
+  services,
+} from '@/db/schema'
 import { generateAIAssistedQuote } from '@/lib/gemini'
 import { generateFinalQuoteWithAI, negotiatePriceWithAI } from '@/lib/gemini'
 import { canUserCreateQuote } from '@/lib/subscription'
@@ -554,6 +560,260 @@ export async function deleteQuoteAction(quoteId: string, userId: string) {
     return {
       success: false,
       error: 'Failed to delete quote',
+    }
+  }
+}
+
+// Quote Editing System Actions
+
+export async function getQuoteForEditingAction(
+  quoteId: string,
+  userId: string,
+) {
+  try {
+    // Get the quote with all related data
+    const quote = await getQuoteWithServicesAction(quoteId)
+
+    if (!quote.success || !quote.quote) {
+      return {
+        success: false,
+        error: 'Quote not found',
+      }
+    }
+
+    // Verify the quote belongs to the user
+    if (quote.quote.userId !== userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to edit this quote',
+      }
+    }
+
+    return {
+      success: true,
+      quote: quote.quote,
+    }
+  } catch (error) {
+    console.error('Error getting quote for editing:', error)
+    return {
+      success: false,
+      error: 'Failed to get quote for editing',
+    }
+  }
+}
+
+export async function createRevisedQuoteAction(data: {
+  originalQuoteId: string
+  userId: string
+  companyId: string
+  projectTitle: string
+  projectDescription?: string
+  clientName?: string
+  clientEmail?: string
+  clientLocation: string
+  deliveryTimeline: string
+  customTimeline?: string
+  clientBudget?: number
+  projectComplexity: string
+  currency?: string
+  selectedServices: Array<{
+    serviceId: string
+    quantity: number
+    unitPrice?: number
+    notes?: string
+  }>
+  revisionNotes: string
+  clientFeedback?: string
+  quoteData?: CreateQuoteData['quoteData']
+}) {
+  try {
+    // Get the original quote to determine the next version number
+    const [originalQuote] = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.id, data.originalQuoteId))
+
+    if (!originalQuote) {
+      return {
+        success: false,
+        error: 'Original quote not found',
+      }
+    }
+
+    // Verify the original quote belongs to the user
+    if (originalQuote.userId !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to revise this quote',
+      }
+    }
+
+    // Calculate the next version number
+    const nextVersionNumber = Number(originalQuote.versionNumber) + 1
+
+    // Calculate total amount from services
+    const totalAmount = data.selectedServices.reduce((sum, service) => {
+      const quantity = service.quantity || 1
+      const unitPrice = service.unitPrice || 0
+      return sum + quantity * unitPrice
+    }, 0)
+
+    // Create the revised quote
+    const [revisedQuote] = await db
+      .insert(quotes)
+      .values({
+        userId: data.userId,
+        companyId: data.companyId,
+        projectTitle: data.projectTitle,
+        projectDescription: data.projectDescription,
+        amount: totalAmount > 0 ? totalAmount.toString() : undefined,
+        currency: data.currency || 'USD',
+        clientEmail: data.clientEmail,
+        clientName: data.clientName,
+        quoteData: data.quoteData || null,
+        parentQuoteId: data.originalQuoteId,
+        revisionNotes: data.revisionNotes,
+        clientFeedback: data.clientFeedback,
+        versionNumber: nextVersionNumber.toString(),
+        status: 'draft', // Start as draft
+      })
+      .returning()
+
+    // Insert quote services
+    if (data.selectedServices.length > 0) {
+      const quoteServiceData = data.selectedServices.map((service) => ({
+        quoteId: revisedQuote.id,
+        serviceId: service.serviceId,
+        quantity: service.quantity.toString(),
+        unitPrice: service.unitPrice?.toString(),
+        totalPrice: service.unitPrice
+          ? (service.quantity * service.unitPrice).toString()
+          : undefined,
+        notes: service.notes,
+      }))
+
+      await db.insert(quoteServices).values(quoteServiceData)
+    }
+
+    // Create a version record
+    await db.insert(quoteVersions).values({
+      originalQuoteId: data.originalQuoteId,
+      versionNumber: nextVersionNumber.toString(),
+      revisionNotes: data.revisionNotes,
+      clientFeedback: data.clientFeedback,
+    })
+
+    // Update the original quote status to 'revised'
+    await db
+      .update(quotes)
+      .set({ status: 'revised' })
+      .where(eq(quotes.id, data.originalQuoteId))
+
+    // Fetch the complete revised quote
+    const completeQuote = await getQuoteWithServicesAction(revisedQuote.id)
+
+    revalidatePath('/dashboard')
+    revalidatePath('/quotes')
+    revalidatePath(`/quotes/${revisedQuote.id}`)
+
+    return {
+      success: true,
+      quote: completeQuote.success ? completeQuote.quote : revisedQuote,
+    }
+  } catch (error) {
+    console.error('Error creating revised quote:', error)
+    return {
+      success: false,
+      error: 'Failed to create revised quote',
+    }
+  }
+}
+
+export async function getQuoteVersionHistoryAction(
+  quoteId: string,
+  userId: string,
+) {
+  try {
+    // Verify the quote belongs to the user
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId))
+
+    if (!quote) {
+      return {
+        success: false,
+        error: 'Quote not found',
+      }
+    }
+
+    if (quote.userId !== userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to view this quote history',
+      }
+    }
+
+    // Get all versions of this quote (including the original)
+    const versions = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.parentQuoteId, quoteId))
+      .orderBy(quotes.versionNumber)
+
+    // Get version history records
+    const versionHistory = await db
+      .select()
+      .from(quoteVersions)
+      .where(eq(quoteVersions.originalQuoteId, quoteId))
+      .orderBy(quoteVersions.versionNumber)
+
+    return {
+      success: true,
+      versions: [quote, ...versions], // Include original quote
+      versionHistory,
+    }
+  } catch (error) {
+    console.error('Error getting quote version history:', error)
+    return {
+      success: false,
+      error: 'Failed to get quote version history',
+    }
+  }
+}
+
+export async function compareQuotesAction(
+  quoteId1: string,
+  quoteId2: string,
+  userId: string,
+) {
+  try {
+    // Get both quotes
+    const quote1 = await getQuoteWithServicesAction(quoteId1)
+    const quote2 = await getQuoteWithServicesAction(quoteId2)
+
+    if (!quote1.success || !quote2.success) {
+      return {
+        success: false,
+        error: 'One or both quotes not found',
+      }
+    }
+
+    // Verify both quotes belong to the user
+    if (quote1.quote!.userId !== userId || quote2.quote!.userId !== userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to compare these quotes',
+      }
+    }
+
+    return {
+      success: true,
+      quote1: quote1.quote,
+      quote2: quote2.quote,
+    }
+  } catch (error) {
+    console.error('Error comparing quotes:', error)
+    return {
+      success: false,
+      error: 'Failed to compare quotes',
     }
   }
 }

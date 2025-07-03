@@ -39,6 +39,13 @@ const quotes = pgTable('quotes', {
   clientName: varchar('client_name', { length: 255 }),
   quoteData: json('quote_data'),
   sentAt: timestamp('sent_at'),
+  // Revision fields for quote editing system
+  parentQuoteId: uuid('parent_quote_id'), // Will add foreign key constraint in migration
+  revisionNotes: text('revision_notes'),
+  clientFeedback: text('client_feedback'),
+  versionNumber: decimal('version_number', { precision: 3, scale: 0 })
+    .default('1')
+    .notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -61,5 +68,21 @@ const quoteServices = pgTable('quote_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// Quote versions table for version history
+const quoteVersions = pgTable('quote_versions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  originalQuoteId: uuid('original_quote_id')
+    .notNull()
+    .references(() => quotes.id, { onDelete: 'cascade' }),
+  versionNumber: decimal('version_number', {
+    precision: 3,
+    scale: 0,
+  }).notNull(),
+  revisionNotes: text('revision_notes'),
+  clientFeedback: text('client_feedback'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 export default quotes
-export { quoteServices }
+export { quoteServices, quoteVersions }

@@ -9,7 +9,7 @@ import { fetchRecentEmails, getValidGmailToken } from '@/lib/gmail'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { companyId: string } },
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
     const session = await getSession()
@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { companyId } = params
+    const { companyId } = await params
     const { searchParams } = new URL(request.url)
     const maxResults = parseInt(searchParams.get('maxResults') || '50')
     const query = searchParams.get('query') || undefined

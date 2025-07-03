@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 import { disableEmailSyncAction } from '@/app/server-actions/email-sync'
 import { getSession } from '@/lib/auth'
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { companyId: string } },
+  request: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> },
 ) {
   try {
     const session = await getSession()
@@ -13,7 +13,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { companyId } = params
+    const { companyId } = await params
     const result = await disableEmailSyncAction(companyId)
 
     if (result.success) {

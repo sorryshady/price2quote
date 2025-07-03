@@ -81,8 +81,23 @@ export interface Quote {
   createdAt: Date
   updatedAt: Date
   quoteData?: JSON
+  // Revision fields for quote editing system
+  parentQuoteId?: string | null
+  revisionNotes?: string | null
+  clientFeedback?: string | null
+  versionNumber: string
   company?: Company | null // Include the full company details
   quoteServices?: QuoteService[] // Include the selected services
+}
+
+export interface QuoteVersion {
+  id: string
+  originalQuoteId: string
+  versionNumber: string
+  revisionNotes?: string | null
+  clientFeedback?: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface SubscriptionFeatures {
