@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, File, Mail, RefreshCw, Save, X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -117,6 +118,7 @@ function formatDate(date: Date) {
 
 export default function EditQuotePage() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const router = useRouter()
   const params = useParams()
   const quoteId = params?.quoteId as string
@@ -513,6 +515,7 @@ export default function EditQuotePage() {
       toast.custom(
         <CustomToast message="Quote revised successfully!" type="success" />,
       )
+      queryClient.invalidateQueries({ queryKey: ['quotes'] })
       router.push('/quotes')
     } else {
       toast.custom(
