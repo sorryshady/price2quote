@@ -37,6 +37,8 @@ const quotes = pgTable('quotes', {
   status: quoteStatusEnum('status').default('draft').notNull(),
   clientEmail: varchar('client_email', { length: 255 }),
   clientName: varchar('client_name', { length: 255 }),
+  clientLocation: varchar('client_location', { length: 255 }),
+  clientBudget: decimal('client_budget', { precision: 10, scale: 2 }),
   quoteData: json('quote_data'),
   sentAt: timestamp('sent_at'),
   // Revision fields for quote editing system

@@ -77,6 +77,8 @@ export interface Quote {
   status: QuoteStatus
   clientEmail?: string | null
   clientName?: string | null
+  clientLocation?: string | null
+  clientBudget?: number | null
   sentAt?: Date | null
   createdAt: Date
   updatedAt: Date

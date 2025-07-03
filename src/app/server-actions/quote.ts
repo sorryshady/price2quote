@@ -90,6 +90,8 @@ export async function createQuoteAction(data: CreateQuoteData) {
         currency: data.currency || 'USD',
         clientEmail: data.clientEmail,
         clientName: data.clientName,
+        clientLocation: data.clientLocation,
+        clientBudget: data.clientBudget?.toString(),
         quoteData: data.quoteData || null,
       })
       .returning()
@@ -260,6 +262,8 @@ export async function getQuoteWithServicesAction(quoteId: string) {
         status: quotes.status,
         clientEmail: quotes.clientEmail,
         clientName: quotes.clientName,
+        clientLocation: quotes.clientLocation,
+        clientBudget: quotes.clientBudget,
         quoteData: quotes.quoteData,
         sentAt: quotes.sentAt,
         // Revision fields for quote editing system
@@ -675,16 +679,18 @@ export async function createRevisedQuoteAction(data: {
         companyId: data.companyId,
         projectTitle: data.projectTitle,
         projectDescription: data.projectDescription,
-        amount: totalAmount > 0 ? totalAmount.toString() : undefined,
-        currency: data.currency || 'USD',
-        clientEmail: data.clientEmail,
         clientName: data.clientName,
-        quoteData: data.quoteData || null,
+        clientEmail: data.clientEmail,
+        clientLocation: data.clientLocation,
+        clientBudget: data.clientBudget?.toString(),
+        currency: data.currency,
+        amount: totalAmount > 0 ? totalAmount.toString() : undefined,
+        status: 'revised',
         parentQuoteId: data.originalQuoteId,
         revisionNotes: data.revisionNotes,
         clientFeedback: data.clientFeedback,
         versionNumber: nextVersionNumber.toString(),
-        status: 'draft', // Start as draft
+        quoteData: data.quoteData || null,
       })
       .returning()
 
