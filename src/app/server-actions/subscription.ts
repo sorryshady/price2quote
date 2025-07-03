@@ -5,7 +5,7 @@ import {
   canUserCreateCompany,
   canUserCreateQuote,
   getCurrentCompanies,
-  getCurrentMonthQuotes,
+  getCurrentMonthOriginalQuotes,
   getQuoteRevisionCount,
   getUpgradeMessage,
 } from '@/lib/subscription'
@@ -18,7 +18,7 @@ export async function checkQuoteLimitAction(
     // Default to 'free' if userTier is invalid
     const tier = userTier === 'free' || userTier === 'pro' ? userTier : 'free'
     const canCreate = await canUserCreateQuote(userId, tier)
-    const currentQuotes = await getCurrentMonthQuotes(userId)
+    const currentQuotes = await getCurrentMonthOriginalQuotes(userId)
     const upgradeMessage = getUpgradeMessage('quotes', tier)
 
     return {

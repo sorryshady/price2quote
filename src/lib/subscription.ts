@@ -132,7 +132,7 @@ export async function canUserCreateQuote(
   userId: string,
   userTier: SubscriptionTier,
 ): Promise<boolean> {
-  const currentQuotes = await getCurrentMonthQuotes(userId)
+  const currentQuotes = await getCurrentMonthOriginalQuotes(userId)
   return canCreateQuote(userTier, currentQuotes)
 }
 
