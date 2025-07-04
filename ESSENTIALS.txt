@@ -1,6 +1,5 @@
 Password:uY5sGbZhabgRt4cv
 BUGS:
-revision quote when service removed should show add service. (fix that for example. If company offers 2 services and initial quote had 2, then there isnt any extra service that we can add. But if we remove one service then that service should be available to add).
 quotes badge needs to be that of latest quote (it shows rejected when we making new revised quote in the conversations route).
 toast is having issues when trying to check number of unread emails (i think it should only take count of unread incoming emails and not both outbound and incoming).
 Revised quotes number not being updated. So cant enforce limit for revisions. When in the revision screen it shows 0/2 for the new quote when editing. What we want is overall revisions 2 not per quote 2 revisions.
@@ -10,3 +9,5 @@ Email when given in onboarding form should not be automatically connected to the
 random quote_sent in status inside conversation.
 when new unread email fetched invalidate conversation using the id.
 everywhere currency is defaulting to dollars
+
+Okay i just noticed something. The first time we create a quote when there are no other quotes. The quotes page, and the email page are not immediately refetching because if they did we would have the quotes showing up there immediately

@@ -517,13 +517,16 @@ export default function NewQuotePage() {
         setSavedQuoteId(result.quote.id)
         setFinalQuoteData(finalQuoteData)
 
-        // Invalidate quotes query to refresh the quotes list
-        await queryClient.invalidateQueries({ queryKey: ['quotes', user.id] })
-
-        // Invalidate quote limit to update the count
-        await queryClient.invalidateQueries({
-          queryKey: ['quote-limit', user.id],
-        })
+        // Invalidate quotes queries to refresh the quotes list
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['quotes', user.id] }),
+          queryClient.invalidateQueries({
+            queryKey: ['latest-quotes', user.id],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ['quote-limit', user.id],
+          }),
+        ])
 
         // Show upgrade message if this was the last free quote
         if (!canCreate) {

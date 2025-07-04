@@ -143,10 +143,14 @@ export default function SendEmailPage() {
         // Reset form after successful send
         setSelectedQuote(null)
         // Invalidate quotes queries to update status from 'draft' or 'revised' to 'sent'
-        queryClient.invalidateQueries({ queryKey: ['quotes', user?.id || ''] })
-        queryClient.invalidateQueries({
-          queryKey: ['latest-quotes', user?.id || ''],
-        })
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ['quotes', user?.id || ''],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ['latest-quotes', user?.id || ''],
+          }),
+        ])
         // Invalidate conversations cache to show new email in conversations
         if (primaryCompany?.id) {
           invalidateConversations(primaryCompany.id)

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, File, Mail, RefreshCw, Save, X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -122,6 +123,7 @@ export default function EditQuotePage() {
   const router = useRouter()
   const params = useParams()
   const quoteId = params?.quoteId as string
+  const queryClient = useQueryClient()
 
   // Check revision limits
   const {
@@ -524,6 +526,13 @@ export default function EditQuotePage() {
 
     setSubmitting(false)
     if (result.success) {
+      // Invalidate quotes queries to refresh the quotes list
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['quotes', user.id] }),
+        queryClient.invalidateQueries({ queryKey: ['latest-quotes', user.id] }),
+        queryClient.invalidateQueries({ queryKey: ['quote-limit', user.id] }),
+      ])
+
       toast.custom(
         <CustomToast message="Quote revised successfully!" type="success" />,
       )

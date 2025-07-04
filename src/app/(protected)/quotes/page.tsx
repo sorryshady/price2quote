@@ -204,15 +204,18 @@ export default function QuotesPage() {
   ) => {
     const result = await updateQuoteStatusAction(quoteId, newStatus)
     if (result.success) {
-      // Invalidate latest quotes query to refresh the list
-      await queryClient.invalidateQueries({
-        queryKey: ['latest-quotes', user?.id || ''],
-      })
-
-      // Invalidate conversations cache to refresh conversation status
-      await queryClient.invalidateQueries({
-        queryKey: ['conversations'],
-      })
+      // Invalidate quotes queries to refresh the list
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['quotes', user?.id || ''],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['latest-quotes', user?.id || ''],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['conversations'],
+        }),
+      ])
 
       toast.custom(
         <CustomToast
@@ -582,8 +585,19 @@ export default function QuotesPage() {
                             <AlertDialogTitle>Delete Quote</AlertDialogTitle>
                             <AlertDialogDescription>
                               Are you sure you want to delete &ldquo;
-                              {quote.projectTitle}&rdquo;? This action cannot be
-                              undone.
+                              {quote.projectTitle}&rdquo;?
+                              {quote.parentQuoteId ? (
+                                <span className="text-muted-foreground mt-2 block text-sm">
+                                  This will delete version{' '}
+                                  {quote.versionNumber || '1'}. Previous
+                                  versions will remain available.
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground mt-2 block text-sm">
+                                  This will delete the entire quote including
+                                  all versions. This action cannot be undone.
+                                </span>
+                              )}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -592,7 +606,7 @@ export default function QuotesPage() {
                               onClick={() => handleDeleteQuote(quote.id)}
                               className="bg-red-600 hover:bg-red-700"
                             >
-                              Delete Quote
+                              Delete {quote.parentQuoteId ? 'Version' : 'Quote'}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
