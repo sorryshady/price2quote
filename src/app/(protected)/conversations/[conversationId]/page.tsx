@@ -130,12 +130,27 @@ export default function ConversationDetailPage() {
   useEffect(() => {
     if (emails.length > 0) {
       const unreadEmails = emails.filter((email: EmailThread) => !email.isRead)
-      for (const email of unreadEmails) {
-        try {
-          markEmailAsReadAction(email.gmailMessageId)
-        } catch (error) {
-          console.error('Error marking email as read:', error)
-        }
+
+      // Mark unread emails as read in our database
+      if (unreadEmails.length > 0) {
+        Promise.all(
+          unreadEmails.map((email) =>
+            markEmailAsReadAction(email.gmailMessageId),
+          ),
+        )
+          .then(() => {
+            // Refresh the conversation data to show updated read status
+            queryClient.invalidateQueries({
+              queryKey: ['conversation', conversationId],
+            })
+            // Also refresh the conversations list to update unread counts
+            queryClient.invalidateQueries({
+              queryKey: ['conversations'],
+            })
+          })
+          .catch((error) => {
+            console.error('Error marking emails as read:', error)
+          })
       }
 
       // Extract conversation info from emails (prefer first outbound email)
@@ -151,7 +166,7 @@ export default function ConversationDetailPage() {
         quoteStatus: infoSource.emailType || 'sent',
       })
     }
-  }, [emails])
+  }, [emails, conversationId, queryClient])
 
   useEffect(() => {
     if (emails.length > 0) {
