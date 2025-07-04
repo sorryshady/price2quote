@@ -337,3 +337,46 @@ export async function getExistingThreadForQuoteAction(
     return { success: false, error: 'Failed to check existing thread' }
   }
 }
+
+export async function getConversationIdForQuoteAction(quoteId: string) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Get the quote to determine original quote ID for threading
+    const quote = await db.query.quotes.findFirst({
+      where: (quotes, { eq }) => eq(quotes.id, quoteId),
+    })
+
+    if (!quote) {
+      return { success: false, error: 'Quote not found' }
+    }
+
+    // Use original quote ID for threading (parentQuoteId or quoteId)
+    const originalQuoteId = quote.parentQuoteId || quote.id
+
+    // Find the most recent email thread for this quote family
+    const mostRecentEmail = await db.query.emailThreads.findFirst({
+      where: (emailThreads, { eq, and }) =>
+        and(
+          eq(emailThreads.quoteId, originalQuoteId),
+          eq(emailThreads.userId, session.user.id),
+        ),
+      orderBy: (emailThreads, { desc }) => [desc(emailThreads.sentAt)],
+    })
+
+    if (!mostRecentEmail || !mostRecentEmail.gmailThreadId) {
+      return { success: false, error: 'No conversation found for this quote' }
+    }
+
+    return {
+      success: true,
+      conversationId: mostRecentEmail.gmailThreadId,
+    }
+  } catch (error) {
+    console.error('Error getting conversation ID for quote:', error)
+    return { success: false, error: 'Failed to get conversation ID' }
+  }
+}

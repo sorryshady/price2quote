@@ -40,6 +40,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 
+import { getConversationIdForQuoteAction } from '@/app/server-actions/email-threads'
 import {
   CreateQuoteData,
   createRevisedQuoteAction,
@@ -166,6 +167,7 @@ export default function EditQuotePage() {
   } | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showAIRecommendations, setShowAIRecommendations] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
 
   const form = useForm<EditQuoteFormData>({
     resolver: zodResolver(editQuoteSchema),
@@ -278,6 +280,13 @@ export default function EditQuotePage() {
           revisionNotes: result.quote.revisionNotes || '',
           clientFeedback: result.quote.clientFeedback || '',
         })
+
+        // Fetch conversation ID for the quote
+        const conversationResult =
+          await getConversationIdForQuoteAction(quoteId)
+        if (conversationResult.success && conversationResult.conversationId) {
+          setConversationId(conversationResult.conversationId)
+        }
       } else {
         setError(result.error || 'Failed to load quote.')
       }
@@ -591,11 +600,17 @@ export default function EditQuotePage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/conversations?quoteId=${quote.id}`}>
-            View Conversation
-          </Link>
-        </Button>
+        {conversationId ? (
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/conversations/${conversationId}`}>
+              View Conversation
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" disabled>
+            No Conversation Found
+          </Button>
+        )}
       </div>
 
       {/* Quote Information Header */}

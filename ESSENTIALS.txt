@@ -1,8 +1,13 @@
 Password:uY5sGbZhabgRt4cv
 BUGS:
-changing status inside conversation should invalidate tanstack cache for quotes in quotes page
-view conversation needs to be connected
-revision quote when service removed should show add service.
-quotes badge needs to be that of latest quote (it shows rejected when we make new revised quote).
-toast is having issues when trying.
+view conversation button in edit page needs to be connected to the conversation right now it is (<Link href={`/conversations?quoteId=${quote.id}`}>) which does not make sense.
+revision quote when service removed should show add service. (fix that for example. If company offers 2 services and initial quote had 2, then there isnt any extra service that we can add. But if we remove one service then that service should be available to add).
+quotes badge needs to be that of latest quote (it shows rejected when we making new revised quote in the conversations route).
+toast is having issues when trying to check number of unread emails (i think it should only take count of unread incoming emails and not both outbound and incoming).
 Revised quotes number not being updated. So cant enforce limit for revisions. When in the revision screen it shows 0/2 for the new quote when editing. What we want is overall revisions 2 not per quote 2 revisions.
+Price is currently always coming in dollars. Have to sort out the conversion based on currency that company sets.
+quote preview is also defaulting to $. Should reflect company currency.
+Email when given in onboarding form should not be automatically connected to the google email sending thingy.
+random quote_sent in status inside conversation.
+when new unread email fetched invalidate conversation using the id.
+everywhere currency is defaulting to dollars
