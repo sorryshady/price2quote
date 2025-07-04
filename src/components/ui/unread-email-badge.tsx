@@ -4,16 +4,19 @@ import { Badge } from './badge'
 
 interface UnreadEmailBadgeProps {
   isRead: boolean
+  direction?: 'inbound' | 'outbound'
   count?: number
   className?: string
 }
 
 export function UnreadEmailBadge({
   isRead,
+  direction = 'inbound',
   count = 1,
   className = '',
 }: UnreadEmailBadgeProps) {
-  if (isRead) {
+  // Only show badge for unread inbound emails
+  if (isRead || direction !== 'inbound') {
     return null
   }
 

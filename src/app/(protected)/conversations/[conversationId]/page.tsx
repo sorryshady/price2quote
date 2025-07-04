@@ -463,7 +463,10 @@ export default function ConversationDetailPage() {
                           {email.subject}
                         </h3>
                         <EmailDirectionIndicator direction={email.direction} />
-                        <UnreadEmailBadge isRead={email.isRead} />
+                        <UnreadEmailBadge
+                          isRead={email.isRead}
+                          direction={email.direction}
+                        />
                         {email.includeQuotePdf && (
                           <Badge variant="secondary" className="text-xs">
                             Quote PDF
