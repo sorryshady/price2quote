@@ -48,6 +48,7 @@ import {
   getQuoteForEditingAction,
 } from '@/app/server-actions/quote'
 import { useAuth } from '@/hooks/use-auth'
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useRevisionLimit } from '@/hooks/use-subscription-limits'
 import type { Quote, QuoteService, QuoteStatus, Service } from '@/types'
 
@@ -168,6 +169,9 @@ export default function EditQuotePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showAIRecommendations, setShowAIRecommendations] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+
+  // Get companies for services
+  const { companies } = useCompaniesQuery()
 
   const form = useForm<EditQuoteFormData>({
     resolver: zodResolver(editQuoteSchema),
@@ -295,19 +299,16 @@ export default function EditQuotePage() {
     fetchQuote()
   }, [user?.id, quoteId, form])
 
-  // Fetch all services for the company (for Add Service)
+  // Get all services for the company (for Add Service)
   useEffect(() => {
-    async function fetchServices() {
-      if (!quote?.companyId) return
-      // Fetch all services for the company (reuse logic from new-quote)
-      const res = await fetch(`/api/services?companyId=${quote.companyId}`)
-      if (res.ok) {
-        const data = await res.json()
-        setAllServices(data.services)
-      }
+    if (!quote?.companyId || !companies) return
+
+    // Find the company and get its services
+    const company = companies.find((c) => c.id === quote.companyId)
+    if (company?.services) {
+      setAllServices(company.services)
     }
-    if (quote) fetchServices()
-  }, [quote])
+  }, [quote?.companyId, companies])
 
   // Initialize editableServices from quote
   useEffect(() => {
@@ -805,7 +806,7 @@ export default function EditQuotePage() {
                     <div className="font-medium">{s.service.name}</div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => handleRemoveService(s.serviceId)}
                     >

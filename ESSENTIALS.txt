@@ -1,6 +1,5 @@
 Password:uY5sGbZhabgRt4cv
 BUGS:
-view conversation button in edit page needs to be connected to the conversation right now it is (<Link href={`/conversations?quoteId=${quote.id}`}>) which does not make sense.
 revision quote when service removed should show add service. (fix that for example. If company offers 2 services and initial quote had 2, then there isnt any extra service that we can add. But if we remove one service then that service should be available to add).
 quotes badge needs to be that of latest quote (it shows rejected when we making new revised quote in the conversations route).
 toast is having issues when trying to check number of unread emails (i think it should only take count of unread incoming emails and not both outbound and incoming).
