@@ -27,10 +27,7 @@ import {
   getEmailSyncStatusAction,
   syncIncomingEmailsAction,
 } from '@/app/server-actions/email-sync'
-import {
-  type EmailThread,
-  deleteConversationAction,
-} from '@/app/server-actions/email-threads'
+import { deleteConversationAction } from '@/app/server-actions/email-threads'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import {
   useConversationsQuery,
@@ -114,13 +111,46 @@ export default function ConversationsPage() {
 
       await loadSyncStatus(currentCompanyId)
 
-      // Enhanced notification with sync details
-      const unreadCount = conversations.reduce(
-        (sum, conv) =>
-          sum +
-          conv.emails.filter((email: EmailThread) => !email.isRead).length,
-        0,
-      )
+      // Wait a moment for backend to process new emails
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Get fresh conversations data to calculate accurate unread count
+      const freshConversationsData = await queryClient.fetchQuery({
+        queryKey: ['conversations', currentCompanyId],
+        queryFn: async () => {
+          const { getEmailThreadsByCompanyAction } = await import(
+            '@/app/server-actions/email-threads'
+          )
+          return getEmailThreadsByCompanyAction(currentCompanyId)
+        },
+        staleTime: 0, // Force fresh data
+      })
+
+      // Calculate NEW unread count from fresh data - only count inbound unread emails
+      const unreadCount =
+        freshConversationsData?.success &&
+        Array.isArray(freshConversationsData.conversations)
+          ? freshConversationsData.conversations.reduce(
+              (sum, conv) =>
+                sum +
+                conv.emails.filter(
+                  (email) =>
+                    email && email.direction === 'inbound' && !email.isRead,
+                ).length,
+              0,
+            )
+          : 0
+
+      // Debug logging for sync results
+      console.log('Sync result:', {
+        updatedConversations: syncResult.updatedConversations,
+        unreadCount,
+        totalConversations:
+          freshConversationsData?.success &&
+          freshConversationsData.conversations
+            ? freshConversationsData.conversations.length
+            : 0,
+      })
 
       const updateMessage =
         syncResult.updatedConversations &&
@@ -128,12 +158,18 @@ export default function ConversationsPage() {
           ? ` ${syncResult.updatedConversations.length} conversation(s) updated.`
           : ''
 
-      toast.custom(
-        <CustomToast
-          message={`Email sync complete!${updateMessage} ${unreadCount > 0 ? `${unreadCount} unread emails found.` : 'No new emails.'}`}
-          type="success"
-        />,
-      )
+      // Show appropriate toast message based on sync results
+      let toastMessage = `Email sync complete!${updateMessage}`
+      if (
+        syncResult.updatedConversations &&
+        syncResult.updatedConversations.length > 0
+      ) {
+        toastMessage += ` ${unreadCount > 0 ? `${unreadCount} unread incoming emails found.` : 'No new emails.'}`
+      } else {
+        toastMessage += ' No new emails.'
+      }
+
+      toast.custom(<CustomToast message={toastMessage} type="success" />)
     } catch {
       toast.custom(<CustomToast message="Failed to sync emails" type="error" />)
     } finally {
@@ -339,33 +375,16 @@ export default function ConversationsPage() {
           } xl:grid-cols-3`}
         >
           {filteredConversations.map((conversation) => {
-            const latestEmail =
-              conversation.emails[conversation.emails.length - 1]
-            // Show 'Unopened' if latest is outbound and not read
-            let statusBadge = null
-            if (
-              latestEmail &&
-              latestEmail.direction === 'outbound' &&
-              !latestEmail.isRead
-            ) {
-              statusBadge = (
-                <span className="inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
-                  Unopened
-                </span>
-              )
-            } else {
-              // Show 'Unread' if any inbound email is unread
-              const hasUnreadInbound = conversation.emails.some(
-                (email) => email.direction === 'inbound' && !email.isRead,
-              )
-              if (hasUnreadInbound) {
-                statusBadge = (
-                  <span className="inline-block rounded border border-blue-300 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                    Unread
-                  </span>
-                )
-              }
-            }
+            // Show 'Unread' if any inbound email is unread
+            const hasUnreadInbound = conversation.emails.some(
+              (email) => email.direction === 'inbound' && !email.isRead,
+            )
+
+            const statusBadge = hasUnreadInbound ? (
+              <span className="inline-block rounded border border-blue-300 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                Unread
+              </span>
+            ) : null
 
             return (
               <Card

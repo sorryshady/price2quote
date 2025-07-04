@@ -126,24 +126,35 @@ export default function ConversationDetailPage() {
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 
-  // Mark unread emails as read when conversation is loaded
+  // Mark unread inbound emails as read when conversation is loaded
   useEffect(() => {
     if (emails.length > 0) {
-      const unreadEmails = emails.filter((email: EmailThread) => !email.isRead)
+      const unreadInboundEmails = emails.filter(
+        (email: EmailThread) => !email.isRead && email.direction === 'inbound',
+      )
 
-      // Mark unread emails as read in our database
-      if (unreadEmails.length > 0) {
+      // Mark unread inbound emails as read in our database
+      if (unreadInboundEmails.length > 0) {
+        console.log(
+          'Marking emails as read:',
+          unreadInboundEmails.map((e) => ({
+            id: e.gmailMessageId,
+            subject: e.subject,
+          })),
+        )
         Promise.all(
-          unreadEmails.map((email) =>
+          unreadInboundEmails.map((email) =>
             markEmailAsReadAction(email.gmailMessageId),
           ),
         )
           .then(() => {
+            console.log('Successfully marked emails as read')
             // Refresh the conversation data to show updated read status
             queryClient.invalidateQueries({
               queryKey: ['conversation', conversationId],
             })
             // Also refresh the conversations list to update unread counts
+            // Invalidate all conversations queries to ensure badges update
             queryClient.invalidateQueries({
               queryKey: ['conversations'],
             })

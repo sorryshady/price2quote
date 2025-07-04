@@ -115,12 +115,7 @@ export class EmailSyncService {
         return { updatedConversations }
       }
 
-      // Get valid access token
-      const accessToken = await getValidGmailToken(
-        gmailConnection.accessToken,
-        gmailConnection.refreshToken,
-        gmailConnection.expiresAt,
-      )
+      // Note: accessToken is used in checkThreadForNewEmails method
 
       // Get all outbound emails for this company that we've sent
       const outboundEmails = await db.query.emailThreads.findMany({
@@ -149,8 +144,7 @@ export class EmailSyncService {
         }
       }
 
-      // Also sync read status for outbound emails
-      await this.syncOutboundEmailReadStatus(accessToken, companyId)
+      // Note: Removed outbound email read status sync - keeping it simple
 
       // Update sync status with current timestamp
       await this.updateSyncStatus(companyId, new Date().toISOString())
@@ -539,58 +533,6 @@ export class EmailSyncService {
       gmailLabels: JSON.stringify(email.labelIds),
       emailType: 'client_response',
     })
-  }
-
-  // Sync read status for outbound emails
-  async syncOutboundEmailReadStatus(
-    accessToken: string,
-    companyId: string,
-  ): Promise<void> {
-    try {
-      console.log('Syncing outbound email read status...')
-
-      // Get all outbound emails for this company
-      const outboundEmails = await db.query.emailThreads.findMany({
-        where: (emailThreads, { eq, and }) =>
-          and(
-            eq(emailThreads.companyId, companyId),
-            eq(emailThreads.direction, 'outbound'),
-            eq(emailThreads.isRead, false), // Only check unread emails
-          ),
-      })
-
-      console.log(`Found ${outboundEmails.length} outbound emails to check`)
-
-      for (const email of outboundEmails) {
-        try {
-          // Get email details from Gmail to check read status
-          const emailDetails = await getEmailDetails(
-            accessToken,
-            email.gmailMessageId,
-          )
-
-          // Check if email has been read (has 'UNREAD' label removed)
-          const isRead = !emailDetails.labelIds.includes('UNREAD')
-
-          if (isRead && !email.isRead) {
-            console.log(
-              `Marking outbound email ${email.gmailMessageId} as read`,
-            )
-            await db
-              .update(emailThreads)
-              .set({ isRead: true })
-              .where(eq(emailThreads.id, email.id))
-          }
-        } catch (error) {
-          console.error(
-            `Error checking read status for email ${email.gmailMessageId}:`,
-            error,
-          )
-        }
-      }
-    } catch (error) {
-      console.error('Error syncing outbound email read status:', error)
-    }
   }
 
   private async updateSyncStatus(

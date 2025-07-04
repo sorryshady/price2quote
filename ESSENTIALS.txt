@@ -9,5 +9,3 @@ Email when given in onboarding form should not be automatically connected to the
 random quote_sent in status inside conversation.
 when new unread email fetched invalidate conversation using the id.
 everywhere currency is defaulting to dollars
-
-Okay i just noticed something. The first time we create a quote when there are no other quotes. The quotes page, and the email page are not immediately refetching because if they did we would have the quotes showing up there immediately

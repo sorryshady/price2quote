@@ -153,7 +153,13 @@ export default function SendEmailPage() {
         ])
         // Invalidate conversations cache to show new email in conversations
         if (primaryCompany?.id) {
-          invalidateConversations(primaryCompany.id)
+          await invalidateConversations(primaryCompany.id)
+          // Also invalidate the specific conversation if possible
+          if (result?.threadId) {
+            await queryClient.invalidateQueries({
+              queryKey: ['conversation', result.threadId],
+            })
+          }
         }
       } else {
         toast.custom(
