@@ -154,3 +154,27 @@ export async function syncIncomingEmailsAction(companyId: string) {
     return { success: false, error: 'Failed to sync incoming emails' }
   }
 }
+
+export async function syncConversationThreadAction(
+  companyId: string,
+  gmailThreadId: string,
+) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    const syncService = new EmailSyncService()
+    await syncService.checkThreadForNewEmails(
+      companyId,
+      gmailThreadId,
+      session.user.id,
+    )
+
+    return { success: true, message: 'Conversation thread synced' }
+  } catch (error) {
+    console.error('Error syncing conversation thread:', error)
+    return { success: false, error: 'Failed to sync conversation thread' }
+  }
+}

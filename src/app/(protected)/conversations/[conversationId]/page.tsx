@@ -31,7 +31,10 @@ import {
 } from '@/components/ui/tooltip'
 import { UnreadEmailBadge } from '@/components/ui/unread-email-badge'
 
-import { markEmailAsReadAction } from '@/app/server-actions/email-sync'
+import {
+  markEmailAsReadAction,
+  syncConversationThreadAction,
+} from '@/app/server-actions/email-sync'
 import { type EmailThread } from '@/app/server-actions/email-threads'
 import {
   getQuoteRevisionHistoryForConversationAction,
@@ -190,14 +193,52 @@ export default function ConversationDetailPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
-      // Invalidate conversation cache to refresh data
-      await queryClient.invalidateQueries({
-        queryKey: ['conversation', conversationId],
-      })
-      toast.custom(
-        <CustomToast message="Conversation refreshed" type="success" />,
+      // Get company ID from the first email in the conversation
+      const companyId = emails.length > 0 ? emails[0].companyId : null
+
+      if (!companyId) {
+        toast.custom(
+          <CustomToast
+            message="No company found for this conversation"
+            type="error"
+          />,
+        )
+        return
+      }
+
+      // Sync this specific conversation thread from Gmail
+      const syncResult = await syncConversationThreadAction(
+        companyId,
+        conversationId,
       )
-    } catch {
+
+      if (syncResult.success) {
+        // Invalidate conversation cache to refresh data
+        await queryClient.invalidateQueries({
+          queryKey: ['conversation', conversationId],
+        })
+
+        // Also invalidate conversations list to update unread counts
+        await queryClient.invalidateQueries({
+          queryKey: ['conversations'],
+        })
+
+        toast.custom(
+          <CustomToast
+            message="Conversation refreshed with latest emails"
+            type="success"
+          />,
+        )
+      } else {
+        toast.custom(
+          <CustomToast
+            message={syncResult.error || 'Failed to sync conversation'}
+            type="error"
+          />,
+        )
+      }
+    } catch (error) {
+      console.error('Error refreshing conversation:', error)
       toast.custom(
         <CustomToast message="Failed to refresh conversation" type="error" />,
       )

@@ -134,11 +134,9 @@ export class EmailSyncService {
       for (const outboundEmail of outboundEmails) {
         if (outboundEmail.gmailThreadId) {
           await this.checkThreadForNewEmails(
-            accessToken,
-            outboundEmail.gmailThreadId,
             companyId,
+            outboundEmail.gmailThreadId,
             userId,
-            gmailConnection.gmailEmail,
           )
         }
       }
@@ -598,15 +596,34 @@ export class EmailSyncService {
       .where(eq(emailSyncStatus.companyId, companyId))
   }
 
-  private async checkThreadForNewEmails(
-    accessToken: string,
-    threadId: string,
+  async checkThreadForNewEmails(
     companyId: string,
+    threadId: string,
     userId: string,
-    gmailSenderEmail?: string,
   ): Promise<void> {
     try {
       console.log(`Checking thread ${threadId} for new emails`)
+
+      // Get Gmail connection for company
+      const gmailConnection = await db.query.gmailConnections.findFirst({
+        where: (gmailConnections, { eq, and }) =>
+          and(
+            eq(gmailConnections.companyId, companyId),
+            eq(gmailConnections.userId, userId),
+          ),
+      })
+
+      if (!gmailConnection) {
+        console.log(`No Gmail connection found for company ${companyId}`)
+        return
+      }
+
+      // Get valid access token
+      const accessToken = await getValidGmailToken(
+        gmailConnection.accessToken,
+        gmailConnection.refreshToken,
+        gmailConnection.expiresAt,
+      )
 
       // Get all messages in the thread
       const threadMessages = await fetchThreadMessages(accessToken, threadId)
@@ -645,7 +662,7 @@ export class EmailSyncService {
           accessToken,
           companyId,
           userId,
-          gmailSenderEmail,
+          gmailConnection.gmailEmail,
         )
       }
     } catch (error) {
