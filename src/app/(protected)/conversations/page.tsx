@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 import { EmailSyncStatus } from '@/components/ui/email-sync-status'
 import { Input } from '@/components/ui/input'
-import { UnreadEmailBadge } from '@/components/ui/unread-email-badge'
+import { useSidebar } from '@/components/ui/sidebar'
 
 import {
   getEmailSyncStatusAction,
@@ -39,6 +39,7 @@ import {
 import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
 export default function ConversationsPage() {
+  const { open } = useSidebar()
   const router = useRouter()
   const queryClient = useQueryClient()
   const { companies, isLoading, error } = useCompaniesQuery()
@@ -310,7 +311,7 @@ export default function ConversationsPage() {
 
       {/* Conversations List */}
       {isLoadingConversations ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="bg-muted h-48 animate-pulse rounded" />
           ))}
@@ -332,36 +333,51 @@ export default function ConversationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={`grid grid-cols-1 gap-4 lg:grid-cols-2 ${
+            open ? 'md:grid-cols-1' : 'md:grid-cols-2'
+          } xl:grid-cols-3`}
+        >
           {filteredConversations.map((conversation) => {
-            const unreadCount = conversation.emails.filter(
-              (email) => !email.isRead,
-            ).length
+            const latestEmail =
+              conversation.emails[conversation.emails.length - 1]
+            let statusBadge = null
+            if (latestEmail) {
+              if (latestEmail.direction === 'outbound' && !latestEmail.isRead) {
+                statusBadge = (
+                  <span className="inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
+                    Unopened
+                  </span>
+                )
+              } else if (
+                latestEmail.direction === 'inbound' &&
+                !latestEmail.isRead
+              ) {
+                statusBadge = (
+                  <span className="inline-block rounded border border-blue-300 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                    Unread
+                  </span>
+                )
+              }
+            }
 
             return (
               <Card
                 key={conversation.conversationId}
-                className="flex flex-col transition-shadow hover:shadow-lg"
+                className="flex h-full flex-col transition-shadow hover:shadow-lg"
               >
-                <CardHeader className="flex-shrink-0 pb-3">
-                  <div className="flex w-full flex-col items-start justify-between gap-1 sm:flex-row sm:items-center">
+                <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex w-full flex-col gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <CardTitle className="truncate text-base">
-                          {conversation.projectTitle || 'Untitled Project'}
-                        </CardTitle>
-                        {unreadCount > 0 && (
-                          <UnreadEmailBadge
-                            isRead={false}
-                            count={unreadCount}
-                          />
-                        )}
-                      </div>
+                      <CardTitle className="truncate text-base sm:text-lg">
+                        {conversation.projectTitle || 'Untitled Project'}
+                      </CardTitle>
                       <p className="text-muted-foreground truncate text-sm">
                         {conversation.clientName || conversation.clientEmail}
                       </p>
                     </div>
-                    <div className="flex w-full flex-shrink-0 flex-row gap-1 sm:w-auto">
+                    <div className="flex flex-row items-center gap-1 sm:ml-auto">
+                      {statusBadge}
                       <Button
                         variant="ghost"
                         size="icon"

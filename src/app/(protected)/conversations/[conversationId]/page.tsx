@@ -366,10 +366,24 @@ export default function ConversationDetailPage() {
                       ? 'sent'
                       : conversationInfo.quoteStatus}
                   </Badge>
-                  {emails.filter((email) => !email.isRead).length > 0 && (
+                  {/* Show latest email direction */}
+                  {emails.length > 0 && (
+                    <EmailDirectionIndicator
+                      direction={emails[emails.length - 1].direction}
+                    />
+                  )}
+                  {/* Only count inbound unread emails */}
+                  {emails.filter(
+                    (email) => !email.isRead && email.direction === 'inbound',
+                  ).length > 0 && (
                     <UnreadEmailBadge
                       isRead={false}
-                      count={emails.filter((email) => !email.isRead).length}
+                      count={
+                        emails.filter(
+                          (email) =>
+                            !email.isRead && email.direction === 'inbound',
+                        ).length
+                      }
                     />
                   )}
                 </div>
