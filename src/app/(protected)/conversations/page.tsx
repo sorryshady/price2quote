@@ -341,18 +341,24 @@ export default function ConversationsPage() {
           {filteredConversations.map((conversation) => {
             const latestEmail =
               conversation.emails[conversation.emails.length - 1]
+            // Show 'Unopened' if latest is outbound and not read
             let statusBadge = null
-            if (latestEmail) {
-              if (latestEmail.direction === 'outbound' && !latestEmail.isRead) {
-                statusBadge = (
-                  <span className="inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
-                    Unopened
-                  </span>
-                )
-              } else if (
-                latestEmail.direction === 'inbound' &&
-                !latestEmail.isRead
-              ) {
+            if (
+              latestEmail &&
+              latestEmail.direction === 'outbound' &&
+              !latestEmail.isRead
+            ) {
+              statusBadge = (
+                <span className="inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
+                  Unopened
+                </span>
+              )
+            } else {
+              // Show 'Unread' if any inbound email is unread
+              const hasUnreadInbound = conversation.emails.some(
+                (email) => email.direction === 'inbound' && !email.isRead,
+              )
+              if (hasUnreadInbound) {
                 statusBadge = (
                   <span className="inline-block rounded border border-blue-300 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
                     Unread
