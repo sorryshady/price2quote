@@ -1,6 +1,6 @@
 'use server'
 
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 import db from '@/db'
 import { emailThreads } from '@/db/schema'
@@ -279,26 +279,16 @@ export async function deleteConversationAction(conversationId: string) {
       return { success: false, error: 'Unauthorized' }
     }
 
-    // Parse conversation ID
-    const [quoteId, clientEmail, companyId] = conversationId.split('_')
+    // conversationId is now gmailThreadId
+    const gmailThreadId = conversationId
 
-    if (!quoteId || !clientEmail || !companyId) {
-      return { success: false, error: 'Invalid conversation ID' }
-    }
-
-    // Decode URL-encoded parts
-    const decodedClientEmail = decodeURIComponent(clientEmail)
-    const decodedCompanyId = decodeURIComponent(companyId)
-
-    // Delete all emails in this conversation
+    // Delete all emails in this conversation thread
     await db
       .delete(emailThreads)
       .where(
         and(
-          eq(emailThreads.quoteId, quoteId),
-          eq(emailThreads.companyId, decodedCompanyId),
+          eq(emailThreads.gmailThreadId, gmailThreadId),
           eq(emailThreads.userId, session.user.id),
-          sql`LOWER(TRIM(${emailThreads.to})) = LOWER(TRIM(${decodedClientEmail}))`,
         ),
       )
 

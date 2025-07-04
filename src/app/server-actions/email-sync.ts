@@ -146,9 +146,16 @@ export async function syncIncomingEmailsAction(companyId: string) {
     }
 
     const syncService = new EmailSyncService()
-    await syncService.syncCompanyEmails(companyId, session.user.id)
+    const result = await syncService.syncCompanyEmails(
+      companyId,
+      session.user.id,
+    )
 
-    return { success: true, message: 'Email sync completed' }
+    return {
+      success: true,
+      message: 'Email sync completed',
+      updatedConversations: result?.updatedConversations || [],
+    }
   } catch (error) {
     console.error('Error syncing incoming emails:', error)
     return { success: false, error: 'Failed to sync incoming emails' }

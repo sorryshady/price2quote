@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Calendar,
   Download,
@@ -39,6 +40,7 @@ import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
 export default function ConversationsPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { companies, isLoading, error } = useCompaniesQuery()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
@@ -91,9 +93,24 @@ export default function ConversationsPage() {
     if (!currentCompanyId) return
     setIsSyncing(true)
     try {
-      await syncIncomingEmailsAction(currentCompanyId)
+      const syncResult = await syncIncomingEmailsAction(currentCompanyId)
+
       // Invalidate conversations cache to refresh data
       invalidateConversations(currentCompanyId)
+
+      // If specific conversations were updated, invalidate their individual caches
+      if (
+        syncResult.success &&
+        syncResult.updatedConversations &&
+        syncResult.updatedConversations.length > 0
+      ) {
+        for (const conversationId of syncResult.updatedConversations) {
+          await queryClient.invalidateQueries({
+            queryKey: ['conversation', conversationId],
+          })
+        }
+      }
+
       await loadSyncStatus(currentCompanyId)
 
       // Enhanced notification with sync details
@@ -104,9 +121,15 @@ export default function ConversationsPage() {
         0,
       )
 
+      const updateMessage =
+        syncResult.updatedConversations &&
+        syncResult.updatedConversations.length > 0
+          ? ` ${syncResult.updatedConversations.length} conversation(s) updated.`
+          : ''
+
       toast.custom(
         <CustomToast
-          message={`Email sync complete! ${unreadCount > 0 ? `${unreadCount} unread emails found.` : 'No new emails.'}`}
+          message={`Email sync complete!${updateMessage} ${unreadCount > 0 ? `${unreadCount} unread emails found.` : 'No new emails.'}`}
           type="success"
         />,
       )
@@ -119,6 +142,7 @@ export default function ConversationsPage() {
 
   const handleDeleteConversation = async (conversationId: string) => {
     try {
+      console.log('Deleting conversation:', conversationId)
       const result = await deleteConversationAction(conversationId)
       if (result.success) {
         // Invalidate conversations cache to refresh data

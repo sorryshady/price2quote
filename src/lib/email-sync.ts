@@ -40,7 +40,12 @@ export class EmailSyncService {
     }
   }
 
-  async syncCompanyEmails(companyId: string, userId: string): Promise<void> {
+  async syncCompanyEmails(
+    companyId: string,
+    userId: string,
+  ): Promise<{ updatedConversations: string[] }> {
+    const updatedConversations: string[] = []
+
     try {
       // Validate userId
       if (!userId || userId.trim() === '') {
@@ -93,7 +98,7 @@ export class EmailSyncService {
 
       if (!syncStatus.syncEnabled) {
         console.log(`Sync disabled for company ${companyId}`)
-        return
+        return { updatedConversations }
       }
 
       // Get Gmail connection for company
@@ -107,7 +112,7 @@ export class EmailSyncService {
 
       if (!gmailConnection) {
         console.log(`No Gmail connection found for company ${companyId}`)
-        return
+        return { updatedConversations }
       }
 
       // Get valid access token
@@ -133,11 +138,14 @@ export class EmailSyncService {
       // Check each outbound email's thread for new responses
       for (const outboundEmail of outboundEmails) {
         if (outboundEmail.gmailThreadId) {
-          await this.checkThreadForNewEmails(
+          const hasUpdates = await this.checkThreadForNewEmails(
             companyId,
             outboundEmail.gmailThreadId,
             userId,
           )
+          if (hasUpdates) {
+            updatedConversations.push(outboundEmail.gmailThreadId)
+          }
         }
       }
 
@@ -146,6 +154,8 @@ export class EmailSyncService {
 
       // Update sync status with current timestamp
       await this.updateSyncStatus(companyId, new Date().toISOString())
+
+      return { updatedConversations }
     } catch (error) {
       console.error(`Error syncing company ${companyId}:`, error)
       throw error
@@ -600,7 +610,7 @@ export class EmailSyncService {
     companyId: string,
     threadId: string,
     userId: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       console.log(`Checking thread ${threadId} for new emails`)
 
@@ -615,7 +625,7 @@ export class EmailSyncService {
 
       if (!gmailConnection) {
         console.log(`No Gmail connection found for company ${companyId}`)
-        return
+        return false
       }
 
       // Get valid access token
@@ -665,9 +675,12 @@ export class EmailSyncService {
           gmailConnection.gmailEmail,
         )
       }
+
+      return newMessages.length > 0
     } catch (error) {
       console.error(`Error checking thread ${threadId} for new emails:`, error)
       // Don't throw error to avoid stopping other threads
+      return false
     }
   }
 }
