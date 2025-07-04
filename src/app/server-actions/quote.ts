@@ -578,31 +578,19 @@ export async function deleteQuoteAction(quoteId: string, userId: string) {
       }
     }
 
-    // Determine if this is part of a quote family
+    // Always delete the entire quote family to maintain conversation integrity
     const originalQuoteId = quote.parentQuoteId || quote.id
 
-    // Get all quotes in this family to determine the latest version
+    // Get all quotes in this family
     const quoteFamily = await db.query.quotes.findMany({
       where: (quotes, { or, eq }) =>
         or(
           eq(quotes.id, originalQuoteId),
           eq(quotes.parentQuoteId, originalQuoteId),
         ),
-      orderBy: (quotes, { desc }) => [desc(quotes.versionNumber)],
     })
 
-    // Find the latest version (highest version number)
-    const latestQuote = quoteFamily[0]
-    const isLatestVersion = latestQuote.id === quoteId
-    const isOriginalQuote = !quote.parentQuoteId
-
-    // Smart cascade delete logic:
-    // 1. If deleting the latest version OR the original quote → delete entire family
-    // 2. If deleting an older version → delete only that version
-    const quotesToDelete =
-      isLatestVersion || isOriginalQuote
-        ? quoteFamily.map((q) => q.id)
-        : [quoteId]
+    const quotesToDelete = quoteFamily.map((q) => q.id)
 
     // Delete quote services first (due to foreign key constraints)
     await db

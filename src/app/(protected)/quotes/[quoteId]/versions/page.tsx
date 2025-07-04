@@ -240,7 +240,6 @@ export default function QuoteVersionsPage() {
             >
               View Preview
             </Button>
-            {/* Original quote should not be editable - only latest version can be edited */}
           </div>
         </CardContent>
       </Card>

@@ -586,18 +586,11 @@ export default function QuotesPage() {
                             <AlertDialogDescription>
                               Are you sure you want to delete &ldquo;
                               {quote.projectTitle}&rdquo;?
-                              {quote.parentQuoteId ? (
-                                <span className="text-muted-foreground mt-2 block text-sm">
-                                  This will delete version{' '}
-                                  {quote.versionNumber || '1'}. Previous
-                                  versions will remain available.
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground mt-2 block text-sm">
-                                  This will delete the entire quote including
-                                  all versions. This action cannot be undone.
-                                </span>
-                              )}
+                              <span className="text-muted-foreground mt-2 block text-sm">
+                                This will delete the entire quote including all
+                                versions and any associated conversations. This
+                                action cannot be undone.
+                              </span>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -606,7 +599,7 @@ export default function QuotesPage() {
                               onClick={() => handleDeleteQuote(quote.id)}
                               className="bg-red-600 hover:bg-red-700"
                             >
-                              Delete {quote.parentQuoteId ? 'Version' : 'Quote'}
+                              Delete Quote
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

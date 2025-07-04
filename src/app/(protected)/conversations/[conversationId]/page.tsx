@@ -306,7 +306,9 @@ export default function ConversationDetailPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">
-                    {conversationInfo.quoteStatus}
+                    {conversationInfo.quoteStatus === 'quote_sent'
+                      ? 'sent'
+                      : conversationInfo.quoteStatus}
                   </Badge>
                   {emails.filter((email) => !email.isRead).length > 0 && (
                     <UnreadEmailBadge
