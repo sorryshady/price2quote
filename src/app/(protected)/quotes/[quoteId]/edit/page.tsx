@@ -1000,7 +1000,7 @@ export default function EditQuotePage() {
                 <span>Revision Information</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">
-                    {currentRevisions}/2 revisions
+                    {currentRevisions}/2 revisions for this quote family
                   </Badge>
                   {!canRevise && (
                     <Badge variant="destructive" className="text-xs">

@@ -709,6 +709,9 @@ export async function createRevisedQuoteAction(data: {
       }
     }
 
+    // Find the root quote (the original quote without a parent)
+    const rootQuoteId = originalQuote.parentQuoteId || originalQuote.id
+
     // Calculate the next version number
     const nextVersionNumber = Number(originalQuote.versionNumber) + 1
 
@@ -784,7 +787,7 @@ export async function createRevisedQuoteAction(data: {
         currency: data.currency,
         amount: totalAmount > 0 ? totalAmount.toString() : undefined,
         status: 'revised',
-        parentQuoteId: data.originalQuoteId,
+        parentQuoteId: rootQuoteId, // Always point to the root quote
         revisionNotes: data.revisionNotes,
         clientFeedback: data.clientFeedback,
         versionNumber: nextVersionNumber.toString(),
@@ -813,7 +816,7 @@ export async function createRevisedQuoteAction(data: {
 
     // Create a version record
     await db.insert(quoteVersions).values({
-      originalQuoteId: data.originalQuoteId,
+      originalQuoteId: rootQuoteId, // Always point to the root quote
       versionNumber: nextVersionNumber.toString(),
       revisionNotes: data.revisionNotes,
       clientFeedback: data.clientFeedback,

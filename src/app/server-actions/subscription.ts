@@ -63,14 +63,14 @@ export async function checkCompanyLimitAction(
 }
 
 export async function checkRevisionLimitAction(
-  originalQuoteId: string,
+  quoteId: string,
   userTier: 'free' | 'pro',
 ) {
   try {
     // Default to 'free' if userTier is invalid
     const tier = userTier === 'free' || userTier === 'pro' ? userTier : 'free'
-    const canCreate = await canCreateQuoteRevision(originalQuoteId, tier)
-    const currentRevisions = await getQuoteRevisionCount(originalQuoteId)
+    const canCreate = await canCreateQuoteRevision(quoteId, tier)
+    const currentRevisions = await getQuoteRevisionCount(quoteId)
     const upgradeMessage =
       tier === 'free' ? 'Upgrade to Pro for unlimited revisions' : ''
 

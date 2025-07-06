@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull } from 'drizzle-orm'
+import { and, eq, gte, isNull, or } from 'drizzle-orm'
 
 import db from '@/db'
 import { companies, quotes } from '@/db/schema'
@@ -12,7 +12,7 @@ export const subscriptionFeatures: SubscriptionFeatures = {
     features: [
       '3 free quotes per month',
       '1 company',
-      '2 revisions per quote',
+      '2 revisions per quote family',
       'Email support',
     ],
   },
@@ -92,21 +92,57 @@ export async function getCurrentMonthOriginalQuotes(
   return result.length
 }
 
-// Count revisions for a specific original quote
-export async function getQuoteRevisionCount(
-  originalQuoteId: string,
-): Promise<number> {
-  const result = await db
-    .select({ count: quotes.id })
+// Get the root original quote ID for a quote family
+export async function getRootQuoteId(quoteId: string): Promise<string> {
+  // First, get the quote to see if it has a parent
+  const [quote] = await db
+    .select({ parentQuoteId: quotes.parentQuoteId })
     .from(quotes)
-    .where(eq(quotes.parentQuoteId, originalQuoteId))
+    .where(eq(quotes.id, quoteId))
 
-  return result.length
+  if (!quote) {
+    throw new Error('Quote not found')
+  }
+
+  // If this quote has no parent, it's the root
+  if (!quote.parentQuoteId) {
+    return quoteId
+  }
+
+  // Otherwise, recursively find the root
+  return getRootQuoteId(quote.parentQuoteId)
+}
+
+// Count the number of edits made for a quote family
+export async function getQuoteRevisionCount(quoteId: string): Promise<number> {
+  try {
+    // Get the root quote ID for this family
+    const rootQuoteId = await getRootQuoteId(quoteId)
+
+    // Get all quotes in this family
+    const allQuotesInFamily = await db
+      .select({ id: quotes.id, parentQuoteId: quotes.parentQuoteId })
+      .from(quotes)
+      .where(
+        or(eq(quotes.id, rootQuoteId), eq(quotes.parentQuoteId, rootQuoteId)),
+      )
+
+    // Count all quotes except the root (i.e., all revisions)
+    // This represents the number of edits that have been made
+    const revisionCount = allQuotesInFamily.filter(
+      (quote) => quote.id !== rootQuoteId,
+    ).length
+
+    return revisionCount
+  } catch (error) {
+    console.error('Error getting quote revision count:', error)
+    return 0
+  }
 }
 
 // Check if user can create a revision for a specific quote
 export async function canCreateQuoteRevision(
-  originalQuoteId: string,
+  quoteId: string,
   userTier: SubscriptionTier,
 ): Promise<boolean> {
   const tier = userTier && subscriptionFeatures[userTier] ? userTier : 'free'
@@ -115,7 +151,7 @@ export async function canCreateQuoteRevision(
   // Unlimited revisions for pro tier
   if (maxRevisions === -1) return true
 
-  const currentRevisions = await getQuoteRevisionCount(originalQuoteId)
+  const currentRevisions = await getQuoteRevisionCount(quoteId)
   return currentRevisions < maxRevisions
 }
 

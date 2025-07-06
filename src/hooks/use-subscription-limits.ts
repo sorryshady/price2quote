@@ -65,7 +65,7 @@ export function useCompanyLimit() {
   }
 }
 
-export function useRevisionLimit(originalQuoteId: string | null) {
+export function useRevisionLimit(quoteId: string | null) {
   const { user } = useAuth()
 
   const {
@@ -74,15 +74,12 @@ export function useRevisionLimit(originalQuoteId: string | null) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['revision-limit', user?.id, originalQuoteId],
+    queryKey: ['revision-limit', user?.id, quoteId],
     queryFn: async () => {
-      if (!user || !originalQuoteId) return null
-      return await checkRevisionLimitAction(
-        originalQuoteId,
-        user.subscriptionTier,
-      )
+      if (!user || !quoteId) return null
+      return await checkRevisionLimitAction(quoteId, user.subscriptionTier)
     },
-    enabled: !!user && !!originalQuoteId,
+    enabled: !!user && !!quoteId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 
