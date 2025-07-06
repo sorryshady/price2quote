@@ -3,8 +3,8 @@ BUGS:
 DONE: quotes badge needs to be that of latest quote (it shows rejected when we making new revised quote in the conversations route).
 DONE: toast is having issues when trying to check number of unread emails (i think it should only take count of unread incoming emails and not both outbound and incoming).
 DONE: Revised quotes number not being updated. So cant enforce limit for revisions. When in the revision screen it shows 0/2 for the new quote when editing. What we want is overall revisions 2 not per quote 2 revisions.
-Price is currently always coming in dollars. Have to sort out the conversion based on currency that company sets.
+DONE: Price is currently always coming in dollars. Have to sort out the conversion based on currency that company sets.
 quote preview is also defaulting to $. Should reflect company currency. everywhere currency is defaulting to dollars
-Email when given in onboarding form should not be automatically connected to the google email sending thingy.
+DONE: Email when given in onboarding form should not be automatically connected to the google email sending thingy.
 random quote_sent in status inside conversation.
-when new unread email fetched invalidate conversation using the id.
+DONE: when new unread email fetched invalidate conversation using the id.

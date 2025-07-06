@@ -410,6 +410,12 @@
   - Version history in conversation view
   - Action plan created and ready for implementation
 
+### ✅ Gmail Connection Status Logic
+
+- UI now only shows 'Gmail connected' if a real, valid Gmail OAuth connection exists (from gmail_connections table)
+- Presence of company email alone no longer triggers 'connected' status
+- Prevents false positives and user confusion
+
 ## What's Left to Build
 
 ### Phase 1: Send Email Quote Revision Integration (Next Priority)

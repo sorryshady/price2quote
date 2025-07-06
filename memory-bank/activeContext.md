@@ -357,6 +357,11 @@
     - **User Information**: Shows user name and email in header
     - **Benefits**: Users can see their current usage and subscription status at a glance
 
+- **NEW: Gmail Connection Status Logic Fix COMPLETED**
+  - **Problem**: Previously, the UI showed 'connected' if the company email field was filled, even if the user never completed Gmail OAuth. This was misleading and could cause errors.
+  - **Solution**: The UI now checks for a real, valid Gmail OAuth connection (from the gmail_connections table) and only shows 'connected' if such a connection exists and is not expired. The presence of a company email alone no longer triggers a 'connected' status. Backend and UI logic updated accordingly.
+  - **Benefits**: Prevents false positives, ensures users only see 'connected' when a real Gmail connection exists, improves reliability and user trust.
+
 ## Next Steps
 
 1. **Send Email Quote Revision Integration (Phase 1)**
