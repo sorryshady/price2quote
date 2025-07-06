@@ -1176,16 +1176,28 @@ export async function getLatestQuotesAction(userId: string) {
       quoteFamilies.get(familyKey)!.push(quote)
     })
 
-    // For each family, get the latest version (highest version number or most recent)
-    const latestQuotes = Array.from(quoteFamilies.values()).map((family) => {
-      // Sort by version number (convert to number, handle '1' vs '2' etc.)
-      const sorted = family.sort((a, b) => {
-        const versionA = parseInt(a.versionNumber || '1')
-        const versionB = parseInt(b.versionNumber || '1')
-        return versionB - versionA // Latest first
+    // For each family, get the latest non-rejected version (highest version number)
+    const latestQuotes = Array.from(quoteFamilies.values())
+      .map((family) => {
+        // Filter out rejected quotes first
+        const nonRejectedQuotes = family.filter(
+          (quote) => quote.status !== 'rejected',
+        )
+
+        // If no non-rejected quotes exist, return null (this family should be excluded)
+        if (nonRejectedQuotes.length === 0) {
+          return null
+        }
+
+        // Sort by version number (convert to number, handle '1' vs '2' etc.)
+        const sorted = nonRejectedQuotes.sort((a, b) => {
+          const versionA = parseInt(a.versionNumber || '1')
+          const versionB = parseInt(b.versionNumber || '1')
+          return versionB - versionA // Latest first
+        })
+        return sorted[0] // Return the latest non-rejected version
       })
-      return sorted[0] // Return the latest version
-    })
+      .filter((quote): quote is (typeof allQuotes)[0] => quote !== null) // Remove null entries and type properly
 
     // Fetch quote services for each latest quote
     const latestQuotesWithServices = await Promise.all(
