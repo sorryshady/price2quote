@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 
+import { formatCurrency } from '@/lib/utils'
+
 interface ServiceRecommendation {
   serviceName: string
   currentPrice: number
@@ -38,6 +40,7 @@ interface AIQuoteResponse {
 
 interface AIQuoteRecommendationsProps {
   aiResponse: AIQuoteResponse
+  currency: string // required
   onApplyRecommendations: () => void
   onClose: () => void
   onNegotiate: (negotiationData: {
@@ -71,6 +74,7 @@ function getConfidenceIcon(level: 'high' | 'medium' | 'low') {
 
 export function AIQuoteRecommendations({
   aiResponse,
+  currency,
   onApplyRecommendations,
   onClose,
   onNegotiate,
@@ -83,10 +87,6 @@ export function AIQuoteRecommendations({
   const [isNegotiating, setIsNegotiating] = useState(false)
 
   const handleApplyAll = () => {
-    console.log(
-      'Applying all recommendations:',
-      aiResponse.serviceRecommendations,
-    )
     onApplyRecommendations()
   }
 
@@ -178,18 +178,21 @@ export function AIQuoteRecommendations({
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Current:</span>
-                  <div className="font-medium">${service.currentPrice}</div>
+                  <div className="font-medium">
+                    {formatCurrency(service.currentPrice, currency)}
+                  </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Recommended:</span>
                   <div className="font-medium text-green-600">
-                    ${service.recommendedPrice}
+                    {formatCurrency(service.recommendedPrice, currency)}
                   </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Range:</span>
                   <div className="font-medium">
-                    ${service.priceRange.min} - ${service.priceRange.max}
+                    {formatCurrency(service.priceRange.min, currency)} -{' '}
+                    {formatCurrency(service.priceRange.max, currency)}
                   </div>
                 </div>
               </div>
@@ -226,7 +229,8 @@ export function AIQuoteRecommendations({
                     <div>
                       <Label className="text-sm">Price Range</Label>
                       <div className="text-muted-foreground pt-2 text-sm">
-                        ${service.priceRange.min} - ${service.priceRange.max}
+                        {formatCurrency(service.priceRange.min, currency)} -{' '}
+                        {formatCurrency(service.priceRange.max, currency)}
                       </div>
                     </div>
                   </div>

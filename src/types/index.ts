@@ -35,6 +35,7 @@ export interface Company {
   website?: string
   createdAt: Date
   updatedAt: Date
+  currency: string
 }
 
 export interface Service {

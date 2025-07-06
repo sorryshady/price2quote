@@ -258,7 +258,7 @@ export default function NewQuotePage() {
   }
 
   // Get the current currency from selected company
-  const currentCurrency = selectedCompany?.services?.[0]?.currency || 'USD'
+  const currentCurrency = selectedCompany?.currency
 
   // Format currency display
   const formatCurrency = (amount: number) => {
@@ -1325,6 +1325,7 @@ export default function NewQuotePage() {
             <div className="p-6">
               <AIQuoteRecommendations
                 aiResponse={aiResponse}
+                currency={currentCurrency!}
                 onApplyRecommendations={handleApplyAIRecommendations}
                 onClose={() => setShowAIRecommendations(false)}
                 onNegotiate={handleNegotiate}

@@ -110,6 +110,19 @@ export async function generateAIAssistedQuote(data: {
   }
 }): Promise<AIQuoteResponse> {
   try {
+    // Currency symbol mapping
+    const currencySymbols: Record<string, string> = {
+      USD: '$',
+      EUR: '€',
+      GBP: '£',
+      INR: '₹',
+      AUD: 'A$',
+      CAD: 'C$',
+      JPY: '¥',
+    }
+    const symbol =
+      currencySymbols[data.companyData.currency] || data.companyData.currency
+
     const prompt = `You are an expert pricing consultant helping a business generate competitive quotes. Analyze the project requirements and provide pricing recommendations with confidence levels.
 
 COMPANY CONTEXT:
@@ -123,10 +136,10 @@ Description: ${data.projectData.description || 'Not provided'}
 Complexity: ${data.projectData.complexity}
 Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
 Client Location: ${data.projectData.clientLocation}
-Client Budget: ${data.projectData.clientBudget ? `${data.companyData.currency} ${data.projectData.clientBudget}` : 'Not specified'}
+Client Budget: ${data.projectData.clientBudget ? `${symbol}${data.projectData.clientBudget}` : 'Not specified'}
 
 SELECTED SERVICES:
-${data.projectData.selectedServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at ${data.companyData.currency} ${s.currentPrice}/unit (total: ${data.companyData.currency} ${s.quantity * s.currentPrice})`).join('\n')}
+${data.projectData.selectedServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at ${symbol}${s.currentPrice}/unit (total: ${symbol}${s.quantity * s.currentPrice})`).join('\n')}
 
 TASK: Provide a structured analysis with:
 1. Market research based on company location vs client location
@@ -134,8 +147,9 @@ TASK: Provide a structured analysis with:
 3. Total quote amount with confidence level
 4. Reasoning for each recommendation
 5. If in person delivery is required, spread the delivery charge over the services. Do not generate separate delivery charges.
+6. For ALL price references in your response (including market analysis, reasoning, and narrative), ALWAYS use the following currency symbol: "${symbol}" and the reference currency is ${data.companyData.currency}.
 
-IMPORTANT: The "recommendedPrice" should be the PER UNIT price, not the total price for all quantities. For example, if you recommend $12/unit for 40 units, the recommendedPrice should be 12, not 480.
+IMPORTANT: The "recommendedPrice" should be the PER UNIT price, not the total price for all quantities. For example, if you recommend ${symbol}12/unit for 40 units, the recommendedPrice should be 12, not 480.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -220,9 +234,6 @@ RESPONSE FORMAT (JSON only):
                     service.priceRange.max / serviceData.quantity,
                   ),
                 }
-                console.log(
-                  `Converted AI recommendation from total price ${recommendedTotal} to unit price ${recommendedPrice} for ${service.serviceName}`,
-                )
               }
             }
           }
