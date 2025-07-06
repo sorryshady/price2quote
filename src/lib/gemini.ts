@@ -123,10 +123,10 @@ Description: ${data.projectData.description || 'Not provided'}
 Complexity: ${data.projectData.complexity}
 Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
 Client Location: ${data.projectData.clientLocation}
-Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
+Client Budget: ${data.projectData.clientBudget ? `${data.companyData.currency} ${data.projectData.clientBudget}` : 'Not specified'}
 
 SELECTED SERVICES:
-${data.projectData.selectedServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at $${s.currentPrice}/unit (total: $${s.quantity * s.currentPrice})`).join('\n')}
+${data.projectData.selectedServices.map((s) => `- ${s.serviceName} (${s.skillLevel}): ${s.quantity} units at ${data.companyData.currency} ${s.currentPrice}/unit (total: ${data.companyData.currency} ${s.quantity * s.currentPrice})`).join('\n')}
 
 TASK: Provide a structured analysis with:
 1. Market research based on company location vs client location
@@ -301,13 +301,13 @@ Description: ${data.projectData.description || 'Not provided'}
 Complexity: ${data.projectData.complexity}
 Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
 Client Location: ${data.projectData.clientLocation}
-Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
+Client Budget: ${data.projectData.clientBudget ? `${data.companyData.currency} ${data.projectData.clientBudget}` : 'Not specified'}
 
 NEGOTIATION CONTEXT:
 Service: ${data.negotiationData.serviceName}
-AI Recommended Price: $${data.negotiationData.currentRecommendedPrice}/unit
-User Proposed Price: $${data.negotiationData.proposedPrice}/unit
-Price Range: $${data.negotiationData.priceRange.min}/unit - $${data.negotiationData.priceRange.max}/unit
+AI Recommended Price: ${data.companyData.currency} ${data.negotiationData.currentRecommendedPrice}/unit
+User Proposed Price: ${data.companyData.currency} ${data.negotiationData.proposedPrice}/unit
+Price Range: ${data.companyData.currency} ${data.negotiationData.priceRange.min}/unit - ${data.companyData.currency} ${data.negotiationData.priceRange.max}/unit
 User Reasoning: ${data.negotiationData.userReasoning}
 
 TASK: Provide a structured response about the proposed price change:
@@ -415,11 +415,11 @@ Description: ${data.projectData.description || 'Not provided'}
 Complexity: ${data.projectData.complexity}
 Timeline: ${data.projectData.deliveryTimeline}${data.projectData.customTimeline ? ` (${data.projectData.customTimeline})` : ''}
 Client Location: ${data.projectData.clientLocation}
-Client Budget: ${data.projectData.clientBudget ? `$${data.projectData.clientBudget}` : 'Not specified'}
+Client Budget: ${data.projectData.clientBudget ? `${data.companyData.currency} ${data.projectData.clientBudget}` : 'Not specified'}
 
 FINAL QUOTE DATA:
-Services: ${data.finalData.services.map((s) => `${s.serviceName}: ${s.quantity} units at $${s.finalPrice}/unit = $${s.totalPrice}`).join(', ')}
-Total Amount: $${data.finalData.totalAmount}
+Services: ${data.finalData.services.map((s) => `${s.serviceName}: ${s.quantity} units at ${data.companyData.currency} ${s.finalPrice}/unit = ${data.companyData.currency} ${s.totalPrice}`).join(', ')}
+Total Amount: ${data.companyData.currency} ${data.finalData.totalAmount}
 Additional Notes: ${data.finalData.notes}
 
 TASK: Generate a professional quote document with:
@@ -505,10 +505,25 @@ export async function generateAIEmail(data: {
       currency: string,
     ) => {
       if (!amount) return 'TBD'
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency || 'USD',
-      }).format(parseFloat(amount))
+      try {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: currency || 'USD',
+        }).format(parseFloat(amount))
+      } catch {
+        // Fallback formatting
+        const currencySymbols: Record<string, string> = {
+          USD: '$',
+          EUR: '€',
+          GBP: '£',
+          INR: '₹',
+          AUD: 'A$',
+          CAD: 'C$',
+          JPY: '¥',
+        }
+        const symbol = currencySymbols[currency] || currency
+        return `${symbol}${parseFloat(amount).toFixed(2)}`
+      }
     }
 
     const prompt = `You are an expert business communication specialist helping ${data.companyData.name} write professional emails to clients.

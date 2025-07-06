@@ -54,3 +54,65 @@ export async function downloadAttachment(
     throw new Error('Failed to download attachment')
   }
 }
+
+// Currency formatting utility
+export const formatCurrency = (
+  amount: number | string | null | undefined,
+  currency: string = 'USD',
+  options?: Intl.NumberFormatOptions,
+) => {
+  if (amount === null || amount === undefined || amount === '') {
+    return 'N/A'
+  }
+
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+
+  if (isNaN(numAmount)) {
+    return 'N/A'
+  }
+
+  // Currency symbol mapping
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    INR: '₹',
+    AUD: 'A$',
+    CAD: 'C$',
+    JPY: '¥',
+  }
+
+  const symbol = currencySymbols[currency] || currency
+
+  // Default formatting options
+  const defaultOptions: Intl.NumberFormatOptions = {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }
+
+  try {
+    return new Intl.NumberFormat('en-US', {
+      ...defaultOptions,
+      ...options,
+    }).format(numAmount)
+  } catch {
+    // Fallback formatting with symbol
+    return `${symbol}${numAmount.toFixed(2)}`
+  }
+}
+
+// Get currency symbol only
+export const getCurrencySymbol = (currency: string = 'USD'): string => {
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    INR: '₹',
+    AUD: 'A$',
+    CAD: 'C$',
+    JPY: '¥',
+  }
+  return currencySymbols[currency] || currency
+}

@@ -11,6 +11,7 @@ import {
   View,
 } from '@react-pdf/renderer'
 
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Quote, QuoteService } from '@/types'
 
 // Type for AI-generated quoteData
@@ -249,12 +250,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
     amount: string | null | undefined,
     currency: string,
   ) => {
-    if (!amount) return 'N/A'
-    const numAmount = parseFloat(amount)
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(numAmount)
+    return formatCurrencyUtil(amount, currency)
   }
 
   const formatDate = (date: Date) => {

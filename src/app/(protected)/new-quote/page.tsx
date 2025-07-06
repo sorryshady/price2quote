@@ -57,6 +57,7 @@ import {
   generateQuoteFilename,
   generateQuotePDF,
 } from '@/lib/pdf-utils'
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Service } from '@/types'
 
 const quoteSchema = z.object({
@@ -261,7 +262,7 @@ export default function NewQuotePage() {
 
   // Format currency display
   const formatCurrency = (amount: number) => {
-    return `${amount.toFixed(2)} ${currentCurrency}`
+    return formatCurrencyUtil(amount, currentCurrency)
   }
 
   const handleGenerateAIQuote = async () => {
@@ -1291,6 +1292,7 @@ export default function NewQuotePage() {
               <div className="mt-6 border-t pt-6">
                 <QuotePreview
                   quoteData={finalQuoteData}
+                  currency={currentCurrency}
                   onClose={() => setShowViewQuote(false)}
                 />
               </div>

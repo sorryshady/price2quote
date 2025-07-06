@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import { getExistingThreadForQuoteAction } from '@/app/server-actions/email-threads'
 import { generateAIEmailAction } from '@/app/server-actions/gmail'
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Quote } from '@/types'
 
 interface EmailComposerProps {
@@ -251,11 +252,7 @@ export function EmailComposer({
         amount: string | null,
         currency?: string | null | undefined,
       ) => {
-        if (!amount) return 'TBD'
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: currency || 'USD',
-        }).format(parseFloat(amount))
+        return formatCurrencyUtil(amount, currency || 'USD')
       }
 
       const replacements = {
@@ -389,11 +386,7 @@ export function EmailComposer({
         amount: string | null,
         currency?: string | null | undefined,
       ) => {
-        if (!amount) return 'TBD'
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: currency || 'USD',
-        }).format(parseFloat(amount))
+        return formatCurrencyUtil(amount, currency || 'USD')
       }
 
       const replacements = {

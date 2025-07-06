@@ -19,6 +19,7 @@ import {
 
 import { useAuth } from '@/hooks/use-auth'
 import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Quote } from '@/types'
 
 interface QuoteSelectorProps {
@@ -62,11 +63,7 @@ export function QuoteSelector({
   })
 
   const formatCurrency = (amount: string | null, currency: string) => {
-    if (!amount) return 'Not specified'
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(parseFloat(amount))
+    return formatCurrencyUtil(amount, currency)
   }
 
   const getStatusColor = (status: string) => {

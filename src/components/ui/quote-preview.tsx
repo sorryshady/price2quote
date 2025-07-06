@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
+import { formatCurrency } from '@/lib/utils'
+
 interface QuotePreviewProps {
   quoteData: {
     quoteDocument: {
@@ -34,6 +36,7 @@ interface QuotePreviewProps {
       competitiveAdvantages: string[]
     }
   }
+  currency?: string
   onClose: () => void
   versionNumber?: string
   isRevision?: boolean
@@ -41,6 +44,7 @@ interface QuotePreviewProps {
 
 export function QuotePreview({
   quoteData,
+  currency = 'USD',
   onClose,
   versionNumber,
   isRevision,
@@ -160,7 +164,7 @@ export function QuotePreview({
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">{service.serviceName}</h4>
                 <Badge variant="outline">
-                  ${service.totalPrice.toFixed(2)}
+                  {formatCurrency(service.totalPrice, currency)}
                 </Badge>
               </div>
 
@@ -176,13 +180,13 @@ export function QuotePreview({
                 <div>
                   <span className="text-muted-foreground">Unit Price:</span>
                   <div className="font-medium">
-                    ${service.unitPrice.toFixed(2)}
+                    {formatCurrency(service.unitPrice, currency)}
                   </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Total:</span>
                   <div className="font-medium">
-                    ${service.totalPrice.toFixed(2)}
+                    {formatCurrency(service.totalPrice, currency)}
                   </div>
                 </div>
               </div>
@@ -214,7 +218,7 @@ export function QuotePreview({
 
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Total Amount:</span>
-            <span>${totalAmount.toFixed(2)}</span>
+            <span>{formatCurrency(totalAmount, currency)}</span>
           </div>
         </CardContent>
       </Card>

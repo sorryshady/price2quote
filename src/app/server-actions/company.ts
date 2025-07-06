@@ -95,6 +95,7 @@ export async function saveCompanyAction(data: {
         name: data.companyInfo.name,
         country: data.companyInfo.country,
         businessType: data.companyInfo.businessType,
+        currency: data.companyInfo.currency,
         description: data.companyProfile.description,
         address: data.companyProfile.address,
         phone: data.companyProfile.phone,

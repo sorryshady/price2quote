@@ -57,6 +57,7 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Quote, QuoteStatus } from '@/types'
 
 // Type for the AI-generated quote data
@@ -128,12 +129,7 @@ function formatDate(date: Date) {
 }
 
 function formatCurrency(amount: string | null, currency: string) {
-  if (!amount) return 'N/A'
-  const numAmount = parseFloat(amount)
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD',
-  }).format(numAmount)
+  return formatCurrencyUtil(amount, currency)
 }
 
 export default function QuotesPage() {
@@ -624,6 +620,7 @@ export default function QuotesPage() {
             'presentation' in selectedQuote.quoteData ? (
               <QuotePreview
                 quoteData={selectedQuote.quoteData as QuoteData}
+                currency={selectedQuote.currency}
                 onClose={handleClosePreview}
                 versionNumber={selectedQuote.versionNumber}
                 isRevision={!!selectedQuote.parentQuoteId}

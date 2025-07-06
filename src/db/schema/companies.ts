@@ -31,6 +31,7 @@ const companies = pgTable('companies', {
   name: varchar('name', { length: 255 }).notNull(),
   country: varchar('country', { length: 100 }).notNull(),
   businessType: businessTypeEnum('business_type').notNull(),
+  currency: varchar('currency', { length: 3 }).default('USD').notNull(),
   logoUrl: varchar('logo_url', { length: 2048 }),
   description: text('description'),
   aiSummary: text('ai_summary'),
