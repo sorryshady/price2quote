@@ -8,3 +8,5 @@ quote preview is also defaulting to $. Should reflect company currency. everywhe
 DONE: Email when given in onboarding form should not be automatically connected to the google email sending thingy.
 random quote_sent in status inside conversation.
 DONE: when new unread email fetched invalidate conversation using the id.
+
+Negotiation is giving results in USD. Need to fix that

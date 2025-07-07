@@ -299,11 +299,24 @@ export async function negotiatePriceWithAI(data: {
   }
 }) {
   try {
+    // Currency symbol mapping
+    const currencySymbols: Record<string, string> = {
+      USD: '$',
+      EUR: '€',
+      GBP: '£',
+      INR: '₹',
+      AUD: 'A$',
+      CAD: 'C$',
+      JPY: '¥',
+    }
+    const symbol =
+      currencySymbols[data.companyData.currency] || data.companyData.currency
     const prompt = `You are an expert pricing consultant helping with price negotiation. A user has proposed a different price for a service and wants your feedback.
 
 COMPANY CONTEXT:
 ${data.companyData.name} - ${data.companyData.businessType} in ${data.companyData.country}
 ${data.companyData.aiSummary ? `AI Business Summary: ${data.companyData.aiSummary}` : ''}
+
 Services: ${data.companyData.services.map((s) => `${s.name} (${s.skillLevel} level${s.basePrice ? `, base: ${s.basePrice}` : ''})`).join(', ')}
 
 PROJECT DETAILS:
@@ -326,6 +339,7 @@ TASK: Provide a structured response about the proposed price change:
 2. Consider the user's reasoning and provide feedback
 3. Suggest any adjustments or alternative approaches
 4. Provide confidence level for your assessment
+5. For ALL price references in your response (including market analysis, reasoning, and narrative), ALWAYS use the following currency symbol: "${symbol}" and the reference currency is ${data.companyData.currency}.
 
 IMPORTANT: All prices should be PER UNIT prices, not total prices for all quantities.
 
