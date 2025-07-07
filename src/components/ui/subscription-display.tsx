@@ -122,21 +122,56 @@ export function SubscriptionDisplay({ currentTier }: SubscriptionDisplayProps) {
           </ul>
         </div>
 
-        {/* Upgrade Section for Free Users */}
+        {/* Enhanced Upgrade Section for Free Users */}
         {!isPro && (
           <div className="border-t pt-4">
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <IconBolt className="h-4 w-4 text-yellow-600" />
-                <h4 className="font-medium">Upgrade to Pro</h4>
+                <IconBolt className="h-4 w-4 text-amber-600" />
+                <h4 className="font-medium text-amber-900">Upgrade to Pro</h4>
               </div>
-              <p className="text-muted-foreground text-sm">
-                Unlock unlimited quotes, more companies, and priority support
-              </p>
-              <Button className="w-full" size="sm">
-                <IconCrown className="mr-2 h-4 w-4" />
-                Upgrade Now
-              </Button>
+
+              <div className="rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-amber-900">
+                        $29
+                        <span className="text-sm font-normal text-amber-700">
+                          /month
+                        </span>
+                      </div>
+                    </div>
+                    <Badge className="border-amber-300 bg-amber-100 text-amber-800">
+                      Popular
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <div className="h-1 w-1 rounded-full bg-green-500" />
+                      <span>5 companies</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-1 w-1 rounded-full bg-green-500" />
+                      <span>Unlimited quotes</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-1 w-1 rounded-full bg-green-500" />
+                      <span>Unlimited revisions</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-1 w-1 rounded-full bg-green-500" />
+                      <span>Priority support</span>
+                    </div>
+                  </div>
+
+                  <Button className="w-full bg-amber-600 text-white hover:bg-amber-700">
+                    <IconCrown className="mr-2 h-4 w-4" />
+                    Upgrade to Pro
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}

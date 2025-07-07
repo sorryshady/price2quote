@@ -262,8 +262,13 @@ export async function getUserProfileAction() {
         image: true,
         emailVerified: true,
         subscriptionTier: true,
+        passwordHash: true,
       },
     })
+
+    if (!userWithDates) {
+      return { success: false, error: 'User not found' }
+    }
 
     // Get connected OAuth providers
     const connectedAccounts = await db.query.accounts.findMany({
@@ -276,7 +281,15 @@ export async function getUserProfileAction() {
 
     return {
       success: true,
-      user: userWithDates,
+      user: {
+        id: userWithDates.id,
+        name: userWithDates.name,
+        email: userWithDates.email,
+        image: userWithDates.image,
+        emailVerified: userWithDates.emailVerified,
+        subscriptionTier: userWithDates.subscriptionTier,
+      },
+      hasPassword: !!userWithDates.passwordHash,
       connectedAccounts: connectedAccounts.map((account) => ({
         provider: account.provider,
         type: account.type,
@@ -285,5 +298,71 @@ export async function getUserProfileAction() {
   } catch (error) {
     console.error('Error getting user profile:', error)
     return { success: false, error: 'Failed to get user profile' }
+  }
+}
+
+export async function changePasswordAction(data: {
+  currentPassword: string
+  newPassword: string
+}) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Get user with password hash
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+      columns: {
+        id: true,
+        passwordHash: true,
+      },
+    })
+
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    // Check if user has a password (OAuth users might not)
+    if (!user.passwordHash) {
+      return {
+        success: false,
+        error: 'Password change not available for OAuth accounts',
+      }
+    }
+
+    // Verify current password
+    const bcrypt = await import('bcryptjs')
+    const isValidPassword = await bcrypt.compare(
+      data.currentPassword,
+      user.passwordHash,
+    )
+
+    if (!isValidPassword) {
+      return { success: false, error: 'Current password is incorrect' }
+    }
+
+    // Validate new password
+    if (data.newPassword.length < 8) {
+      return {
+        success: false,
+        error: 'New password must be at least 8 characters long',
+      }
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(data.newPassword, 12)
+
+    // Update password in database
+    await db
+      .update(users)
+      .set({ passwordHash: newPasswordHash })
+      .where(eq(users.id, session.user.id))
+
+    return { success: true, message: 'Password updated successfully' }
+  } catch (error) {
+    console.error('Error changing password:', error)
+    return { success: false, error: 'Failed to change password' }
   }
 }

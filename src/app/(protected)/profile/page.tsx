@@ -4,6 +4,7 @@ import { AppContainer } from '@/components/app-container'
 import { AccountInfo } from '@/components/ui/account-info'
 import { ConnectedAccounts } from '@/components/ui/connected-accounts'
 import { ProfileForm } from '@/components/ui/profile-form'
+import { ProfileSecurity } from '@/components/ui/profile-security'
 import { SubscriptionDisplay } from '@/components/ui/subscription-display'
 
 import { getUserProfileAction } from '@/app/server-actions'
@@ -23,7 +24,7 @@ export default async function ProfilePage() {
     redirect('/login')
   }
 
-  const { user, connectedAccounts } = result
+  const { user, connectedAccounts, hasPassword } = result
 
   return (
     <AppContainer>
@@ -38,6 +39,7 @@ export default async function ProfilePage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
+          {/* Left Column - Personal & Account */}
           <div className="space-y-6">
             <ProfileForm
               initialData={{
@@ -51,10 +53,13 @@ export default async function ProfilePage() {
                 emailVerified: user.emailVerified,
               }}
             />
+            <ConnectedAccounts connectedAccounts={connectedAccounts || []} />
           </div>
+
+          {/* Right Column - Subscription & Security */}
           <div className="space-y-6">
             <SubscriptionDisplay currentTier={user.subscriptionTier} />
-            <ConnectedAccounts connectedAccounts={connectedAccounts || []} />
+            <ProfileSecurity hasPassword={hasPassword || false} />
           </div>
         </div>
       </div>

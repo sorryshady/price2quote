@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   Mail,
   MessageCircle,
-  Settings,
 } from 'lucide-react'
 
 import { SidebarSkeleton } from '@/components/ui/loading-states'
@@ -80,11 +79,6 @@ const data = {
     },
   ],
   navSecondary: [
-    {
-      title: 'Settings',
-      url: '/settings',
-      icon: Settings,
-    },
     {
       title: 'Get Help',
       url: '/help',
