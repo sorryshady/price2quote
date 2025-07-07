@@ -1,100 +1,118 @@
-# Next.js Starter Template
+# PricingGPT - AI-Powered Pricing Platform
 
-A modern, feature-rich Next.js starter template with authentication, database integration, and beautiful UI components.
+A modern web application that helps freelancers and businesses generate AI-powered pricing recommendations and professional quotes using Google's Gemini AI.
 
-## Features
+## 🚀 Features
+
+### Core Functionality
+
+- 🤖 **AI-Powered Pricing**: Generate intelligent pricing recommendations using Google's Gemini AI
+- 📊 **Professional Quote Generation**: Create comprehensive quotes with AI assistance
+- 📄 **PDF Export**: Generate professional quote PDFs with company branding
+- 📧 **Gmail Integration**: Send quotes directly via Gmail with OAuth authentication
+- 🌍 **Multi-Currency Support**: Support for 30+ currencies worldwide
+- 💳 **Subscription Management**: Free and Pro tiers with usage tracking
+
+### Technical Stack
 
 - 🚀 **Next.js 15.3.1** with App Router
 - 🔐 **Authentication** with secure session-based auth and bcrypt
 - 🎨 **UI Components** using Radix UI and Tailwind CSS
 - 📱 **Responsive Design** with mobile-first approach
 - 🌙 **Dark Mode** support
-- 📧 **Email Integration** with React Email and Nodemailer
 - 🗄️ **Database** with PostgreSQL and Drizzle ORM
 - 📝 **Form Handling** with React Hook Form and Zod
-- 🎭 **Animations** with Motion
-- 🔄 **State Management** with Zustand
+- 🔄 **State Management** with TanStack Query and Zustand
 - 🎯 **TypeScript** for type safety
-- 🛠️ **Development Tools** (ESLint, Prettier, etc.)
 
-## Getting Started
-
-### Prerequisites
+## 📋 Prerequisites
 
 - Node.js 18+
 - pnpm (recommended) or npm
-- PostgreSQL
+- PostgreSQL database
+- Google OAuth credentials (for Gmail integration)
+- Google Gemini API key
 
-### Installation
+## 🛠️ Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/sorryshady/next-starter.git
-cd next-starter
+git clone <repository-url>
+cd price2quote
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 
 ```bash
 pnpm install
 ```
 
-3. Set up environment variables:
+3. **Set up environment variables:**
 
-```bash
-# Copy the example environment file
-cp .env.example .env.local
-```
-
-Required environment variables:
+Create a `.env.local` file with the following variables:
 
 ```env
-# Database
+# Database Configuration
 DB_HOST=localhost
-DB_USER=
-DB_PASSWORD= 
-DB_NAME=
-DB_PORT=
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=price2quote
+DB_PORT=5432
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
-# Email (for local development)
-MAILHOG_HOST=localhost
-MAILHOG_PORT=1025
+# Application URL
+NEXT_PUBLIC_API_URL=http://localhost:3000
 
-# Sender's email (for local and production)
-EMAIL_FROM=
+# Authentication
+AUTH_SECRET=your_secure_auth_secret_here
 
-# Auth
-AUTH_SECRET=your_auth_secret
-
-# Google OAuth
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+# Google OAuth (for authentication)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=${NEXT_PUBLIC_API_URL}/api/auth/callback/google
 
-# Github OAuth
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
+# GitHub OAuth (optional)
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 GITHUB_REDIRECT_URI=${NEXT_PUBLIC_API_URL}/api/auth/callback/github
+
+# Gmail API (for email sending)
+GMAIL_CLIENT_ID=your_gmail_client_id
+GMAIL_CLIENT_SECRET=your_gmail_client_secret
+
+# Google Gemini AI
+GEMINI_API_KEY=your_gemini_api_key
+
+# Supabase (for file storage)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Email Configuration (for development)
+MAILHOG_HOST=localhost
+MAILHOG_PORT=1025
+EMAIL_FROM=noreply@yourapp.com
+
+# Resend (for production email)
+RESEND_API_KEY=your_resend_api_key
 ```
 
-4. Set up the database:
+4. **Set up the database:**
 
 ```bash
 pnpm db:generate
 pnpm db:migrate
 ```
 
-5. Start the development server:
+5. **Start the development server:**
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## Available Scripts
+## 📦 Available Scripts
 
 - `pnpm dev` - Start development server
 - `pnpm build` - Build for production
@@ -105,162 +123,222 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `pnpm db:migrate` - Run database migrations
 - `pnpm db:studio` - Open Drizzle Studio
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 ├── src/
 │   ├── app/                    # App router pages and layouts
 │   │   ├── (auth)/            # Authentication pages (login, register, etc.)
-│   │   ├── (public)/          # Public pages (home, about, etc.)
-│   │   ├── (protected)/       # Protected pages (dashboard, etc.)
+│   │   ├── (public)/          # Public pages (home, about, contact)
+│   │   ├── (protected)/       # Protected pages (dashboard, quotes, etc.)
+│   │   │   ├── add-company/   # Company onboarding
+│   │   │   ├── dashboard/     # Main dashboard
+│   │   │   ├── quotes/        # Quote management
+│   │   │   ├── conversations/ # Email conversations
+│   │   │   ├── send-email/    # Email composer
+│   │   │   └── profile/       # User profile
 │   │   ├── api/               # API routes
-│   │   │   └── auth/          # Authentication API endpoints
-│   │   ├── server-actions/    # Server actions for form handling
-│   │   ├── globals.css        # Global styles
-│   │   ├── layout.tsx         # Root layout
-│   │   └── page.tsx           # Home page
+│   │   └── server-actions/    # Server actions
 │   │
 │   ├── components/            # React components
-│   │   ├── form-ui/          # Form-related components
 │   │   ├── ui/               # Reusable UI components
 │   │   ├── navbar/           # Navigation components
+│   │   ├── form-ui/          # Form components
 │   │   └── providers/        # Context providers
 │   │
-│   ├── db/                   # Database configuration and schema
-│   │   ├── index.ts          # Database connection
-│   │   └── schema.ts         # Database schema definitions
+│   ├── db/                   # Database configuration
+│   │   ├── schema/           # Database schema definitions
+│   │   └── migrations/       # Database migrations
 │   │
-│   ├── email-templates/      # Email templates using React Email
-│   ├── env/                  # Environment variable validation
+│   ├── lib/                  # Utility functions
+│   │   ├── auth.ts           # Authentication utilities
+│   │   ├── gemini.ts         # AI integration
+│   │   ├── gmail.ts          # Gmail API integration
+│   │   ├── mailer.ts         # Email utilities
+│   │   └── schemas/          # Validation schemas
+│   │
 │   ├── hooks/                # Custom React hooks
-│   ├── lib/                  # Utility functions and helpers
-│   ├── providers/            # App-wide providers
-│   └── middleware.ts         # Next.js middleware for auth
+│   ├── types/                # TypeScript type definitions
+│   └── email-templates/      # Email templates
 │
+├── memory-bank/              # Project documentation
 ├── public/                   # Static assets
-├── memory-bank/             # Project documentation
-├── .cursor/                 # Cursor IDE configuration
-├── .vscode/                 # VS Code configuration
-│
-├── next.config.js           # Next.js configuration
-├── drizzle.config.ts        # Drizzle ORM configuration
-├── components.json          # UI components configuration
-├── postcss.config.mjs       # PostCSS configuration
-├── tailwind.config.ts       # Tailwind CSS configuration
-├── tsconfig.json            # TypeScript configuration
-└── package.json             # Project dependencies and scripts
+└── docker-compose.yml        # Docker configuration
 ```
 
-### Key Directories Explained
+## 🔐 Authentication Setup
 
-- **`src/app/`**: Contains all the pages and API routes using Next.js App Router
+### Google OAuth Setup
 
-  - `(auth)/`: Authentication-related pages (login, register, etc.)
-  - `(public)/`: Publicly accessible pages
-  - `(protected)/`: Pages that require authentication
-  - `api/`: Backend API endpoints
-  - `server-actions/`: Server-side form handling functions
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API and Gmail API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google` (development)
+   - `https://yourdomain.com/api/auth/callback/google` (production)
 
-- **`src/components/`**: Reusable React components
+### Gmail API Setup
 
-  - `form-ui/`: Form components with validation
-  - `ui/`: Base UI components (buttons, inputs, etc.)
-  - `navbar/`: Navigation components
-  - `providers/`: Context providers for state management
+1. In Google Cloud Console, enable Gmail API
+2. Create OAuth 2.0 credentials for web application
+3. Add authorized JavaScript origins and redirect URIs
+4. Download credentials and add to environment variables
 
-- **`src/db/`**: Database-related code
+## 🤖 AI Integration
 
-  - Schema definitions
-  - Database connection setup
-  - Migration utilities
+The application uses Google's Gemini AI for:
 
-- **`src/lib/`**: Utility functions and helpers
+- **Company Summary Generation**: AI-powered business summaries
+- **Pricing Recommendations**: Market-based pricing suggestions with confidence levels
+- **Quote Generation**: Professional quote content creation
+- **Email Composition**: Context-aware email generation
+- **Quote Revision Analysis**: AI-assisted quote revisions
 
-  - Authentication utilities
-  - Form validation schemas
-  - Common helper functions
+## 💼 Subscription System
 
-- **`src/email-templates/`**: Email templates using React Email
+### Free Tier
 
-  - Verification emails
-  - Password reset emails
-  - Notification templates
+- 3 quotes per month
+- 1 company profile
+- 2 revisions per quote
+- Basic features
 
-- **`src/hooks/`**: Custom React hooks
-  - Authentication hooks
-  - Form handling hooks
-  - UI interaction hooks
+### Pro Tier
 
-## Contributing
+- Unlimited quotes
+- Up to 5 companies
+- Unlimited revisions
+- Priority support
+- Advanced analytics
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🌍 Multi-Currency Support
 
-## License
+Supported currencies include:
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+- USD, EUR, GBP, CAD, AUD, JPY, CHF, CNY, INR, BRL, MXN, KRW, SGD, NOK, SEK, DKK, PLN, CZK, HUF, ILS, ZAR, PHP, THB, MYR, IDR, VND, TRY, RUB, AED, SAR
 
-## Local Development with Docker
+## 🐳 Local Development with Docker
 
-This project includes Docker configuration for local development, including a PostgreSQL database and Mailhog for email testing.
+The project includes Docker configuration for local development:
 
-### Prerequisites
-
-- Docker and Docker Compose installed
-- Node.js 18+ and pnpm
-
-### Setup with Docker
-
-1. Create a `.env.local` file with the following variables:
+1. **Create environment file:**
 
 ```env
 # Database
 DB_PASSWORD=your_password
 DB_USER=your_user
-DB_NAME=next_starter
+DB_NAME=price2quote
 DB_PORT=5432
-
 ```
 
-2. Start the Docker containers:
+2. **Start services:**
 
 ```bash
 docker-compose up -d
 ```
 
-This will start:
+This starts:
 
 - PostgreSQL database on port 5432
-- Mailhog (email testing) on:
-  - SMTP server: localhost:1025
-  - Web interface: http://localhost:8025
+- Mailhog (email testing) on port 8025
 
-### Testing Email Functionality
+3. **View emails:**
 
-1. The application is configured to use Mailhog in development mode
-2. All outgoing emails will be captured by Mailhog
-3. View captured emails at http://localhost:8025
-4. Features available in Mailhog:
-   - View email content (HTML and plain text)
-   - Test email templates
-   - Verify email sending functionality
-   - Debug email-related issues
+- Mailhog web interface: http://localhost:8025
 
-### Database Management
+## 🔧 Configuration
 
-- Database data is persisted in `./docker-data/db`
-- Connect to the database using your preferred PostgreSQL client:
-  - Host: localhost
-  - Port: your_port (from .env.local)
-  - Database: your_db_name (from .env.local)
-  - Username: your_user (from .env.local)
-  - Password: your_password (from .env.local)
+### Database Schema
 
-### Stopping the Services
+The application uses a comprehensive database schema including:
 
-```bash
-# Stop the containers
-docker-compose down
+- **Users & Authentication**: User accounts, sessions, OAuth connections
+- **Companies**: Business profiles with AI-generated summaries
+- **Services**: Company service offerings with pricing
+- **Quotes**: Quote generation and management with versioning
+- **Email Threads**: Conversation tracking and threading
+- **Subscriptions**: Usage tracking and limits
 
-# Stop and remove volumes (this will delete the database data)
-docker-compose down -v
-```
+### Key Features
+
+1. **Company Onboarding**: Multi-step form with logo upload and AI summary generation
+2. **Quote Creation**: AI-assisted pricing with service selection and client management
+3. **Email Integration**: Gmail OAuth with conversation threading and PDF attachments
+4. **Quote Management**: Version history, revisions, and status tracking
+5. **Analytics**: Usage tracking and subscription management
+
+## 📊 Production Deployment
+
+### Environment Setup
+
+Ensure all environment variables are configured for production:
+
+- Use production database credentials
+- Configure production OAuth redirect URIs
+- Set up production email service (Resend)
+- Configure Supabase for file storage
+- Use production Gemini API key
+
+### Performance Considerations
+
+- Database connection pooling
+- Image optimization for company logos
+- PDF generation optimization
+- Email sending rate limits
+- Cache management
+
+## 🔒 Security
+
+- Session-based authentication with secure cookies
+- Password hashing with bcrypt
+- CSRF protection
+- Input validation with Zod
+- Row-level security for database access
+- Secure file upload handling
+- OAuth token management
+
+## 🧪 Testing
+
+The application includes:
+
+- Component testing setup
+- API route testing
+- Form validation testing
+- Authentication flow testing
+- Email integration testing
+
+## 📖 Documentation
+
+Additional documentation is available in the `memory-bank/` directory:
+
+- `projectbrief.md` - Project overview and requirements
+- `productContext.md` - Product goals and user experience
+- `systemPatterns.md` - Technical architecture and patterns
+- `techContext.md` - Technology stack and constraints
+- `progress.md` - Current status and completed features
+- `activeContext.md` - Current work and next steps
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For technical issues:
+
+1. Check environment variables are properly configured
+2. Verify database connectivity
+3. Ensure all required APIs are enabled
+4. Check OAuth configuration and redirect URIs
+5. Review application logs for detailed error messages
+
+For questions about features or usage, please refer to the documentation in the `memory-bank/` directory.

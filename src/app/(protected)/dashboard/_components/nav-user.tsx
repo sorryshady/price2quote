@@ -1,11 +1,12 @@
 'use client'
 
+import Link from 'next/link'
+
 import {
   IconCreditCard,
   IconCrown,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUser,
   IconUserCircle,
 } from '@tabler/icons-react'
@@ -114,17 +115,15 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <IconUserCircle />
+                  Account
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconCreditCard />
                 Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

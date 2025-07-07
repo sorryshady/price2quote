@@ -5,7 +5,9 @@ import jwt from 'jsonwebtoken'
 
 import db from '@/db'
 import { users } from '@/db/schema'
+import { accounts } from '@/db/schema'
 import { env } from '@/env/server'
+import { getSession } from '@/lib/auth'
 
 export async function generateToken(
   email: string,
@@ -168,4 +170,120 @@ export async function verifyForgotPasswordToken(
       error: 'Invalid or malformed token',
     }
   }
-} 
+}
+
+export async function updateUserProfileAction(data: { name?: string }) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Validate input
+    if (data.name !== undefined) {
+      if (typeof data.name !== 'string' || data.name.trim().length === 0) {
+        return {
+          success: false,
+          error: 'Name is required and must be a valid string',
+        }
+      }
+      if (data.name.trim().length > 255) {
+        return {
+          success: false,
+          error: 'Name must be less than 255 characters',
+        }
+      }
+    }
+
+    // Prepare update data
+    const updateData: Partial<typeof users.$inferInsert> = {}
+    if (data.name !== undefined) {
+      updateData.name = data.name.trim()
+    }
+
+    // Update user in database
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, session.user.id))
+      .returning()
+
+    if (!updatedUser) {
+      return { success: false, error: 'Failed to update user profile' }
+    }
+
+    return {
+      success: true,
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        image: updatedUser.image,
+        emailVerified: updatedUser.emailVerified,
+        subscriptionTier: updatedUser.subscriptionTier,
+      },
+    }
+  } catch (error) {
+    console.error('Error updating user profile:', error)
+    return { success: false, error: 'Failed to update user profile' }
+  }
+}
+
+export async function getUserProfileAction() {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        emailVerified: true,
+        subscriptionTier: true,
+      },
+    })
+
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    // Get user data with all columns needed
+    const userWithDates = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        emailVerified: true,
+        subscriptionTier: true,
+      },
+    })
+
+    // Get connected OAuth providers
+    const connectedAccounts = await db.query.accounts.findMany({
+      where: eq(accounts.userId, session.user.id),
+      columns: {
+        provider: true,
+        type: true,
+      },
+    })
+
+    return {
+      success: true,
+      user: userWithDates,
+      connectedAccounts: connectedAccounts.map((account) => ({
+        provider: account.provider,
+        type: account.type,
+      })),
+    }
+  } catch (error) {
+    console.error('Error getting user profile:', error)
+    return { success: false, error: 'Failed to get user profile' }
+  }
+}
