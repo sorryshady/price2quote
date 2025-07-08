@@ -1,4 +1,5 @@
 // Export all server actions
+export * from './analytics'
 export * from './auth'
 export * from './company'
 export * from './dashboard'
