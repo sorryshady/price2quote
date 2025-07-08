@@ -30,10 +30,18 @@ interface RevenueByCompany {
   currency: string
 }
 
+interface RevenueByService {
+  serviceName: string
+  revenue: number
+  currency: string
+}
+
 interface RevenueChartsProps {
   revenueByMonth: RevenueByMonth[]
   revenueByCompany: RevenueByCompany[]
+  revenueByService?: RevenueByService[]
   currency: string
+  mode?: 'auto' | 'company' | 'service' // Controls which breakdown to show
 }
 
 const COLORS = [
@@ -77,7 +85,9 @@ function formatMonthLabel(monthKey: string): string {
 export function RevenueCharts({
   revenueByMonth,
   revenueByCompany,
+  revenueByService = [],
   currency,
+  mode = 'auto',
 }: RevenueChartsProps) {
   // Format data for charts
   const monthlyData = revenueByMonth.map((item) => ({
@@ -86,11 +96,45 @@ export function RevenueCharts({
   }))
 
   const companyData = revenueByCompany.slice(0, 8) // Top 8 companies for readability
+  const serviceData = revenueByService.slice(0, 8) // Top 8 services for readability
 
-  // Only show company breakdown if there are multiple companies
-  const breakdownData = companyData
-  const breakdownTitle = 'Revenue by Company'
-  const breakdownKey = 'companyName'
+  // Determine breakdown based on mode
+  let breakdownData: typeof companyData | typeof serviceData
+  let breakdownTitle: string
+  let breakdownKey: string
+
+  if (mode === 'company') {
+    // Force company breakdown
+    breakdownData = companyData
+    breakdownTitle = 'Revenue by Company'
+    breakdownKey = 'companyName'
+  } else if (mode === 'service') {
+    // Force service breakdown
+    breakdownData = serviceData
+    breakdownTitle = 'Revenue by Service'
+    breakdownKey = 'serviceName'
+  } else {
+    // Auto mode: Smart breakdown logic
+    // - Multiple companies: show company breakdown
+    // - Single company: show service breakdown (if available)
+    const hasMultipleCompanies = companyData.length > 1
+    const hasServices = serviceData.length > 0
+
+    if (hasMultipleCompanies) {
+      breakdownData = companyData
+      breakdownTitle = 'Revenue by Company'
+      breakdownKey = 'companyName'
+    } else if (hasServices) {
+      breakdownData = serviceData
+      breakdownTitle = 'Revenue by Service'
+      breakdownKey = 'serviceName'
+    } else {
+      // Fallback to company even if just one
+      breakdownData = companyData
+      breakdownTitle = 'Revenue by Company'
+      breakdownKey = 'companyName'
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -156,6 +200,7 @@ export function RevenueCharts({
                       axisLine={false}
                       tickLine={false}
                       className="text-xs"
+                      color="red"
                       tickFormatter={(value) => formatCurrency(value, currency)}
                     />
                     <YAxis

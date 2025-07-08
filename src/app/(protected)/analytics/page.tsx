@@ -236,12 +236,10 @@ export default function AnalyticsPage() {
                 {analytics.revenue.revenueByMonth.length > 0 ? (
                   <RevenueCharts
                     revenueByMonth={analytics.revenue.revenueByMonth.slice(-6)} // Last 6 months
-                    revenueByCompany={
-                      analytics.revenue.revenueByCompany.length > 1
-                        ? analytics.revenue.revenueByCompany.slice(0, 5) // Show company breakdown only if multiple companies
-                        : []
-                    }
+                    revenueByCompany={analytics.revenue.revenueByCompany}
+                    revenueByService={analytics.revenue.revenueByService}
                     currency={analytics.summary.currency}
+                    mode="auto" // Overview: company breakdown for multiple companies, service for single
                   />
                 ) : (
                   <div className="text-muted-foreground flex h-[200px] items-center justify-center">
@@ -375,7 +373,9 @@ export default function AnalyticsPage() {
           <RevenueCharts
             revenueByMonth={analytics.revenue.revenueByMonth}
             revenueByCompany={analytics.revenue.revenueByCompany}
+            revenueByService={analytics.revenue.revenueByService}
             currency={analytics.summary.currency}
+            mode="service" // Revenue tab: always show service breakdown for selected company
           />
         </TabsContent>
 

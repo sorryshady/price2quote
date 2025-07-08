@@ -1,9 +1,15 @@
 'use server'
 
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 
 import db from '@/db'
-import { companies, emailThreads, quotes } from '@/db/schema'
+import {
+  companies,
+  emailThreads,
+  quoteServices,
+  quotes,
+  services,
+} from '@/db/schema'
 import { getSession } from '@/lib/auth'
 
 interface DateRange {
@@ -284,12 +290,42 @@ export async function getAnalyticsDataAction(
       }),
     )
 
-    // Revenue by service - removed for simplicity (service breakdown not essential)
-    const revenueByService: {
+    // Revenue by service - for single company scenarios
+    const acceptedQuoteIds = acceptedQuotes.map((q) => q.quote.id)
+
+    let revenueByService: {
       serviceName: string
       revenue: number
       currency: string
     }[] = []
+
+    if (acceptedQuoteIds.length > 0) {
+      const serviceRevenueData = await db
+        .select({
+          quoteService: quoteServices,
+          service: services,
+        })
+        .from(quoteServices)
+        .leftJoin(services, eq(quoteServices.serviceId, services.id))
+        .where(inArray(quoteServices.quoteId, acceptedQuoteIds))
+
+      const revenueByServiceMap = new Map<string, number>()
+      serviceRevenueData.forEach((item) => {
+        const serviceName = item.service?.name || 'Unknown Service'
+        const serviceRevenue = parseFloat(item.quoteService.totalPrice || '0')
+        revenueByServiceMap.set(
+          serviceName,
+          (revenueByServiceMap.get(serviceName) || 0) + serviceRevenue,
+        )
+      })
+      revenueByService = Array.from(revenueByServiceMap.entries()).map(
+        ([serviceName, revenue]) => ({
+          serviceName,
+          revenue,
+          currency,
+        }),
+      )
+    }
 
     // Quote performance analytics using final statuses only
     const totalQuotes = finalQuotesData.length
