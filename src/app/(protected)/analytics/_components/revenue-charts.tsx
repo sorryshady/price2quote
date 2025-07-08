@@ -5,9 +5,6 @@ import {
   AreaChart,
   Bar,
   BarChart,
-  Cell,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -43,15 +40,6 @@ interface RevenueChartsProps {
   currency: string
   mode?: 'auto' | 'company' | 'service' // Controls which breakdown to show
 }
-
-const COLORS = [
-  '#0088FE',
-  '#00C49F',
-  '#FFBB28',
-  '#FF8042',
-  '#8884d8',
-  '#82ca9d',
-]
 
 interface TooltipProps {
   active?: boolean
@@ -184,32 +172,46 @@ export function RevenueCharts({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Revenue Breakdown Bar Chart */}
-        {breakdownData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{breakdownTitle}</CardTitle>
-            </CardHeader>
-            <CardContent>
+      {/* Revenue Breakdown Bar Chart */}
+      {breakdownData.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{breakdownTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Check if all revenue values are 0 */}
+            {breakdownData.every((item) => item.revenue === 0) ? (
+              <div className="text-muted-foreground flex h-[300px] items-center justify-center">
+                <div className="text-center">
+                  <p className="mb-2">No revenue data available</p>
+                  <p className="text-sm">
+                    {mode === 'service'
+                      ? 'Services may not be properly linked to accepted quotes'
+                      : 'No revenue has been generated yet'}
+                  </p>
+                </div>
+              </div>
+            ) : (
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={breakdownData} layout="horizontal">
+                  <BarChart
+                    data={breakdownData.filter((item) => item.revenue > 0)}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  >
                     <XAxis
-                      type="number"
-                      axisLine={false}
-                      tickLine={false}
-                      className="text-xs"
-                      color="red"
-                      tickFormatter={(value) => formatCurrency(value, currency)}
-                    />
-                    <YAxis
-                      type="category"
                       dataKey={breakdownKey}
                       axisLine={false}
                       tickLine={false}
                       className="text-xs"
-                      width={100}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      className="text-xs"
+                      tickFormatter={(value) => formatCurrency(value, currency)}
                     />
                     <Tooltip
                       content={(props) => (
@@ -219,70 +221,26 @@ export function RevenueCharts({
                     <Bar
                       dataKey="revenue"
                       fill="#00C49F"
-                      radius={[0, 4, 4, 0]}
+                      radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Revenue Distribution Pie Chart */}
-        {breakdownData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={breakdownData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      dataKey="revenue"
-                      nameKey={breakdownKey}
-                    >
-                      {breakdownData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      content={(props) => (
-                        <CustomTooltip {...props} currency={currency} />
-                      )}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Legend */}
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {breakdownData.map((entry, index) => (
-                  <div
-                    key={entry[breakdownKey as keyof typeof entry]}
-                    className="flex items-center gap-2"
-                  >
-                    <div
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span className="text-muted-foreground truncate text-sm">
-                      {entry[breakdownKey as keyof typeof entry]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>{breakdownTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-muted-foreground flex h-[300px] items-center justify-center">
+              <p>No data available</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
