@@ -3,7 +3,7 @@
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
 
 import db from '@/db'
-import { companies, emailThreads, quotes, services } from '@/db/schema'
+import { companies, emailThreads, quotes } from '@/db/schema'
 import { getSession } from '@/lib/auth'
 
 interface DateRange {
@@ -170,18 +170,44 @@ export async function getAnalyticsDataAction(
       baseConditions.push(sql`${quotes.status} IN ${statuses}`)
     }
 
-    // Get all quotes with company and service data
+    // Get all quotes with company data only (no services to avoid duplication)
+    // This gets ALL quote versions for further processing
     const quotesData = await db
       .select({
         quote: quotes,
         company: companies,
-        service: services,
       })
       .from(quotes)
       .leftJoin(companies, eq(quotes.companyId, companies.id))
-      .leftJoin(services, eq(quotes.companyId, services.companyId))
       .where(and(...baseConditions))
       .orderBy(desc(quotes.createdAt))
+
+    // Process quotes to get only the latest version of each quote family
+    const quotesByFamily = new Map<string, (typeof quotesData)[0]>()
+
+    quotesData.forEach((quoteData) => {
+      // Determine the family ID - either parentQuoteId if it's a revision, or the quote's own ID if it's the original
+      const familyId = quoteData.quote.parentQuoteId || quoteData.quote.id
+      const currentVersion = parseFloat(
+        quoteData.quote.versionNumber?.toString() || '1',
+      )
+
+      const existing = quotesByFamily.get(familyId)
+      if (!existing) {
+        quotesByFamily.set(familyId, quoteData)
+      } else {
+        const existingVersion = parseFloat(
+          existing.quote.versionNumber?.toString() || '1',
+        )
+        // Keep the highest version number (latest version)
+        if (currentVersion > existingVersion) {
+          quotesByFamily.set(familyId, quoteData)
+        }
+      }
+    })
+
+    // Convert back to array with only latest versions (final statuses)
+    const finalQuotesData = Array.from(quotesByFamily.values())
 
     // Get email data for the same period
     const emailData = await db
@@ -212,15 +238,15 @@ export async function getAnalyticsDataAction(
         ),
       )
 
-    // Calculate revenue analytics
-    const acceptedQuotes = quotesData.filter(
+    // Calculate revenue analytics using final statuses only
+    const acceptedQuotes = finalQuotesData.filter(
       (q) => q.quote.status === 'accepted',
     )
     const totalRevenue = acceptedQuotes.reduce(
       (sum, q) => sum + parseFloat(q.quote.amount || '0'),
       0,
     )
-    const currency = quotesData[0]?.quote.currency || 'USD'
+    const currency = finalQuotesData[0]?.quote.currency || 'USD'
 
     // Revenue by month
     const revenueByMonthMap = new Map<string, number>()
@@ -258,24 +284,34 @@ export async function getAnalyticsDataAction(
       }),
     )
 
-    // Quote performance analytics
-    const totalQuotes = quotesData.length
-    const acceptedCount = quotesData.filter(
+    // Revenue by service - removed for simplicity (service breakdown not essential)
+    const revenueByService: {
+      serviceName: string
+      revenue: number
+      currency: string
+    }[] = []
+
+    // Quote performance analytics using final statuses only
+    const totalQuotes = finalQuotesData.length
+    const acceptedCount = finalQuotesData.filter(
       (q) => q.quote.status === 'accepted',
     ).length
     const acceptanceRate =
       totalQuotes > 0 ? (acceptedCount / totalQuotes) * 100 : 0
 
     const conversionFunnel = {
-      draft: quotesData.filter((q) => q.quote.status === 'draft').length,
-      sent: quotesData.filter((q) => q.quote.status === 'sent').length,
-      accepted: quotesData.filter((q) => q.quote.status === 'accepted').length,
-      rejected: quotesData.filter((q) => q.quote.status === 'rejected').length,
-      revised: quotesData.filter((q) => q.quote.status === 'revised').length,
+      draft: finalQuotesData.filter((q) => q.quote.status === 'draft').length,
+      sent: finalQuotesData.filter((q) => q.quote.status === 'sent').length,
+      accepted: finalQuotesData.filter((q) => q.quote.status === 'accepted')
+        .length,
+      rejected: finalQuotesData.filter((q) => q.quote.status === 'rejected')
+        .length,
+      revised: finalQuotesData.filter((q) => q.quote.status === 'revised')
+        .length,
     }
 
     // Calculate average time to acceptance
-    const acceptedQuotesWithSentDate = quotesData.filter(
+    const acceptedQuotesWithSentDate = finalQuotesData.filter(
       (q) => q.quote.status === 'accepted' && q.quote.sentAt,
     )
     const totalAcceptanceTime = acceptedQuotesWithSentDate.reduce((sum, q) => {
@@ -289,12 +325,12 @@ export async function getAnalyticsDataAction(
           (acceptedQuotesWithSentDate.length * 24 * 60 * 60 * 1000) // Convert to days
         : 0
 
-    // Quotes by month
+    // Quotes by month using final statuses only
     const quotesByMonthMap = new Map<
       string,
       { created: number; accepted: number }
     >()
-    quotesData.forEach((q) => {
+    finalQuotesData.forEach((q) => {
       const monthKey = getMonthKey(q.quote.createdAt)
       const current = quotesByMonthMap.get(monthKey) || {
         created: 0,
@@ -311,23 +347,28 @@ export async function getAnalyticsDataAction(
       }),
     )
 
-    // Client analytics
-    const uniqueClients = new Set(quotesData.map((q) => q.quote.clientEmail))
+    // Client analytics using final quote statuses only
+    const uniqueClients = new Set(
+      finalQuotesData.map((q) => q.quote.clientEmail),
+    )
     const totalClients = uniqueClients.size
 
-    // Client by location
-    const clientsByLocationMap = new Map<string, number>()
-    quotesData.forEach((q) => {
+    // Client by location - count unique clients per location
+    const clientsByLocationMap = new Map<string, Set<string>>()
+    finalQuotesData.forEach((q) => {
       const country = q.quote.clientLocation || 'Unknown'
-      clientsByLocationMap.set(
-        country,
-        (clientsByLocationMap.get(country) || 0) + 1,
-      )
+      const email = q.quote.clientEmail
+      if (email) {
+        if (!clientsByLocationMap.has(country)) {
+          clientsByLocationMap.set(country, new Set())
+        }
+        clientsByLocationMap.get(country)!.add(email)
+      }
     })
     const clientsByLocation = Array.from(clientsByLocationMap.entries()).map(
-      ([country, count]) => ({
+      ([country, clientSet]) => ({
         country,
-        count,
+        count: clientSet.size,
       }),
     )
 
@@ -414,9 +455,9 @@ export async function getAnalyticsDataAction(
       prevPeriodClients,
     )
 
-    // Market insights
+    // Market insights using final quote statuses only
     const currencyUsageMap = new Map<string, number>()
-    quotesData.forEach((q) => {
+    finalQuotesData.forEach((q) => {
       const curr = q.quote.currency || 'USD'
       currencyUsageMap.set(curr, (currencyUsageMap.get(curr) || 0) + 1)
     })
@@ -425,7 +466,7 @@ export async function getAnalyticsDataAction(
       .sort((a, b) => b.usage - a.usage)
 
     const businessTypeMap = new Map<string, number>()
-    quotesData.forEach((q) => {
+    finalQuotesData.forEach((q) => {
       const type = q.company?.businessType || 'Unknown'
       businessTypeMap.set(type, (businessTypeMap.get(type) || 0) + 1)
     })
@@ -449,8 +490,8 @@ export async function getAnalyticsDataAction(
         totalRevenue,
         revenueByMonth,
         revenueByCompany,
-        revenueByService: [], // TODO: Implement service revenue breakdown
-        averageQuoteValue: totalQuotes > 0 ? totalRevenue / acceptedCount : 0,
+        revenueByService,
+        averageQuoteValue: acceptedCount > 0 ? totalRevenue / acceptedCount : 0,
         currency,
       },
       quotes: {
@@ -459,7 +500,7 @@ export async function getAnalyticsDataAction(
         conversionFunnel,
         averageTimeToAcceptance,
         revisionFrequency:
-          (quotesData.filter((q) => q.quote.parentQuoteId).length /
+          (finalQuotesData.filter((q) => q.quote.parentQuoteId).length /
             totalQuotes) *
           100,
         quotesByMonth,

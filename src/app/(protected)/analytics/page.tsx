@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 
-import { Download, Filter } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-import { useAnalyticsDateRange, useQuickAnalytics } from '@/hooks/use-analytics'
+import { useAnalytics, useAnalyticsDateRange } from '@/hooks/use-analytics'
 import { useAuth } from '@/hooks/use-auth'
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
 import { AnalyticsSummary } from './_components/analytics-summary'
 import { DateRangeSelector } from './_components/date-range-selector'
@@ -87,16 +88,23 @@ function AnalyticsSkeleton() {
 
 export default function AnalyticsPage() {
   const { user, isLoading: authLoading, isInitialized } = useAuth()
+  const { companies, isLoading: companiesLoading } = useCompaniesQuery()
   const { defaultRange } = useAnalyticsDateRange('last12Months')
   const [dateRange, setDateRange] = useState<DateRange>(defaultRange)
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([])
 
-  // For MVP, using quick analytics with last 12 months
-  const { data: analytics, isLoading: analyticsLoading } = useQuickAnalytics(
+  // Use analytics with the selected date range and companies
+  const { data: analytics, isLoading: analyticsLoading } = useAnalytics(
     user?.id,
+    {
+      dateRange,
+      companyIds:
+        selectedCompanyIds.length > 0 ? selectedCompanyIds : undefined,
+    },
   )
 
-  // Wait for auth to be initialized
-  if (!isInitialized || authLoading) {
+  // Wait for auth and companies to be initialized
+  if (!isInitialized || authLoading || companiesLoading) {
     return <AnalyticsSkeleton />
   }
 
@@ -124,9 +132,27 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-bold">Analytics</h1>
           <div className="flex items-center gap-2">
             <DateRangeSelector value={dateRange} onChange={setDateRange} />
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4" />
-            </Button>
+            {companies.length > 1 && (
+              <select
+                value={
+                  selectedCompanyIds.length === 1
+                    ? selectedCompanyIds[0]
+                    : 'all'
+                }
+                onChange={(e) => {
+                  const value = e.target.value
+                  setSelectedCompanyIds(value === 'all' ? [] : [value])
+                }}
+                className="border-input bg-background rounded border px-3 py-1 text-sm"
+              >
+                <option value="all">All Companies</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4" />
               Export
@@ -155,9 +181,25 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex items-center gap-2">
           <DateRangeSelector value={dateRange} onChange={setDateRange} />
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4" />
-          </Button>
+          {companies.length > 1 && (
+            <select
+              value={
+                selectedCompanyIds.length === 1 ? selectedCompanyIds[0] : 'all'
+              }
+              onChange={(e) => {
+                const value = e.target.value
+                setSelectedCompanyIds(value === 'all' ? [] : [value])
+              }}
+              className="border-input bg-background rounded border px-3 py-1 text-sm"
+            >
+              <option value="all">All Companies</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+          )}
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4" />
             Export
@@ -170,12 +212,16 @@ export default function AnalyticsPage() {
 
       {/* Main Analytics Content */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-fit">
+        <TabsList
+          className={`grid w-full ${analytics.revenue.revenueByMonth.length > 1 ? 'grid-cols-5' : 'grid-cols-4'} lg:w-fit`}
+        >
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="quotes">Quotes</TabsTrigger>
           <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="growth">Growth</TabsTrigger>
+          {analytics.revenue.revenueByMonth.length > 1 && (
+            <TabsTrigger value="growth">Growth</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Overview Tab */}
@@ -190,10 +236,11 @@ export default function AnalyticsPage() {
                 {analytics.revenue.revenueByMonth.length > 0 ? (
                   <RevenueCharts
                     revenueByMonth={analytics.revenue.revenueByMonth.slice(-6)} // Last 6 months
-                    revenueByCompany={analytics.revenue.revenueByCompany.slice(
-                      0,
-                      5,
-                    )} // Top 5 companies
+                    revenueByCompany={
+                      analytics.revenue.revenueByCompany.length > 1
+                        ? analytics.revenue.revenueByCompany.slice(0, 5) // Show company breakdown only if multiple companies
+                        : []
+                    }
                     currency={analytics.summary.currency}
                   />
                 ) : (
@@ -205,122 +252,121 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Quote Performance Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quote Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {analytics.quotes.totalQuotes > 0 ? (
+            <div className="flex flex-col gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quote Performance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {analytics.quotes.totalQuotes > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">
+                            {analytics.quotes.acceptanceRate.toFixed(1)}%
+                          </div>
+                          <p className="text-muted-foreground text-sm">
+                            Acceptance Rate
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {analytics.quotes.averageTimeToAcceptance.toFixed(
+                              1,
+                            )}
+                          </div>
+                          <p className="text-muted-foreground text-sm">
+                            Days to Accept
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">
+                          {analytics.quotes.totalQuotes} Total Quotes
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          {analytics.quotes.conversionFunnel.accepted} accepted,{' '}
+                          {analytics.quotes.conversionFunnel.rejected} rejected
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground flex h-[200px] items-center justify-center">
+                      No quote data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Client Analytics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold">
+                        {analytics.clients.totalClients}
+                      </div>
+                      <p className="text-muted-foreground">Active Clients</p>
+                    </div>
+                    {analytics.clients.topClients.length > 0 && (
+                      <div>
+                        <h4 className="mb-2 text-sm font-medium">Top Client</h4>
+                        <div className="bg-muted rounded-lg p-3">
+                          <div className="font-medium">
+                            {analytics.clients.topClients[0].name}
+                          </div>
+                          <div className="text-muted-foreground text-sm">
+                            {analytics.clients.topClients[0].quotesCount} quotes
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Communication Stats</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {analytics.quotes.acceptanceRate.toFixed(1)}%
+                        <div className="text-2xl font-bold">
+                          {analytics.emails.totalEmails}
                         </div>
                         <p className="text-muted-foreground text-sm">
-                          Acceptance Rate
+                          Total Emails
                         </p>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {analytics.quotes.averageTimeToAcceptance.toFixed(1)}
+                        <div className="text-2xl font-bold text-green-600">
+                          {analytics.emails.responseRate.toFixed(1)}%
                         </div>
                         <p className="text-muted-foreground text-sm">
-                          Days to Accept
+                          Response Rate
                         </p>
                       </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-lg font-semibold">
-                        {analytics.quotes.totalQuotes} Total Quotes
-                      </div>
-                      <p className="text-muted-foreground text-sm">
-                        {analytics.quotes.conversionFunnel.accepted} accepted,{' '}
-                        {analytics.quotes.conversionFunnel.rejected} rejected
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground flex h-[200px] items-center justify-center">
-                    No quote data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Client & Email Overview */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Client Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">
-                      {analytics.clients.totalClients}
-                    </div>
-                    <p className="text-muted-foreground">Active Clients</p>
-                  </div>
-                  {analytics.clients.topClients.length > 0 && (
-                    <div>
-                      <h4 className="mb-2 text-sm font-medium">Top Client</h4>
-                      <div className="bg-muted rounded-lg p-3">
+                    <div className="grid grid-cols-2 gap-4 text-center text-sm">
+                      <div>
                         <div className="font-medium">
-                          {analytics.clients.topClients[0].name}
+                          {analytics.emails.emailsByDirection.outbound}
                         </div>
-                        <div className="text-muted-foreground text-sm">
-                          {analytics.clients.topClients[0].quotesCount} quotes
+                        <p className="text-muted-foreground">Sent</p>
+                      </div>
+                      <div>
+                        <div className="font-medium">
+                          {analytics.emails.emailsByDirection.inbound}
                         </div>
+                        <p className="text-muted-foreground">Received</p>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Communication Stats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {analytics.emails.totalEmails}
-                      </div>
-                      <p className="text-muted-foreground text-sm">
-                        Total Emails
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {analytics.emails.responseRate.toFixed(1)}%
-                      </div>
-                      <p className="text-muted-foreground text-sm">
-                        Response Rate
-                      </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-center text-sm">
-                    <div>
-                      <div className="font-medium">
-                        {analytics.emails.emailsByDirection.outbound}
-                      </div>
-                      <p className="text-muted-foreground">Sent</p>
-                    </div>
-                    <div>
-                      <div className="font-medium">
-                        {analytics.emails.emailsByDirection.inbound}
-                      </div>
-                      <p className="text-muted-foreground">Received</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 
@@ -415,128 +461,155 @@ export default function AnalyticsPage() {
 
         {/* Growth Tab */}
         <TabsContent value="growth" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
+          {/* Only show growth if there's meaningful data (multiple months) */}
+          {analytics.revenue.revenueByMonth.length > 1 ? (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Business Growth Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div
+                        className={`text-3xl font-bold ${
+                          analytics.growth.growthRate >= 0
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {analytics.growth.growthRate >= 0 ? '+' : ''}
+                        {analytics.growth.growthRate.toFixed(1)}%
+                      </div>
+                      <p className="text-muted-foreground">
+                        Overall Growth Rate
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Revenue:</span>
+                        <span
+                          className={`font-medium ${
+                            analytics.growth.trendsAnalysis.revenue ===
+                            'increasing'
+                              ? 'text-green-600'
+                              : analytics.growth.trendsAnalysis.revenue ===
+                                  'decreasing'
+                                ? 'text-red-600'
+                                : 'text-gray-600'
+                          }`}
+                        >
+                          {analytics.growth.trendsAnalysis.revenue}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Client Base:</span>
+                        <span
+                          className={`font-medium ${
+                            analytics.growth.trendsAnalysis.clientBase ===
+                            'increasing'
+                              ? 'text-green-600'
+                              : analytics.growth.trendsAnalysis.clientBase ===
+                                  'decreasing'
+                                ? 'text-red-600'
+                                : 'text-gray-600'
+                          }`}
+                        >
+                          {analytics.growth.trendsAnalysis.clientBase}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Quote Volume:</span>
+                        <span
+                          className={`font-medium ${
+                            analytics.growth.trendsAnalysis.quoteVolume ===
+                            'increasing'
+                              ? 'text-green-600'
+                              : analytics.growth.trendsAnalysis.quoteVolume ===
+                                  'decreasing'
+                                ? 'text-red-600'
+                                : 'text-gray-600'
+                          }`}
+                        >
+                          {analytics.growth.trendsAnalysis.quoteVolume}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Period Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">
+                        Growth metrics are calculated by comparing the selected
+                        period with the previous period of equal length.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">
+                          {analytics.revenue.revenueByMonth.length} months
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          Data Range
+                        </p>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">
+                          {analytics.summary.totalRevenue.toLocaleString()}{' '}
+                          {analytics.summary.currency}
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          Current Period Revenue
+                        </p>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">
+                          {analytics.summary.totalQuotes}
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          Total Quotes
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Business Growth Trends</CardTitle>
+                <CardTitle>Growth Analytics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div
-                      className={`text-3xl font-bold ${
-                        analytics.growth.growthRate >= 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      {analytics.growth.growthRate >= 0 ? '+' : ''}
-                      {analytics.growth.growthRate.toFixed(1)}%
-                    </div>
-                    <p className="text-muted-foreground">Overall Growth Rate</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Revenue:</span>
-                      <span
-                        className={`font-medium ${
-                          analytics.growth.trendsAnalysis.revenue ===
-                          'increasing'
-                            ? 'text-green-600'
-                            : analytics.growth.trendsAnalysis.revenue ===
-                                'decreasing'
-                              ? 'text-red-600'
-                              : 'text-gray-600'
-                        }`}
-                      >
-                        {analytics.growth.trendsAnalysis.revenue}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Client Base:</span>
-                      <span
-                        className={`font-medium ${
-                          analytics.growth.trendsAnalysis.clientBase ===
-                          'increasing'
-                            ? 'text-green-600'
-                            : analytics.growth.trendsAnalysis.clientBase ===
-                                'decreasing'
-                              ? 'text-red-600'
-                              : 'text-gray-600'
-                        }`}
-                      >
-                        {analytics.growth.trendsAnalysis.clientBase}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Quote Volume:</span>
-                      <span
-                        className={`font-medium ${
-                          analytics.growth.trendsAnalysis.quoteVolume ===
-                          'increasing'
-                            ? 'text-green-600'
-                            : analytics.growth.trendsAnalysis.quoteVolume ===
-                                'decreasing'
-                              ? 'text-red-600'
-                              : 'text-gray-600'
-                        }`}
-                      >
-                        {analytics.growth.trendsAnalysis.quoteVolume}
-                      </span>
-                    </div>
+                <div className="py-8 text-center">
+                  <div className="text-muted-foreground">
+                    <p className="mb-2">
+                      Growth analytics will be available once you have:
+                    </p>
+                    <ul className="inline-block space-y-1 text-left">
+                      <li>• Multiple months of data</li>
+                      <li>• At least 2-3 quotes per month</li>
+                      <li>• Consistent business activity</li>
+                    </ul>
+                    <p className="mt-4 text-sm">
+                      Keep creating quotes and check back in a few weeks!
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Market Insights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium">Top Currencies</h4>
-                    <div className="space-y-1">
-                      {analytics.growth.marketInsights.topCurrencies
-                        .slice(0, 5)
-                        .map((curr: { currency: string; usage: number }) => (
-                          <div
-                            key={curr.currency}
-                            className="flex justify-between text-sm"
-                          >
-                            <span>{curr.currency}</span>
-                            <span className="text-muted-foreground">
-                              {curr.usage} quotes
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium">Business Types</h4>
-                    <div className="space-y-1">
-                      {analytics.growth.marketInsights.businessTypeDistribution
-                        .slice(0, 5)
-                        .map((type: { type: string; count: number }) => (
-                          <div
-                            key={type.type}
-                            className="flex justify-between text-sm"
-                          >
-                            <span>{type.type}</span>
-                            <span className="text-muted-foreground">
-                              {type.count}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

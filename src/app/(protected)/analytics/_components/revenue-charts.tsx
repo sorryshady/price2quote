@@ -87,6 +87,11 @@ export function RevenueCharts({
 
   const companyData = revenueByCompany.slice(0, 8) // Top 8 companies for readability
 
+  // Only show company breakdown if there are multiple companies
+  const breakdownData = companyData
+  const breakdownTitle = 'Revenue by Company'
+  const breakdownKey = 'companyName'
+
   return (
     <div className="space-y-6">
       {/* Revenue Trend Line Chart */}
@@ -136,94 +141,102 @@ export function RevenueCharts({
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Revenue by Company Bar Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue by Company</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={companyData} layout="horizontal">
-                  <XAxis
-                    type="number"
-                    axisLine={false}
-                    tickLine={false}
-                    className="text-xs"
-                    tickFormatter={(value) => formatCurrency(value, currency)}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="companyName"
-                    axisLine={false}
-                    tickLine={false}
-                    className="text-xs"
-                    width={100}
-                  />
-                  <Tooltip
-                    content={(props) => (
-                      <CustomTooltip {...props} currency={currency} />
-                    )}
-                  />
-                  <Bar dataKey="revenue" fill="#00C49F" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Revenue Breakdown Bar Chart */}
+        {breakdownData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{breakdownTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={breakdownData} layout="horizontal">
+                    <XAxis
+                      type="number"
+                      axisLine={false}
+                      tickLine={false}
+                      className="text-xs"
+                      tickFormatter={(value) => formatCurrency(value, currency)}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey={breakdownKey}
+                      axisLine={false}
+                      tickLine={false}
+                      className="text-xs"
+                      width={100}
+                    />
+                    <Tooltip
+                      content={(props) => (
+                        <CustomTooltip {...props} currency={currency} />
+                      )}
+                    />
+                    <Bar
+                      dataKey="revenue"
+                      fill="#00C49F"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Revenue Distribution Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={companyData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    dataKey="revenue"
-                    nameKey="companyName"
-                  >
-                    {companyData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={(props) => (
-                      <CustomTooltip {...props} currency={currency} />
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+        {breakdownData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={breakdownData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="revenue"
+                      nameKey={breakdownKey}
+                    >
+                      {breakdownData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      content={(props) => (
+                        <CustomTooltip {...props} currency={currency} />
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
-            {/* Legend */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {companyData.map((entry, index) => (
-                <div
-                  key={entry.companyName}
-                  className="flex items-center gap-2"
-                >
+              {/* Legend */}
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {breakdownData.map((entry, index) => (
                   <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-muted-foreground truncate text-sm">
-                    {entry.companyName}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                    key={entry[breakdownKey as keyof typeof entry]}
+                    className="flex items-center gap-2"
+                  >
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-muted-foreground truncate text-sm">
+                      {entry[breakdownKey as keyof typeof entry]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

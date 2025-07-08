@@ -90,52 +90,39 @@ export function QuotePerformanceCharts({
 
   return (
     <div className="space-y-6">
-      {/* Key Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
+      {/* Key Metrics Cards - Compact Layout */}
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card className="p-4">
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-sm font-medium">
               Acceptance Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            </p>
+            <div className="text-xl font-bold text-green-600">
               {acceptanceRate.toFixed(1)}%
             </div>
-            <p className="text-muted-foreground text-xs">
-              Overall quote acceptance
-            </p>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="p-4">
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-sm font-medium">
               Avg. Time to Accept
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            </p>
+            <div className="text-xl font-bold text-blue-600">
               {averageTimeToAcceptance.toFixed(1)} days
             </div>
-            <p className="text-muted-foreground text-xs">
-              From sent to accepted
-            </p>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Revision Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+        <Card className="p-4">
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-sm font-medium">
+              Revision Rate
+            </p>
+            <div className="text-xl font-bold text-orange-600">
               {revisionFrequency.toFixed(1)}%
             </div>
-            <p className="text-muted-foreground text-xs">
-              Quotes requiring revisions
-            </p>
-          </CardContent>
+          </div>
         </Card>
       </div>
 
@@ -146,7 +133,7 @@ export function QuotePerformanceCharts({
             <CardTitle>Quote Conversion Funnel</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <FunnelChart>
                   <Funnel dataKey="value" data={funnelData} isAnimationActive />
@@ -163,7 +150,7 @@ export function QuotePerformanceCharts({
             <CardTitle>Quote Status Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnelData}>
                   <XAxis
@@ -192,7 +179,7 @@ export function QuotePerformanceCharts({
           <CardTitle>Quote Performance Over Time</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={monthlyData}>
                 <XAxis
