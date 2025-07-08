@@ -5,7 +5,6 @@ import {
   Clock,
   DollarSign,
   FileText,
-  Mail,
   MessageSquare,
   RefreshCw,
 } from 'lucide-react'
@@ -151,7 +150,7 @@ export function TodaysSummary({
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Unread Messages
@@ -163,7 +162,7 @@ export function TodaysSummary({
               {conversations.unread}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

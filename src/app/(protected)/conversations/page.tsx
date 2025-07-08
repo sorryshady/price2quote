@@ -96,6 +96,17 @@ export default function ConversationsPage() {
       // Invalidate conversations cache to refresh data
       invalidateConversations(currentCompanyId)
 
+      // Invalidate dashboard related queries when new emails are received
+      await queryClient.invalidateQueries({
+        queryKey: ['recent-activity'],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ['action-items'],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ['dashboard-summary'],
+      })
+
       // If specific conversations were updated, invalidate their individual caches
       if (
         syncResult.success &&
