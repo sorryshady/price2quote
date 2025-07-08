@@ -115,22 +115,69 @@ export async function getEmailThreadsByCompanyAction(companyId: string) {
         clientName: true,
         clientEmail: true,
         status: true,
+        parentQuoteId: true,
+        createdAt: true,
       },
     })
 
-    // Create a map of quote data
-    const quoteMap = new Map(quotes.map((quote) => [quote.id, quote]))
+    // Get all root quote IDs to find revision chains
+    const rootQuoteIds = new Set<string>()
+    for (const quote of quotes) {
+      const rootId = quote.parentQuoteId || quote.id
+      rootQuoteIds.add(rootId)
+    }
 
-    // Parse attachments JSON and add quote data
-    const parsedThreads = threads.map((thread) => ({
-      ...thread,
-      direction: thread.direction as 'inbound' | 'outbound',
-      fromEmail: thread.fromEmail || undefined,
-      quote: quoteMap.get(thread.quoteId) || undefined,
-      attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
-      gmailLabels: thread.gmailLabels ? JSON.parse(thread.gmailLabels) : null,
-      isRead: thread.isRead ?? false,
-    }))
+    // Fetch all quotes in revision chains to find latest versions
+    const allQuotesInChains = await db.query.quotes.findMany({
+      where: (quotes, { inArray, or, and, isNotNull }) =>
+        or(
+          inArray(quotes.id, Array.from(rootQuoteIds)),
+          and(
+            isNotNull(quotes.parentQuoteId),
+            inArray(quotes.parentQuoteId, Array.from(rootQuoteIds)),
+          ),
+        ),
+      columns: {
+        id: true,
+        projectTitle: true,
+        clientName: true,
+        clientEmail: true,
+        status: true,
+        parentQuoteId: true,
+        createdAt: true,
+      },
+      orderBy: (quotes, { desc }) => [desc(quotes.createdAt)],
+    })
+
+    // Create a map to find the latest quote for each root quote
+    const latestQuoteForRoot = new Map<string, (typeof allQuotesInChains)[0]>()
+
+    for (const quote of allQuotesInChains) {
+      const rootId = quote.parentQuoteId || quote.id
+      const current = latestQuoteForRoot.get(rootId)
+
+      // Keep the latest created quote for each root
+      if (!current || quote.createdAt > current.createdAt) {
+        latestQuoteForRoot.set(rootId, quote)
+      }
+    }
+
+    // Parse attachments JSON and add latest quote data
+    const parsedThreads = threads.map((thread) => {
+      const originalQuote = quotes.find((q) => q.id === thread.quoteId)
+      const rootId = originalQuote?.parentQuoteId || thread.quoteId
+      const latestQuote = latestQuoteForRoot.get(rootId)
+
+      return {
+        ...thread,
+        direction: thread.direction as 'inbound' | 'outbound',
+        fromEmail: thread.fromEmail || undefined,
+        quote: latestQuote,
+        attachments: thread.attachments ? JSON.parse(thread.attachments) : null,
+        gmailLabels: thread.gmailLabels ? JSON.parse(thread.gmailLabels) : null,
+        isRead: thread.isRead ?? false,
+      }
+    })
 
     // Group threads into conversations
     const conversations = groupThreadsIntoConversations(parsedThreads)

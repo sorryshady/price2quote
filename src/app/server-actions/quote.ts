@@ -870,22 +870,42 @@ export async function getQuoteVersionHistoryAction(
       }
     }
 
-    // Get all versions of this quote (including the original)
-    const versions = await db
+    // Determine if this is the original quote or a revision
+    let originalQuoteId = quoteId
+    if (quote.parentQuoteId) {
+      // This is a revision, so get the original quote ID
+      originalQuoteId = quote.parentQuoteId
+    }
+
+    // Get the original quote
+    const [originalQuote] = await db
       .select()
       .from(quotes)
-      .where(eq(quotes.parentQuoteId, quoteId))
-      .orderBy(quotes.versionNumber)
+      .where(eq(quotes.id, originalQuoteId))
+
+    if (!originalQuote) {
+      return {
+        success: false,
+        error: 'Original quote not found',
+      }
+    }
+
+    // Get all revisions of the original quote
+    const revisions = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.parentQuoteId, originalQuoteId))
+      .orderBy(quotes.createdAt)
 
     // Get version history records
     const versionHistory = await db
       .select()
       .from(quoteVersions)
-      .where(eq(quoteVersions.originalQuoteId, quoteId))
+      .where(eq(quoteVersions.originalQuoteId, originalQuoteId))
       .orderBy(quoteVersions.versionNumber)
 
     // Fetch quote services for all versions
-    const allVersions = [quote, ...versions]
+    const allVersions = [originalQuote, ...revisions]
     const versionsWithServices = await Promise.all(
       allVersions.map(async (version) => {
         const quoteServicesData = await db

@@ -3,7 +3,7 @@
 import { eq } from 'drizzle-orm'
 
 import db from '@/db'
-import { companies, services } from '@/db/schema'
+import { companies, gmailConnections, services } from '@/db/schema'
 import { generateCompanySummary } from '@/lib/gemini'
 import { uploadCompanyLogo } from '@/lib/storage'
 import type { CompanyWithServices } from '@/types'
@@ -40,15 +40,27 @@ export async function getUserCompaniesAction(userId: string): Promise<{
       where: eq(companies.userId, userId),
     })
 
-    // Get services for each company separately to avoid relationship issues
+    // Get services and Gmail connections for each company
     const companiesWithServices = await Promise.all(
       userCompanies.map(async (company) => {
         const companyServices = await db.query.services.findMany({
           where: eq(services.companyId, company.id),
         })
+
+        // Check Gmail connection status
+        const gmailConnection = await db.query.gmailConnections.findFirst({
+          where: eq(gmailConnections.companyId, company.id),
+        })
+
+        const now = new Date()
+        const isGmailConnected =
+          gmailConnection && gmailConnection.expiresAt > now
+
         return {
           ...company,
           services: companyServices,
+          gmailConnected: isGmailConnected,
+          gmailEmail: gmailConnection?.gmailEmail || null,
         }
       }),
     )

@@ -53,6 +53,8 @@ export interface Service {
 // Extended type for companies with services (what the API returns)
 export interface CompanyWithServices extends Company {
   services: Service[]
+  gmailConnected?: boolean
+  gmailEmail?: string | null
 }
 
 export interface QuoteService {

@@ -4,7 +4,15 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { ArrowLeft, File, GitBranch, Mail, RefreshCw, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  Check,
+  File,
+  GitBranch,
+  Mail,
+  RefreshCw,
+  X,
+} from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -47,7 +55,7 @@ function getStatusIcon(status: QuoteStatus) {
     case 'sent':
       return <Mail className="h-4 w-4" />
     case 'accepted':
-      return <X className="h-4 w-4" />
+      return <Check className="h-4 w-4" />
     case 'rejected':
       return <X className="h-4 w-4" />
     case 'revised':
@@ -185,7 +193,7 @@ export default function QuoteVersionsPage() {
               >
                 {getStatusIcon(originalQuote.status)} {originalQuote.status}
               </Badge>
-              <Badge variant="secondary">v{originalQuote.versionNumber}</Badge>
+              <Badge variant="secondary">v1</Badge>
             </div>
           </CardTitle>
         </CardHeader>
@@ -256,11 +264,11 @@ export default function QuoteVersionsPage() {
             </p>
           </div>
           <div className="space-y-4">
-            {revisions.map((revision) => (
+            {revisions.map((revision, index) => (
               <Card key={revision.id} className="border-l-4 border-l-blue-500">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Revision {revision.versionNumber}</span>
+                    <span>Revision {index + 1}</span>
                     <div className="flex items-center gap-2">
                       <Badge
                         variant="outline"
@@ -268,9 +276,7 @@ export default function QuoteVersionsPage() {
                       >
                         {getStatusIcon(revision.status)} {revision.status}
                       </Badge>
-                      <Badge variant="secondary">
-                        v{revision.versionNumber}
-                      </Badge>
+                      <Badge variant="secondary">v{index + 2}</Badge>
                     </div>
                   </CardTitle>
                   <CardDescription>
@@ -350,10 +356,7 @@ export default function QuoteVersionsPage() {
                       View Preview
                     </Button>
                     {/* Only show Edit button for the latest version with rejected or revised status */}
-                    {revision.versionNumber ===
-                      Math.max(
-                        ...revisions.map((r) => Number(r.versionNumber)),
-                      ).toString() &&
+                    {index === revisions.length - 1 &&
                       (revision.status === 'rejected' ||
                         revision.status === 'revised') && (
                         <Button variant="outline" size="sm" asChild>
@@ -377,7 +380,13 @@ export default function QuoteVersionsPage() {
                 setShowPreview(false)
                 setSelectedQuote(null)
               }}
-              versionNumber={selectedQuote.versionNumber}
+              versionNumber={
+                selectedQuote.parentQuoteId
+                  ? (
+                      revisions.findIndex((r) => r.id === selectedQuote.id) + 2
+                    ).toString()
+                  : '1'
+              }
               isRevision={!!selectedQuote.parentQuoteId}
             />
           </div>
