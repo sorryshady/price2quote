@@ -209,6 +209,158 @@ interface AIQuoteResponse {
 }
 ```
 
+### 5. **User Profile Page Pattern**
+
+**Comprehensive User Management Architecture:**
+
+```typescript
+// Profile page layout with logical component grouping
+<div className="container mx-auto p-6">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {/* Left Column: Personal & Account */}
+    <div className="space-y-6">
+      <ProfileForm />
+      <AccountInfo />
+      <ConnectedAccounts />
+    </div>
+
+    {/* Right Column: Subscription & Security */}
+    <div className="space-y-6">
+      <SubscriptionDisplay />
+      <ProfileSecurity />
+    </div>
+  </div>
+</div>
+```
+
+**Form Management with Real-time Validation:**
+
+```typescript
+// Profile form with proper state management
+const form = useForm<{ name: string }>({
+  resolver: zodResolver(profileSchema),
+  defaultValues: { name: user?.name || '' },
+})
+
+// Real-time dirty state tracking
+const isDirty = form.formState.isDirty
+const isSubmitting = form.formState.isSubmitting
+
+// Server action integration
+const onSubmit = async (data: { name: string }) => {
+  const result = await updateUserProfileAction(data)
+  if (result.success) {
+    form.reset({ name: data.name }) // Reset dirty state
+    toast.success('Profile updated successfully')
+  }
+}
+```
+
+**Subscription Analytics with Visual Indicators:**
+
+```typescript
+// Usage analytics with progress visualization
+const { data: quoteLimit } = useQuoteLimit()
+const { data: companyLimit } = useCompanyLimit()
+
+// Custom Progress component for usage display
+<div className="space-y-4">
+  <div className="flex items-center justify-between">
+    <span className="text-sm text-muted-foreground">Quotes Used</span>
+    <span className="text-sm font-medium">
+      {quoteLimit?.used || 0} / {quoteLimit?.limit || 0}
+    </span>
+  </div>
+  <Progress
+    value={((quoteLimit?.used || 0) / (quoteLimit?.limit || 1)) * 100}
+    className="h-2"
+  />
+</div>
+```
+
+**Security Settings with Conditional Rendering:**
+
+```typescript
+// Conditional security features based on auth method
+{user?.hasPassword ? (
+  <ChangePasswordForm />
+) : (
+  <div className="rounded-md bg-blue-50 p-4">
+    <p className="text-sm text-blue-700">
+      You're signed in with {user?.authProvider}.
+      Password changes are managed through your OAuth provider.
+    </p>
+  </div>
+)}
+```
+
+**Server Actions Pattern for Profile Management:**
+
+```typescript
+// Comprehensive profile server actions
+export async function updateUserProfileAction(data: { name: string }) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const validatedData = profileSchema.parse(data)
+
+    await db
+      .update(users)
+      .set({ name: validatedData.name, updatedAt: new Date() })
+      .where(eq(users.id, user.id))
+
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: 'Failed to update profile' }
+  }
+}
+
+// User data fetching with connected accounts
+export async function getUserProfileAction() {
+  const user = await getCurrentUser()
+  const connectedAccounts = await getConnectedAccounts(user.id)
+  const hasPassword = await checkUserHasPassword(user.id)
+
+  return {
+    user: { ...user, hasPassword },
+    connectedAccounts,
+  }
+}
+```
+
+**Schema Organization Pattern:**
+
+```typescript
+// Dedicated schema files with proper exports
+// src/lib/schemas/change-password.ts
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+// src/lib/schemas/index.ts - Clean exports only
+export { changePasswordSchema } from './change-password'
+export { loginSchema } from './login'
+export { registerSchema } from './register'
+```
+
+**Benefits:**
+
+- **Logical Organization**: Components grouped by functionality (personal vs subscription)
+- **Real-time Feedback**: Immediate form validation and state updates
+- **Conditional Features**: Different UI based on user authentication method
+- **Responsive Design**: Mobile-friendly layout with proper grid system
+- **Server-side Validation**: Comprehensive validation in server actions
+- **Clean Architecture**: Proper separation of concerns and schema organization
+- **User Experience**: Intuitive navigation and clear information hierarchy
+
 ### 5. **Subscription Management Pattern**
 
 **Real-time Usage Tracking:**

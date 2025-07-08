@@ -199,6 +199,71 @@
   - **NEW: Form hiding after quote generation to prevent accidents**
   - **NEW: Automatic form restoration after page refresh**
 
+### ✅ **User Profile Page System**
+
+- **Profile Information Management:**
+
+  - Real-time profile editing with React Hook Form and Zod validation
+  - Name updates with proper dirty state handling
+  - Email display (read-only with verification status)
+  - Profile form with server-side validation and error handling
+
+- **Subscription Overview:**
+
+  - Current tier display (Free/Pro) with visual indicators
+  - Real-time usage analytics with progress bars for quotes and companies
+  - Plan features list with clear benefit descriptions
+  - Upgrade section for free users with pricing and benefits grid
+  - Custom Progress component for visual usage indicators
+
+- **Account Information:**
+
+  - User email with verification status badges
+  - Account registration date with proper formatting
+  - Security information and account warnings for unverified users
+  - Authentication method display with icons and clear labels
+
+- **Connected Accounts:**
+
+  - Authentication method identification (credentials vs OAuth)
+  - Gmail integration guidance and connection status
+  - Simplified design aligned with actual auth system constraints
+  - Clear information about email restrictions for different auth methods
+
+- **Security Settings:**
+
+  - Password change functionality for credential users
+  - Current password validation with bcrypt verification
+  - OAuth account notices for users without passwords
+  - Proper form validation and error handling
+
+- **Server Actions:**
+
+  - `updateUserProfileAction` for secure profile name updates
+  - `getUserProfileAction` for fetching complete user data with connected accounts
+  - `changePasswordAction` for secure password changes with validation
+  - Proper error handling and validation in all actions
+
+- **Responsive Design:**
+
+  - Mobile-friendly grid layout with logical component grouping
+  - Left column: Personal & Account (Profile Form, Account Info, Connected Accounts)
+  - Right column: Subscription & Security (Subscription Display, Security Settings)
+  - Consistent design system with cards, badges, icons, and proper spacing
+
+- **Schema Organization:**
+
+  - Dedicated schema files following proper organization patterns
+  - `change-password.ts` for password validation schema
+  - Clean index.ts exports without inline definitions
+  - Proper separation of client and server code boundaries
+
+- **Navigation Integration:**
+
+  - Updated user dropdown menu to link to profile page
+  - Proper routing and page structure integration
+  - Seamless user experience with existing navigation patterns
+
 - **AI-Assisted Quote Generation:**
 
   - Market analysis with location-based insights
