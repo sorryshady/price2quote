@@ -498,6 +498,21 @@ export default function NewQuotePage() {
           })),
           totalAmount: calculateTotal(),
           notes: data.finalNotes || '',
+          // Tax fields
+          subtotal: selectedServices.reduce(
+            (sum, s) => sum + s.quantity * s.unitPrice,
+            0,
+          ),
+          taxEnabled: data.taxEnabled,
+          taxRate: data.taxRate ? data.taxRate / 100 : 0, // Convert percentage to decimal
+          taxAmount:
+            data.taxEnabled && data.taxRate
+              ? selectedServices.reduce(
+                  (sum, s) => sum + s.quantity * s.unitPrice,
+                  0,
+                ) *
+                (data.taxRate / 100)
+              : 0,
         },
       })
 

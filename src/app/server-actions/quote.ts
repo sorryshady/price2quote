@@ -192,6 +192,11 @@ export async function getQuotesAction(userId: string) {
         revisionNotes: quotes.revisionNotes,
         clientFeedback: quotes.clientFeedback,
         versionNumber: quotes.versionNumber,
+        // Tax fields
+        subtotal: quotes.subtotal,
+        taxEnabled: quotes.taxEnabled,
+        taxRate: quotes.taxRate,
+        taxAmount: quotes.taxAmount,
         createdAt: quotes.createdAt,
         updatedAt: quotes.updatedAt,
         company: {
@@ -313,6 +318,11 @@ export async function getQuoteWithServicesAction(quoteId: string) {
         revisionNotes: quotes.revisionNotes,
         clientFeedback: quotes.clientFeedback,
         versionNumber: quotes.versionNumber,
+        // Tax fields
+        subtotal: quotes.subtotal,
+        taxEnabled: quotes.taxEnabled,
+        taxRate: quotes.taxRate,
+        taxAmount: quotes.taxAmount,
         createdAt: quotes.createdAt,
         updatedAt: quotes.updatedAt,
         company: {
@@ -465,6 +475,11 @@ export async function generateFinalQuoteAction(data: {
     }>
     totalAmount: number
     notes?: string
+    // Tax fields
+    subtotal?: number
+    taxEnabled?: boolean
+    taxRate?: number
+    taxAmount?: number
   }
 }) {
   try {
@@ -1206,6 +1221,11 @@ export async function getLatestQuotesAction(userId: string) {
         revisionNotes: quotes.revisionNotes,
         clientFeedback: quotes.clientFeedback,
         versionNumber: quotes.versionNumber,
+        // Tax fields
+        subtotal: quotes.subtotal,
+        taxEnabled: quotes.taxEnabled,
+        taxRate: quotes.taxRate,
+        taxAmount: quotes.taxAmount,
         createdAt: quotes.createdAt,
         updatedAt: quotes.updatedAt,
         company: {

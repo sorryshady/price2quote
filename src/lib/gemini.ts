@@ -424,6 +424,11 @@ export async function generateFinalQuoteWithAI(data: {
     }>
     totalAmount: number
     notes: string
+    // Tax fields
+    subtotal?: number
+    taxEnabled?: boolean
+    taxRate?: number
+    taxAmount?: number
   }
 }) {
   try {
@@ -481,6 +486,14 @@ RESPONSE FORMAT (JSON only):
     "keyHighlights": ["string with key selling points"],
     "valueProposition": "string explaining the value to the client",
     "competitiveAdvantages": ["string with competitive advantages"]
+  },
+  "pricing": {
+    "subtotal": ${data.finalData.subtotal || data.finalData.totalAmount},
+    "taxEnabled": ${data.finalData.taxEnabled || false},
+    "taxRate": ${data.finalData.taxRate || 0},
+    "taxAmount": ${data.finalData.taxAmount || 0},
+    "totalAmount": ${data.finalData.totalAmount},
+    "currency": "${data.companyData.currency}"
   }
 }`
 
