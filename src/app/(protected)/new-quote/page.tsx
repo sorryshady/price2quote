@@ -80,6 +80,9 @@ const quoteSchema = z.object({
   clientBudget: z.number().min(0).optional(),
   projectComplexity: z.enum(['simple', 'moderate', 'complex']),
   currency: z.string(),
+  // Tax fields
+  taxEnabled: z.boolean(),
+  taxRate: z.number().min(0).max(100),
   finalNotes: z.string().optional(),
 })
 
@@ -148,10 +151,6 @@ export default function NewQuotePage() {
   } | null>(null)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
-  // Tax state
-  const [taxEnabled, setTaxEnabled] = useState(false)
-  const [taxRate, setTaxRate] = useState(0)
-
   const form = useForm<QuoteFormData>({
     resolver: zodResolver(quoteSchema),
     defaultValues: {
@@ -166,6 +165,9 @@ export default function NewQuotePage() {
       clientBudget: undefined,
       projectComplexity: 'moderate',
       currency: 'USD',
+      // Tax fields
+      taxEnabled: false,
+      taxRate: 0,
       finalNotes: '',
     },
   })
@@ -260,6 +262,9 @@ export default function NewQuotePage() {
     const subtotal = selectedServices.reduce((sum, service) => {
       return sum + service.quantity * service.unitPrice
     }, 0)
+
+    const taxEnabled = form.watch('taxEnabled')
+    const taxRate = form.watch('taxRate')
 
     if (taxEnabled && taxRate > 0) {
       const taxCalc = calculateTax(subtotal, taxRate)
@@ -516,8 +521,8 @@ export default function NewQuotePage() {
         projectComplexity: data.projectComplexity,
         currency: data.currency,
         // Tax fields
-        taxEnabled,
-        taxRate,
+        taxEnabled: data.taxEnabled,
+        taxRate: data.taxRate,
         selectedServices: selectedServices.map((s) => ({
           serviceId: s.serviceId,
           quantity: s.quantity,
@@ -616,9 +621,6 @@ export default function NewQuotePage() {
     setFinalQuoteData(null)
     setSavedQuoteId(null)
     setShowViewQuote(false)
-    // Reset tax settings
-    setTaxEnabled(false)
-    setTaxRate(0)
     localStorage.removeItem('quote')
 
     // Re-select company for free users after reset
@@ -643,6 +645,9 @@ export default function NewQuotePage() {
     form.setValue('deliveryTimeline', '1_week')
     form.setValue('projectComplexity', 'moderate')
     form.setValue('clientBudget', 800)
+    // Set tax for testing
+    form.setValue('taxEnabled', true)
+    form.setValue('taxRate', 8.25)
     form.setValue(
       'finalNotes',
       'Please ensure all items are nut-free due to guest allergies. Delivery needed 2 hours before event start time. Include cake stand and serving utensils.',
@@ -1204,73 +1209,88 @@ export default function NewQuotePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="tax-enabled"
-                    checked={taxEnabled}
-                    onCheckedChange={setTaxEnabled}
-                  />
-                  <Label htmlFor="tax-enabled" className="text-sm font-medium">
-                    Apply tax to this quote
-                  </Label>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="taxEnabled"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-2">
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-medium">
+                        Apply tax to this quote
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
 
-                {taxEnabled && (
-                  <div className="space-y-2">
-                    <Label htmlFor="tax-rate" className="text-sm">
-                      Tax Rate (%)
-                    </Label>
-                    <Input
-                      id="tax-rate"
-                      type="number"
-                      placeholder="8.25"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={taxRate || ''}
-                      onChange={(e) =>
-                        setTaxRate(parseFloat(e.target.value) || 0)
-                      }
-                      className="w-32"
-                    />
-                    <p className="text-muted-foreground text-xs">
-                      Enter tax rate as percentage (e.g., 8.25 for 8.25%)
-                    </p>
-                  </div>
+                {form.watch('taxEnabled') && (
+                  <FormField
+                    control={form.control}
+                    name="taxRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tax Rate (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="8.25"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            className="w-32"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <p className="text-muted-foreground text-xs">
+                          Enter tax rate as percentage (e.g., 8.25 for 8.25%)
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
 
                 {/* Tax Preview */}
-                {taxEnabled && taxRate > 0 && selectedServices.length > 0 && (
-                  <div className="bg-muted rounded-md p-3 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>
-                        {formatCurrency(
-                          selectedServices.reduce(
-                            (sum, s) => sum + s.quantity * s.unitPrice,
-                            0,
-                          ),
-                        )}
-                      </span>
+                {form.watch('taxEnabled') &&
+                  form.watch('taxRate') > 0 &&
+                  selectedServices.length > 0 && (
+                    <div className="bg-muted rounded-md p-3 text-sm">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>
+                          {formatCurrency(
+                            selectedServices.reduce(
+                              (sum, s) => sum + s.quantity * s.unitPrice,
+                              0,
+                            ),
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tax ({form.watch('taxRate')}%):</span>
+                        <span>
+                          {formatCurrency(
+                            selectedServices.reduce(
+                              (sum, s) => sum + s.quantity * s.unitPrice,
+                              0,
+                            ) *
+                              (form.watch('taxRate') / 100),
+                          )}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex justify-between border-t pt-1 font-medium">
+                        <span>Total:</span>
+                        <span>{formatCurrency(calculateTotal())}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Tax ({taxRate}%):</span>
-                      <span>
-                        {formatCurrency(
-                          selectedServices.reduce(
-                            (sum, s) => sum + s.quantity * s.unitPrice,
-                            0,
-                          ) *
-                            (taxRate / 100),
-                        )}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex justify-between border-t pt-1 font-medium">
-                      <span>Total:</span>
-                      <span>{formatCurrency(calculateTotal())}</span>
-                    </div>
-                  </div>
-                )}
+                  )}
               </CardContent>
             </Card>
 
