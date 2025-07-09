@@ -127,50 +127,73 @@ export function RevenueCharts({
   return (
     <div className="space-y-6">
       {/* Revenue Trend Line Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0088FE" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#0088FE" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="monthLabel"
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                  tickFormatter={(value) => formatCurrency(value, currency)}
-                />
-                <Tooltip
-                  content={(props) => (
-                    <CustomTooltip {...props} currency={currency} />
-                  )}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#0088FE"
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {monthlyData.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyData}>
+                  <defs>
+                    <linearGradient
+                      id="colorRevenue"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#0088FE" stopOpacity={0.8} />
+                      <stop
+                        offset="95%"
+                        stopColor="#0088FE"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="monthLabel"
+                    axisLine={false}
+                    tickLine={false}
+                    className="text-xs"
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    className="text-xs"
+                    tickFormatter={(value) => formatCurrency(value, currency)}
+                  />
+                  <Tooltip
+                    content={(props) => (
+                      <CustomTooltip {...props} currency={currency} />
+                    )}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#0088FE"
+                    fillOpacity={1}
+                    fill="url(#colorRevenue)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-muted-foreground flex h-[300px] items-center justify-center">
+              <p>No data available</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Revenue Breakdown Bar Chart */}
       {breakdownData.length > 0 ? (

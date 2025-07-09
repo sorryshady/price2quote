@@ -134,7 +134,9 @@ export function QuotePerformanceCharts({
               Revision Rate
             </p>
             <div className="text-xl font-bold text-orange-600">
-              {revisionFrequency.toFixed(1)}%
+              {revisionFrequency.toFixed(1) === 'NaN'
+                ? '0.0%'
+                : `${revisionFrequency.toFixed(1)}%`}
             </div>
           </div>
         </Card>
@@ -142,109 +144,152 @@ export function QuotePerformanceCharts({
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Conversion Funnel */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quote Conversion Funnel</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <FunnelChart>
-                  <Funnel dataKey="value" data={funnelData} isAnimationActive />
-                  <Tooltip content={<CustomTooltip />} />
-                </FunnelChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {funnelData.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Conversion Funnel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <FunnelChart>
+                    <Funnel
+                      dataKey="value"
+                      data={funnelData}
+                      isAnimationActive
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                  </FunnelChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Conversion Funnel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-muted-foreground flex h-[250px] items-center justify-center">
+                <p>No data available</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quote Volume by Status */}
+        {funnelData.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Status Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={funnelData}>
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      className="text-xs"
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      className="text-xs"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Status Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-muted-foreground flex h-[250px] items-center justify-center">
+                <p>No data available</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Quotes and Acceptance Trend */}
+      {monthlyData.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Quote Status Distribution</CardTitle>
+            <CardTitle>Quote Performance Over Time</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={funnelData}>
+                <ComposedChart data={monthlyData}>
                   <XAxis
-                    dataKey="name"
+                    dataKey="monthLabel"
                     axisLine={false}
                     tickLine={false}
                     className="text-xs"
                   />
                   <YAxis
+                    yAxisId="quotes"
                     axisLine={false}
                     tickLine={false}
                     className="text-xs"
                   />
+                  <YAxis
+                    yAxisId="rate"
+                    orientation="right"
+                    axisLine={false}
+                    tickLine={false}
+                    className="text-xs"
+                    tickFormatter={(value) => `${value}%`}
+                  />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#8884d8" />
-                </BarChart>
+                  <Bar
+                    yAxisId="quotes"
+                    dataKey="created"
+                    name="Created"
+                    fill="#8884d8"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    yAxisId="quotes"
+                    dataKey="accepted"
+                    name="Accepted"
+                    fill="#00C49F"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Line
+                    yAxisId="rate"
+                    type="monotone"
+                    dataKey="acceptanceRate"
+                    name="Acceptance Rate (%)"
+                    stroke="#FF8042"
+                    strokeWidth={3}
+                    dot={{ fill: '#FF8042', strokeWidth: 2, r: 4 }}
+                  />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Quotes and Acceptance Trend */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quote Performance Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={monthlyData}>
-                <XAxis
-                  dataKey="monthLabel"
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                />
-                <YAxis
-                  yAxisId="quotes"
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                />
-                <YAxis
-                  yAxisId="rate"
-                  orientation="right"
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  yAxisId="quotes"
-                  dataKey="created"
-                  name="Created"
-                  fill="#8884d8"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  yAxisId="quotes"
-                  dataKey="accepted"
-                  name="Accepted"
-                  fill="#00C49F"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Line
-                  yAxisId="rate"
-                  type="monotone"
-                  dataKey="acceptanceRate"
-                  name="Acceptance Rate (%)"
-                  stroke="#FF8042"
-                  strokeWidth={3}
-                  dot={{ fill: '#FF8042', strokeWidth: 2, r: 4 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Quote Performance Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-muted-foreground flex h-[250px] items-center justify-center">
+              <p>No data available</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

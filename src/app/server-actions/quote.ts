@@ -1199,26 +1199,43 @@ export async function getLatestQuotesAction(userId: string) {
       quoteFamilies.get(familyKey)!.push(quote)
     })
 
-    // For each family, get the latest non-rejected version (highest version number)
+    // For each family, get the latest version with smart rejected quote logic
     const latestQuotes = Array.from(quoteFamilies.values())
       .map((family) => {
-        // Filter out rejected quotes first
-        const nonRejectedQuotes = family.filter(
-          (quote) => quote.status !== 'rejected',
-        )
-
-        // If no non-rejected quotes exist, return null (this family should be excluded)
-        if (nonRejectedQuotes.length === 0) {
-          return null
-        }
-
-        // Sort by version number (convert to number, handle '1' vs '2' etc.)
-        const sorted = nonRejectedQuotes.sort((a, b) => {
+        // Sort by version number first (convert to number, handle '1' vs '2' etc.)
+        const sorted = family.sort((a, b) => {
           const versionA = parseInt(a.versionNumber || '1')
           const versionB = parseInt(b.versionNumber || '1')
           return versionB - versionA // Latest first
         })
-        return sorted[0] // Return the latest non-rejected version
+
+        // Check if there are any non-rejected quotes in the family
+        const nonRejectedQuotes = family.filter(
+          (quote) => quote.status !== 'rejected',
+        )
+
+        // If there are non-rejected quotes, return the latest non-rejected one
+        if (nonRejectedQuotes.length > 0) {
+          const sortedNonRejected = nonRejectedQuotes.sort((a, b) => {
+            const versionA = parseInt(a.versionNumber || '1')
+            const versionB = parseInt(b.versionNumber || '1')
+            return versionB - versionA // Latest first
+          })
+          return sortedNonRejected[0]
+        }
+
+        // If ALL quotes in the family are rejected, check if this is a standalone rejection
+        // or a family with multiple versions (superseded rejections)
+        if (family.length === 1) {
+          // This is a standalone rejected quote (original quote with no revisions)
+          // Show it since it's the only version and represents the final state
+          return sorted[0]
+        } else {
+          // This is a family with multiple versions where all are rejected
+          // This typically means the original was rejected and revisions were also rejected
+          // In this case, show the latest rejected version
+          return sorted[0]
+        }
       })
       .filter((quote): quote is (typeof allQuotes)[0] => quote !== null) // Remove null entries and type properly
 

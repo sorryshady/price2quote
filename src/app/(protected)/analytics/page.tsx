@@ -398,64 +398,82 @@ export default function AnalyticsPage() {
               <CardHeader>
                 <CardTitle>Top Clients by Revenue</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {analytics.clients.topClients
-                    .slice(0, 8)
-                    .map(
-                      (client: {
-                        name: string
-                        email: string
-                        totalRevenue: number
-                        quotesCount: number
-                      }) => (
-                        <div
-                          key={client.email}
-                          className="flex items-center justify-between border-b pb-2 last:border-0"
-                        >
-                          <div>
-                            <div className="font-medium">{client.name}</div>
-                            <div className="text-muted-foreground text-sm">
-                              {client.email}
+              {analytics.clients.topClients.length > 0 ? (
+                <CardContent>
+                  <div className="space-y-3">
+                    {analytics.clients.topClients
+                      .slice(0, 8)
+                      .map(
+                        (client: {
+                          name: string
+                          email: string
+                          totalRevenue: number
+                          quotesCount: number
+                        }) => (
+                          <div
+                            key={client.email}
+                            className="flex items-center justify-between border-b pb-2 last:border-0"
+                          >
+                            <div>
+                              <div className="font-medium">{client.name}</div>
+                              <div className="text-muted-foreground text-sm">
+                                {client.email}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">
+                                {client.totalRevenue.toLocaleString()}{' '}
+                                {analytics.summary.currency}
+                              </div>
+                              <div className="text-muted-foreground text-sm">
+                                {client.quotesCount} quotes
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-medium">
-                              {client.totalRevenue.toLocaleString()}{' '}
-                              {analytics.summary.currency}
-                            </div>
-                            <div className="text-muted-foreground text-sm">
-                              {client.quotesCount} quotes
-                            </div>
-                          </div>
-                        </div>
-                      ),
-                    )}
-                </div>
-              </CardContent>
+                        ),
+                      )}
+                  </div>
+                </CardContent>
+              ) : (
+                <CardContent>
+                  <div className="text-muted-foreground flex h-[200px] items-center justify-center">
+                    No client data available
+                  </div>
+                </CardContent>
+              )}
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle>Geographic Distribution</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {analytics.clients.clientsByLocation
-                    .slice(0, 8)
-                    .map((location: { country: string; count: number }) => (
-                      <div
-                        key={location.country}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="font-medium">{location.country}</span>
-                        <span className="text-muted-foreground">
-                          {location.count} clients
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
+              {analytics.clients.clientsByLocation.length > 0 ? (
+                <CardContent>
+                  <div className="space-y-3">
+                    {analytics.clients.clientsByLocation
+                      .slice(0, 8)
+                      .map((location: { country: string; count: number }) => (
+                        <div
+                          key={location.country}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="font-medium">
+                            {location.country}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {location.count} clients
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              ) : (
+                <CardContent>
+                  <div className="text-muted-foreground flex h-[200px] items-center justify-center">
+                    No client data available
+                  </div>
+                </CardContent>
+              )}
             </Card>
           </div>
         </TabsContent>

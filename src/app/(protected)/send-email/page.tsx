@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 
-import { getGmailConnectionAction } from '@/app/server-actions/gmail'
 import { env } from '@/env/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
@@ -26,14 +26,6 @@ import type { Quote } from '@/types'
 
 import { EmailComposer, type EmailData } from './_components/email-composer'
 import { QuoteSelector } from './_components/quote-selector'
-
-// Define a type for GmailConnection
-interface GmailConnection {
-  gmailEmail: string
-  expiresAt: Date
-  isExpired: boolean
-  // add other fields as needed
-}
 
 export default function SendEmailPage() {
   const { user } = useAuth()
@@ -45,24 +37,9 @@ export default function SendEmailPage() {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [isSending, setIsSending] = useState(false)
-  const [gmailConnection, setGmailConnection] =
-    useState<GmailConnection | null>(null)
 
   // Get the first company (for free users) or check if any company has email
   const primaryCompany = companies?.[0]
-
-  useEffect(() => {
-    async function fetchConnection() {
-      if (!primaryCompany) return
-      const result = await getGmailConnectionAction(primaryCompany.id)
-      if (result.success && result.connection && !result.connection.isExpired) {
-        setGmailConnection(result.connection)
-      } else {
-        setGmailConnection(null)
-      }
-    }
-    fetchConnection()
-  }, [primaryCompany])
 
   // Handle URL parameters for success/error states
   useEffect(() => {
@@ -115,7 +92,7 @@ export default function SendEmailPage() {
             type="success"
           />,
         )
-        refetch() // Refresh company data
+        refetch() // Refresh company data to update Gmail status
       } else {
         const data = await response.json()
         toast.custom(
@@ -249,7 +226,11 @@ export default function SendEmailPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-muted-foreground">
-              No company found. Please add a company first.
+              No company found. Please{' '}
+              <Link href="/add-company" className="text-primary underline">
+                add a company
+              </Link>{' '}
+              first.
             </p>
           </CardContent>
         </Card>
@@ -257,7 +238,9 @@ export default function SendEmailPage() {
     )
   }
 
-  const hasGmailConnected = !!gmailConnection
+  // Use Gmail connection status from companies query
+  const hasGmailConnected = primaryCompany.gmailConnected
+  const gmailEmail = primaryCompany.gmailEmail
 
   return (
     <div className="space-y-6">
@@ -270,12 +253,12 @@ export default function SendEmailPage() {
         </div>
 
         {/* Connected Status - Top Right */}
-        {hasGmailConnected && (
+        {hasGmailConnected && gmailEmail && (
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
             <div className="flex w-full items-center gap-2 rounded-md bg-green-100 px-3 py-1.5 sm:w-auto dark:bg-green-900/30">
               <MailCheck className="h-4 w-4 text-green-600" />
               <span className="truncate text-sm font-medium text-green-700 dark:text-green-300">
-                {gmailConnection.gmailEmail}
+                {gmailEmail}
               </span>
             </div>
             <Button
