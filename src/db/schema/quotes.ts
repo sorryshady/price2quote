@@ -1,4 +1,5 @@
 import {
+  boolean,
   decimal,
   json,
   pgEnum,
@@ -53,6 +54,11 @@ const quotes = pgTable('quotes', {
   projectTitle: varchar('project_title', { length: 255 }).notNull(),
   projectDescription: text('project_description'),
   amount: decimal('amount', { precision: 10, scale: 2 }),
+  // Tax fields
+  subtotal: decimal('subtotal', { precision: 10, scale: 2 }),
+  taxEnabled: boolean('tax_enabled').default(false).notNull(),
+  taxRate: decimal('tax_rate', { precision: 5, scale: 4 }).default('0'), // e.g., 0.0825 for 8.25%
+  taxAmount: decimal('tax_amount', { precision: 10, scale: 2 }).default('0'),
   currency: varchar('currency', { length: 3 }).default('USD').notNull(),
   status: quoteStatusEnum('status').default('draft').notNull(),
   clientEmail: varchar('client_email', { length: 255 }),

@@ -84,6 +84,11 @@ export interface Quote {
   projectTitle: string
   projectDescription?: string | null
   amount?: string | null
+  // Tax fields
+  subtotal?: string | null
+  taxEnabled: boolean
+  taxRate?: string | null
+  taxAmount?: string | null
   currency: string
   status: QuoteStatus
   clientEmail?: string | null

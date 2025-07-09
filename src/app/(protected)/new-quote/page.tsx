@@ -57,6 +57,7 @@ import {
   generateQuoteFilename,
   generateQuotePDF,
 } from '@/lib/pdf-utils'
+import { calculateTax } from '@/lib/tax-utils'
 import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Service } from '@/types'
 
@@ -146,6 +147,10 @@ export default function NewQuotePage() {
     negotiationTips: string[]
   } | null>(null)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+
+  // Tax state
+  const [taxEnabled, setTaxEnabled] = useState(false)
+  const [taxRate, setTaxRate] = useState(0)
 
   const form = useForm<QuoteFormData>({
     resolver: zodResolver(quoteSchema),
@@ -252,9 +257,16 @@ export default function NewQuotePage() {
   }
 
   const calculateTotal = () => {
-    return selectedServices.reduce((sum, service) => {
+    const subtotal = selectedServices.reduce((sum, service) => {
       return sum + service.quantity * service.unitPrice
     }, 0)
+
+    if (taxEnabled && taxRate > 0) {
+      const taxCalc = calculateTax(subtotal, taxRate)
+      return taxCalc.total
+    }
+
+    return subtotal
   }
 
   // Get the current currency from selected company
@@ -503,6 +515,9 @@ export default function NewQuotePage() {
         clientBudget: data.clientBudget,
         projectComplexity: data.projectComplexity,
         currency: data.currency,
+        // Tax fields
+        taxEnabled,
+        taxRate,
         selectedServices: selectedServices.map((s) => ({
           serviceId: s.serviceId,
           quantity: s.quantity,
@@ -601,6 +616,9 @@ export default function NewQuotePage() {
     setFinalQuoteData(null)
     setSavedQuoteId(null)
     setShowViewQuote(false)
+    // Reset tax settings
+    setTaxEnabled(false)
+    setTaxRate(0)
     localStorage.removeItem('quote')
 
     // Re-select company for free users after reset
@@ -1174,6 +1192,85 @@ export default function NewQuotePage() {
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
+
+            {/* Tax Configuration */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tax Configuration</CardTitle>
+                <CardDescription>
+                  Configure tax settings for this quote (optional)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="tax-enabled"
+                    checked={taxEnabled}
+                    onCheckedChange={setTaxEnabled}
+                  />
+                  <Label htmlFor="tax-enabled" className="text-sm font-medium">
+                    Apply tax to this quote
+                  </Label>
+                </div>
+
+                {taxEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="tax-rate" className="text-sm">
+                      Tax Rate (%)
+                    </Label>
+                    <Input
+                      id="tax-rate"
+                      type="number"
+                      placeholder="8.25"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={taxRate || ''}
+                      onChange={(e) =>
+                        setTaxRate(parseFloat(e.target.value) || 0)
+                      }
+                      className="w-32"
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      Enter tax rate as percentage (e.g., 8.25 for 8.25%)
+                    </p>
+                  </div>
+                )}
+
+                {/* Tax Preview */}
+                {taxEnabled && taxRate > 0 && selectedServices.length > 0 && (
+                  <div className="bg-muted rounded-md p-3 text-sm">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>
+                        {formatCurrency(
+                          selectedServices.reduce(
+                            (sum, s) => sum + s.quantity * s.unitPrice,
+                            0,
+                          ),
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax ({taxRate}%):</span>
+                      <span>
+                        {formatCurrency(
+                          selectedServices.reduce(
+                            (sum, s) => sum + s.quantity * s.unitPrice,
+                            0,
+                          ) *
+                            (taxRate / 100),
+                        )}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex justify-between border-t pt-1 font-medium">
+                      <span>Total:</span>
+                      <span>{formatCurrency(calculateTotal())}</span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

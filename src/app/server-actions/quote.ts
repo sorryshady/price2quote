@@ -23,6 +23,7 @@ import {
   canCreateQuoteRevision,
   getCurrentMonthOriginalQuotes,
 } from '@/lib/subscription'
+import { calculateTax } from '@/lib/tax-utils'
 import type { QuoteStatus } from '@/types'
 
 export interface CreateQuoteData {
@@ -38,6 +39,9 @@ export interface CreateQuoteData {
   clientBudget?: number
   projectComplexity: string
   currency?: string
+  // Tax fields
+  taxEnabled?: boolean
+  taxRate?: number
   selectedServices: Array<{
     serviceId: string
     quantity: number
@@ -83,12 +87,24 @@ export async function createQuoteAction(data: CreateQuoteData) {
       }
     }
 
-    // Calculate total amount from services
-    const totalAmount = data.selectedServices.reduce((sum, service) => {
+    // Calculate subtotal from services
+    const subtotal = data.selectedServices.reduce((sum, service) => {
       const quantity = service.quantity || 1
       const unitPrice = service.unitPrice || 0
       return sum + quantity * unitPrice
     }, 0)
+
+    // Calculate tax if enabled
+    const taxEnabled = data.taxEnabled || false
+    const taxRate = data.taxRate || 0
+    let taxAmount = 0
+    let totalAmount = subtotal
+
+    if (taxEnabled && taxRate > 0) {
+      const taxCalc = calculateTax(subtotal, taxRate)
+      taxAmount = taxCalc.taxAmount
+      totalAmount = taxCalc.total
+    }
 
     const [quote] = await db
       .insert(quotes)
@@ -98,6 +114,10 @@ export async function createQuoteAction(data: CreateQuoteData) {
         projectTitle: data.projectTitle,
         projectDescription: data.projectDescription,
         amount: totalAmount > 0 ? totalAmount.toString() : undefined,
+        subtotal: subtotal > 0 ? subtotal.toString() : undefined,
+        taxEnabled,
+        taxRate: taxEnabled && taxRate > 0 ? (taxRate / 100).toString() : '0',
+        taxAmount: taxEnabled && taxAmount > 0 ? taxAmount.toString() : '0',
         currency: data.currency || 'USD',
         clientEmail: data.clientEmail,
         clientName: data.clientName,
@@ -667,6 +687,9 @@ export async function createRevisedQuoteAction(data: {
   clientBudget?: number
   projectComplexity: string
   currency?: string
+  // Tax fields
+  taxEnabled?: boolean
+  taxRate?: number
   selectedServices: Array<{
     serviceId: string
     quantity: number
@@ -715,12 +738,24 @@ export async function createRevisedQuoteAction(data: {
     // Calculate the next version number
     const nextVersionNumber = Number(originalQuote.versionNumber) + 1
 
-    // Calculate total amount from services
-    const totalAmount = data.selectedServices.reduce((sum, service) => {
+    // Calculate subtotal from services
+    const subtotal = data.selectedServices.reduce((sum, service) => {
       const quantity = service.quantity || 1
       const unitPrice = service.unitPrice || 0
       return sum + quantity * unitPrice
     }, 0)
+
+    // Calculate tax if enabled
+    const taxEnabled = data.taxEnabled || false
+    const taxRate = data.taxRate || 0
+    let taxAmount = 0
+    let totalAmount = subtotal
+
+    if (taxEnabled && taxRate > 0) {
+      const taxCalc = calculateTax(subtotal, taxRate)
+      taxAmount = taxCalc.taxAmount
+      totalAmount = taxCalc.total
+    }
 
     // Get service details for updating quoteData
     const serviceDetails = await db
@@ -786,6 +821,10 @@ export async function createRevisedQuoteAction(data: {
         clientBudget: data.clientBudget?.toString(),
         currency: data.currency,
         amount: totalAmount > 0 ? totalAmount.toString() : undefined,
+        subtotal: subtotal > 0 ? subtotal.toString() : undefined,
+        taxEnabled,
+        taxRate: taxEnabled && taxRate > 0 ? (taxRate / 100).toString() : '0',
+        taxAmount: taxEnabled && taxAmount > 0 ? taxAmount.toString() : '0',
         status: 'revised',
         parentQuoteId: rootQuoteId, // Always point to the root quote
         revisionNotes: data.revisionNotes,
