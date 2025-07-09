@@ -255,7 +255,7 @@ export async function getActionItemsAction(userId: string) {
         and(
           eq(quotes.userId, userId),
           eq(quotes.status, 'draft'),
-          sql`${quotes.createdAt} < ${sevenDaysAgo}`,
+          sql`${quotes.createdAt} < ${sevenDaysAgo.toISOString()}`,
         ),
       )
 

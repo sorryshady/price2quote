@@ -352,7 +352,7 @@ export class EmailSyncService {
       'offer',
       'discount',
       'sale',
-      'marketing',
+      // 'marketing',
       'advertisement',
       'sponsored',
       'unsubscribe',
@@ -370,6 +370,34 @@ export class EmailSyncService {
       return false
     }
 
+    // Note: A simple check, can be improved with more sophisticated NLP
+    const promotionalSubjects = [
+      'sale',
+      'discount',
+      'offer',
+      'newsletter',
+      'webinar',
+      'download',
+      'ebook',
+      'free',
+    ]
+    if (
+      promotionalSubjects.some((term) =>
+        email.subject.toLowerCase().includes(term),
+      )
+    ) {
+      console.log(`Skipping promotional email with subject: ${email.subject}`)
+      return false
+    }
+
+    // Check for unsubscribe links (common in promotional emails)
+    // const unsubscribeRegex = /unsubscribe|manage your subscription/i
+    // if (unsubscribeRegex.test(email.body)) {
+    //   console.log('Skipping email with unsubscribe link')
+    //   return false
+    // }
+
+    // All checks passed, process the email
     return true
   }
 

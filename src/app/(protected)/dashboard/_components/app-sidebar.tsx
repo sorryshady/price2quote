@@ -8,7 +8,6 @@ import {
   BarChart3,
   Briefcase,
   CirclePlusIcon,
-  FileImage,
   FileText,
   HelpCircle,
   LayoutDashboard,
@@ -58,11 +57,11 @@ const data = {
       url: '/quotes',
       icon: FileText,
     },
-    {
-      title: 'PDF Preview',
-      url: '/pdf-preview',
-      icon: FileImage,
-    },
+    // {
+    //   title: 'PDF Preview',
+    //   url: '/pdf-preview',
+    //   icon: FileImage,
+    // },
     {
       title: 'Send Email',
       url: '/send-email',
