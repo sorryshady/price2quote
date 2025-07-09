@@ -10,3 +10,4 @@ random quote_sent in status inside conversation.
 DONE: when new unread email fetched invalidate conversation using the id.
 
 Negotiation is giving results in USD. Need to fix that
+Need to check the implementation of the actions required thing. Right now it shows some things but not fully functional.

@@ -251,7 +251,18 @@
     - **API Organization**: Properly organized Gmail endpoints under `/api/auth/gmail/` structure
     - **Benefits**: Users can now connect Gmail accounts to specific companies for email sending
 
-15. **NEW: AI Unit Price Recommendation System COMPLETED:**
+15. **NEW: PDF Generation Overhaul & Bug Fixes COMPLETED:**
+
+    - **Professional Redesign**: Overhauled the PDF quote to a formal, legal-document style with a monochromatic color scheme, improved typography, and a cleaner layout.
+    - **Layout Bug Fixes**: Corrected layout issues where borders would break across pages by adopting a more robust styling strategy using section-based borders.
+    - **Header/Footer**: Ensured the header only appears on the first page and added a professional footer with page numbering (e.g., "Page 1 of 3").
+    - **Content Completeness**: Fixed an issue where not all company and quote data was being displayed in the PDF, ensuring all relevant information is now included.
+    - **Character Rendering Fix**: Removed emojis from the PDF component to prevent unknown character rendering issues.
+    - **Email Syncing Fix**: Adjusted email filtering logic to be less aggressive, preventing it from skipping legitimate business emails that contain common unsubscribe links.
+    - **Action Items TypeError Fix**: Resolved a critical backend `TypeError` in the dashboard's "action items" feature by ensuring date objects are correctly formatted as ISO strings before being passed to the database.
+    - **Benefits**: A highly professional and reliable PDF quote generation system, improved email processing accuracy, and increased backend stability.
+
+16. **NEW: AI Unit Price Recommendation System COMPLETED:**
 
     - **Fixed AI Prompt**: Updated Gemini prompts to explicitly request PER UNIT prices, not total prices
     - **Automatic Validation**: Added logic to detect when AI returns total prices and convert them to unit prices
@@ -260,7 +271,7 @@
     - **Negotiation Clarity**: Updated negotiation prompts to be explicit about unit pricing
     - **Benefits**: AI now correctly recommends unit prices (e.g., $12/unit) instead of total prices (e.g., $480 for 40 units)
 
-16. **NEW: PDF Download System with Complete Data COMPLETED:**
+17. **NEW: PDF Download System with Complete Data COMPLETED:**
 
     - **Company Data Integration**: Updated `getQuoteWithServicesAction` to fetch complete company details
     - **Enhanced Quote Creation**: `createQuoteAction` now returns complete quote with company data
@@ -268,7 +279,7 @@
     - **PDF Component Support**: QuotePDF component now has access to all company branding and details
     - **Benefits**: PDF downloads include company logo, address, phone, website, and all branding
 
-17. **NEW: Form State Management with Persistence COMPLETED:**
+18. **NEW: Form State Management with Persistence COMPLETED:**
 
     - **localStorage Check**: Added useEffect to check for existing quotes on page load
     - **State Restoration**: Automatically restores quote state after page refresh
@@ -276,7 +287,7 @@
     - **Data Parsing**: Proper parsing of AI quote data from localStorage
     - **Benefits**: Generated quotes persist across page refreshes and browser sessions
 
-18. **NEW: TanStack Query Invalidation System COMPLETED:**
+19. **NEW: TanStack Query Invalidation System COMPLETED:**
 
     - **Query Client Integration**: Added useQueryClient to new-quote page
     - **Automatic Refetching**: Invalidates quotes query after creating new quote
@@ -284,7 +295,7 @@
     - **Real-time Updates**: Quotes list updates immediately without manual refresh
     - **Benefits**: Seamless UX where new quotes appear instantly in the quotes list
 
-19. **NEW: Enhanced UX with Form Hiding COMPLETED:**
+20. **NEW: Enhanced UX with Form Hiding COMPLETED:**
 
     - **Conditional Form Display**: Form is hidden when a quote is generated
     - **Dummy Data Button**: Hidden when quote exists to prevent accidental overwrites
@@ -293,7 +304,7 @@
     - **Accident Prevention**: Users cannot accidentally overwrite generated quotes
     - **Benefits**: Better UX flow and prevents data loss from accidental form submissions
 
-20. **NEW: AI Quote Data Persistence System COMPLETED:**
+21. **NEW: AI Quote Data Persistence System COMPLETED:**
 
     - **Database Schema**: Added `quoteData` JSON field to quotes table to store AI-generated content
     - **Server Actions**: Updated `createQuoteAction` to save AI quote data and `getQuotesAction` to retrieve it
@@ -301,7 +312,7 @@
     - **Type Safety**: Proper TypeScript interfaces for quote data structures
     - **Benefits**: AI-generated quotes are now permanently stored and retrievable
 
-21. **NEW: Enhanced Quote Viewing System COMPLETED:**
+22. **NEW: Enhanced Quote Viewing System COMPLETED:**
 
     - **Full AI Quote Display**: "View Quote" button now shows complete AI-generated quote content
     - **QuotePreview Component**: Reused the same professional quote preview component from quote creation
@@ -310,7 +321,7 @@
     - **Type Safety**: Proper type checking for quote data structure
     - **Benefits**: Users can view the complete professional quote document from the quotes listing
 
-22. **NEW: Negotiation System Improvements COMPLETED:**
+23. **NEW: Negotiation System Improvements COMPLETED:**
 
     - **Price Matching Fix**: Resolved service name mismatch between AI recommendations and selected services
     - **Flexible Matching**: Handles skill level suffixes (e.g., "Cake Baking (advanced)" matches "Cake Baking")
@@ -319,14 +330,14 @@
     - **useCallback Optimization**: Fixed stale closure issues with proper dependency management
     - **Benefits**: Reliable negotiation system with proper price updates
 
-23. **NEW: Subscription System Robustness COMPLETED:**
+24. **NEW: Subscription System Robustness COMPLETED:**
 
     - **Error Handling**: Added safety checks for invalid subscription tiers
     - **Default Fallbacks**: Gracefully handles missing or corrupted subscription data
     - **Type Safety**: Proper validation before accessing subscription features
     - **Benefits**: System won't crash with data inconsistencies
 
-24. **NEW: Complete Quotes Listing Page COMPLETED:**
+25. **NEW: Complete Quotes Listing Page COMPLETED:**
 
     - **Comprehensive Quote Display**: Shows all quote information including project title, company, status, amount, client, services, and timestamps
     - **Status Filtering**: Filter quotes by status (draft, sent, accepted, rejected, revised, all)
@@ -340,7 +351,7 @@
     - **Error Handling**: Graceful error states and empty states
     - **Benefits**: Complete quote management interface ready for client use
 
-25. **NEW: Quote Data Fetching System COMPLETED:**
+26. **NEW: Quote Data Fetching System COMPLETED:**
 
     - **Server Action**: `getQuotesAction` fetches quotes with company and service details
     - **TanStack Query Hook**: `useQuotesQuery` for efficient caching and data fetching
@@ -348,7 +359,7 @@
     - **Type Safety**: Proper TypeScript interfaces for quote data structures
     - **Benefits**: Fast, cached quote loading with real-time updates
 
-26. **NEW: Complete Quote Creation System COMPLETED:**
+27. **NEW: Complete Quote Creation System COMPLETED:**
 
     - **Full Quote Form**: Comprehensive form with company selection, project details, services, client info, and final notes
     - **Service Management**: Dynamic service selection with quantity, pricing, and notes
@@ -360,7 +371,7 @@
     - **Dummy Data**: Test data population for birthday event scenario
     - **Benefits**: End-to-end quote creation workflow with AI assistance
 
-27. **NEW: Quote Preview Component COMPLETED:**
+28. **NEW: Quote Preview Component COMPLETED:**
 
     - **Professional Layout**: Executive summary, value proposition, service breakdown, terms, payment, timeline, and next steps
     - **Service Breakdown**: Detailed pricing with quantity, unit price, total, and deliverables
@@ -368,7 +379,7 @@
     - **Total Calculation**: Automatic total amount calculation from services
     - **Benefits**: Professional quote presentation ready for client delivery
 
-28. **NEW: AI Quote Generation with Enhanced Features COMPLETED:**
+29. **NEW: AI Quote Generation with Enhanced Features COMPLETED:**
 
     - **Market Analysis**: Location-based insights, market conditions, and competitive positioning
     - **Service Recommendations**: AI-suggested pricing with confidence levels (high/medium/low)
@@ -378,7 +389,7 @@
     - **Interactive Negotiation**: Per-service negotiation with AI assistance
     - **Benefits**: Professional AI-powered pricing with market intelligence
 
-29. **NEW: Enhanced AI Context Integration COMPLETED:**
+30. **NEW: Enhanced AI Context Integration COMPLETED:**
 
     - **Company AI Summary**: Previously generated business summaries now included in pricing prompts
     - **Rich Context**: AI has access to company's market position, expertise, and operational details
@@ -386,14 +397,14 @@
     - **Updated Interfaces**: Type-safe integration of AI summary data
     - **Benefits**: Significantly improved AI pricing accuracy and relevance
 
-30. **NEW: TypeScript Type Safety COMPLETED:**
+31. **NEW: TypeScript Type Safety COMPLETED:**
 
     - **Proper Interfaces**: Replaced all `any` types with comprehensive type definitions
     - **AI Response Types**: Full type safety for AI recommendation structures
     - **Function Parameters**: Type-safe function signatures throughout
     - **Benefits**: Better developer experience and runtime safety
 
-31. **NEW: Subscription tracking and limit enforcement system COMPLETED:**
+32. **NEW: Subscription tracking and limit enforcement system COMPLETED:**
 
     - **Quotes Table**: Created with proper schema and relationships
     - **Subscription Limits**: Free tier (3 quotes/month, 1 company), Pro tier (unlimited quotes, 5 companies)
@@ -405,7 +416,7 @@
     - **Limit Enforcement**: Prevents exceeding subscription limits
     - **Benefits**: Complete subscription management with real-time tracking
 
-32. **NEW: Header User Status COMPLETED:**
+33. **NEW: Header User Status COMPLETED:**
 
     - **Quote Usage Display**: Shows current usage for free users (e.g., "Quotes: 2/3")
     - **Subscription Status**: Displays current subscription tier and limits
