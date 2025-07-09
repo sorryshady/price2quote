@@ -74,7 +74,7 @@ export default function ProtectedLayout({
               </div>
             </div>
           </header>
-          <div className="border-sidebar-border h-[calc(100vh-3rem)] w-full overflow-y-auto rounded-md border p-4 shadow">
+          <div className="border-sidebar-border h-full max-h-[calc(100vh-3rem)] w-full overflow-y-auto rounded-md border p-4 shadow">
             <ProtectedContent>{children}</ProtectedContent>
           </div>
         </main>

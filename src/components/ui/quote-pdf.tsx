@@ -52,11 +52,11 @@ export type AIQuoteData = {
 // Register fonts
 Font.register({ family: 'Helvetica', src: 'Helvetica' })
 
-// Professional color palette
+// More professional, monochromatic color palette
 const COLORS = {
-  primary: '#1f2937', // Dark gray
-  secondary: '#374151', // Medium gray
-  accent: '#3b82f6', // Blue
+  primary: '#1f2937', // Dark Gray
+  secondary: '#4b5563', // Medium Gray
+  accent: '#111827', // Near Black for emphasis
   text: {
     primary: '#1f2937',
     secondary: '#6b7280',
@@ -64,331 +64,192 @@ const COLORS = {
   },
   background: {
     white: '#ffffff',
-    light: '#f9fafb',
-    section: '#f3f4f6',
   },
-  border: '#e5e7eb',
+  border: '#e5e7eb', // A subtle border color
 }
 
-// Enhanced styles with professional design
+// Styles refactored for a more professional, legal-document look
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
     fontSize: 10,
     backgroundColor: COLORS.background.white,
     color: COLORS.text.primary,
-    padding: 40, // Add proper page margins
-    paddingTop: 20, // Reduce top padding since header has its own
-    paddingBottom: 20, // Reduce bottom padding for footer
-    lineHeight: 1.4,
+    padding: '40pt',
+    paddingBottom: '60pt', // Make space for footer
   },
-
-  // Header Section
   header: {
-    backgroundColor: COLORS.background.section,
-    padding: 25, // Reduced from 30 to account for page margins
-    borderRadius: 8, // Add border radius for modern look
-    borderBottom: `2px solid ${COLORS.border}`,
-    marginBottom: 25, // Add space between header and content
-    marginTop: 0,
-  },
-  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: '30pt',
+    borderBottom: `1pt solid ${COLORS.border}`,
+    paddingBottom: '10pt',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   logo: {
-    width: 50, // Slightly smaller to fit better
-    height: 50,
-    marginRight: 15,
-    objectFit: 'contain',
-    borderRadius: 6,
+    width: '35pt',
+    height: '35pt',
+    marginRight: '10pt',
   },
-  companyInfo: {
-    flex: 1,
-  },
+  companyInfo: {},
   companyName: {
-    fontSize: 20, // Slightly smaller
+    fontSize: '16pt',
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 3,
-    letterSpacing: 0.3,
-  },
-  companyTagline: {
-    fontSize: 9,
-    color: COLORS.text.secondary,
-    fontStyle: 'italic',
-    marginBottom: 6,
   },
   companyDetails: {
-    fontSize: 8,
-    color: COLORS.text.secondary,
-    marginBottom: 1.5,
+    fontSize: '8pt',
+    color: COLORS.secondary,
   },
   headerRight: {
     alignItems: 'flex-end',
-    minWidth: 140,
   },
   quoteTitle: {
-    fontSize: 22, // Slightly smaller
+    fontSize: '24pt',
     fontWeight: 'bold',
     color: COLORS.accent,
-    marginBottom: 3,
-    letterSpacing: 0.8,
   },
-  quoteNumber: {
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    marginBottom: 2,
+  quoteDetails: {
+    fontSize: '9pt',
+    color: COLORS.secondary,
   },
-  quoteDate: {
-    fontSize: 9,
-    color: COLORS.text.secondary,
-    marginBottom: 2,
-  },
-  validUntil: {
-    fontSize: 8,
-    color: COLORS.text.muted,
-    fontStyle: 'italic',
-  },
-
-  // Content Area
-  content: {
-    padding: 0, // Remove padding since page now has margins
-    paddingBottom: 20, // Add some bottom padding
-  },
-
-  // Client Information Section
-  clientSection: {
-    marginBottom: 20,
-    padding: 18, // Slightly reduced
-    backgroundColor: COLORS.background.light,
-    borderRadius: 6,
-    border: `1px solid ${COLORS.border}`,
-  },
-  clientHeader: {
+  metaSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: '30pt',
   },
-  billToTitle: {
-    fontSize: 11,
+  metaColumn: {
+    width: '48%',
+  },
+  metaTitle: {
+    fontSize: '11pt',
     fontWeight: 'bold',
     color: COLORS.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: '0.5pt',
+    borderBottom: `1pt solid ${COLORS.border}`,
+    paddingBottom: '4pt',
+    marginBottom: '8pt',
   },
-  clientInfo: {
-    flex: 1,
-    paddingRight: 15,
+  metaContent: {
+    fontSize: '10pt',
+    color: COLORS.secondary,
+    lineHeight: 1.5,
   },
-  projectInfo: {
-    flex: 1,
-  },
-  clientName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-    marginBottom: 3,
-  },
-  clientDetail: {
-    fontSize: 9,
-    color: COLORS.text.secondary,
-    marginBottom: 2,
-  },
-  projectTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 3,
-  },
-
-  // Section Styles
   section: {
-    marginBottom: 20, // Reduced for better spacing
-    backgroundColor: COLORS.background.white,
-    borderRadius: 6,
-    border: `1px solid ${COLORS.border}`,
-    overflow: 'hidden',
-    breakInside: 'avoid', // Prevent breaking sections across pages
-  },
-  sectionHeader: {
-    backgroundColor: COLORS.background.section,
-    padding: 12, // Reduced padding
-    borderBottom: `1px solid ${COLORS.border}`,
+    marginBottom: '20pt',
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: '12pt',
     fontWeight: 'bold',
     color: COLORS.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: '0.5pt',
+    borderBottom: `2pt solid ${COLORS.primary}`,
+    paddingBottom: '5pt',
+    marginBottom: '15pt',
   },
-  sectionContent: {
-    padding: 16, // Reduced padding
-  },
-
-  // Executive Summary
-  executiveSummary: {
-    fontSize: 10,
-    color: COLORS.text.primary,
-    lineHeight: 1.4,
-    marginBottom: 12,
-  },
-
-  // Service Breakdown
   serviceItem: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottom: `1px solid ${COLORS.border}`,
-    breakInside: 'avoid', // Keep service items together
+    marginBottom: '15pt',
+    paddingBottom: '15pt',
+    borderBottom: `1pt solid ${COLORS.border}`,
   },
   serviceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: '5pt',
   },
   serviceName: {
-    fontSize: 11,
+    fontSize: '11pt',
     fontWeight: 'bold',
     color: COLORS.primary,
-    flex: 1,
-    paddingRight: 10, // Ensure text doesn't touch price
   },
   servicePrice: {
-    fontSize: 11,
+    fontSize: '11pt',
     fontWeight: 'bold',
     color: COLORS.accent,
   },
   serviceDescription: {
-    fontSize: 9,
-    color: COLORS.text.secondary,
-    marginBottom: 6,
-    lineHeight: 1.3,
-  },
-  serviceDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
+    fontSize: '10pt',
+    color: COLORS.secondary,
+    marginBottom: '8pt',
   },
   serviceQty: {
-    fontSize: 8,
-    color: COLORS.text.secondary,
+    fontSize: '9pt',
+    color: COLORS.secondary,
   },
   deliverablesList: {
-    marginTop: 6,
+    marginTop: '8pt',
   },
   deliverableItem: {
-    fontSize: 8,
-    color: COLORS.text.secondary,
-    marginBottom: 1.5,
-    paddingLeft: 8,
+    fontSize: '9pt',
+    color: COLORS.secondary,
+    lineHeight: 1.4,
+    marginBottom: '2pt',
   },
-
-  // Investment Summary
   investmentSection: {
-    backgroundColor: COLORS.background.light,
-    padding: 16, // Reduced padding
-    marginTop: 16,
-    borderRadius: 6,
-    breakInside: 'avoid', // Keep investment summary together
+    marginTop: '20pt',
+    paddingTop: '15pt',
+    borderTop: `2pt solid ${COLORS.primary}`,
   },
   investmentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  investmentLabel: {
-    fontSize: 10,
-    color: COLORS.text.primary,
-  },
-  investmentAmount: {
-    fontSize: 10,
-    color: COLORS.text.primary,
-    fontWeight: 'bold',
-  },
-  subtotalRow: {
-    paddingTop: 6,
-    borderTop: `1px solid ${COLORS.border}`,
+    marginBottom: '6pt',
+    fontSize: '10pt',
   },
   totalRow: {
-    borderTop: `2px solid ${COLORS.primary}`,
-    paddingTop: 8,
-    marginTop: 6,
-  },
-  totalLabel: {
-    fontSize: 12,
+    marginTop: '10pt',
+    paddingTop: '10pt',
+    borderTop: `1pt solid ${COLORS.secondary}`,
+    fontSize: '14pt',
     fontWeight: 'bold',
-    color: COLORS.primary,
   },
   totalAmount: {
-    fontSize: 14,
-    fontWeight: 'bold',
     color: COLORS.accent,
   },
-
-  // Terms and Conditions
   termsList: {
-    marginTop: 8,
+    fontSize: '9pt',
+    color: COLORS.secondary,
+    lineHeight: 1.5,
   },
   termItem: {
-    fontSize: 9,
-    color: COLORS.text.secondary,
-    marginBottom: 4,
-    paddingLeft: 10,
-    lineHeight: 1.3,
+    marginBottom: '5pt',
   },
-
-  // Next Steps
-  nextStepsList: {
-    marginTop: 8,
+  finalSection: {
+    marginTop: '30pt',
+    paddingTop: '15pt',
+    borderTop: `1pt solid ${COLORS.border}`,
   },
-  nextStepItem: {
-    fontSize: 9,
-    color: COLORS.text.primary,
-    marginBottom: 4,
-    paddingLeft: 10,
-    fontWeight: 'bold',
-    lineHeight: 1.3,
-  },
-
-  // Footer
-  footer: {
-    marginTop: 25,
-    padding: 16, // Reduced padding
-    backgroundColor: COLORS.background.section,
-    borderRadius: 6,
-    borderTop: `1px solid ${COLORS.border}`,
-    textAlign: 'center',
-    breakInside: 'avoid', // Keep footer together
-  },
-  footerText: {
-    fontSize: 8,
-    color: COLORS.text.muted,
-    marginBottom: 6,
-  },
-  footerSignature: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTop: `1px solid ${COLORS.border}`,
+  signatureSection: {
+    marginTop: '40pt',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   signatureBox: {
-    width: 180, // Reduced width to fit better
-    borderBottom: `1px solid ${COLORS.border}`,
-    paddingBottom: 2,
+    width: '200pt',
+    borderBottom: `1pt solid ${COLORS.primary}`,
+    height: '40pt',
   },
   signatureLabel: {
-    fontSize: 7,
+    fontSize: '9pt',
+    color: COLORS.secondary,
+    marginTop: '4pt',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: '25pt',
+    left: '40pt',
+    right: '40pt',
+    textAlign: 'center',
+    fontSize: '8pt',
     color: COLORS.text.muted,
-    marginTop: 4,
+    borderTop: `1pt solid ${COLORS.border}`,
+    paddingTop: '5pt',
   },
 })
 
@@ -397,6 +258,9 @@ interface QuotePDFProps {
 }
 
 export function QuotePDF({ quote }: QuotePDFProps) {
+  // Log the quote data for analysis as requested
+  console.log('Quote data being rendered:', quote)
+
   const { company, quoteData } = quote
 
   const aiData: AIQuoteData | undefined = quoteData
@@ -426,7 +290,6 @@ export function QuotePDF({ quote }: QuotePDFProps) {
     return formatDate(validDate)
   }
 
-  // Calculate totals with tax support
   const subtotal = parseFloat(quote.subtotal || quote.amount || '0')
   const taxEnabled = quote.taxEnabled || false
   const taxRatePercent = quote.taxRate
@@ -437,400 +300,297 @@ export function QuotePDF({ quote }: QuotePDFProps) {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page} wrap>
-        {/* Professional Header */}
-        <View style={styles.header} fixed>
-          <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              {company?.logoUrl && (
-                <Image src={company.logoUrl} style={styles.logo} />
+      <Page size="A4" style={styles.page}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {company?.logoUrl && (
+              <Image src={company.logoUrl} style={styles.logo} />
+            )}
+            <View style={styles.companyInfo}>
+              <Text style={styles.companyName}>
+                {company?.name || 'Your Company'}
+              </Text>
+              <Text style={styles.companyDetails}>{company?.address}</Text>
+              <Text style={styles.companyDetails}>{company?.email}</Text>
+              {company?.phone && (
+                <Text style={styles.companyDetails}>{company.phone}</Text>
               )}
-              <View style={styles.companyInfo}>
-                <Text style={styles.companyName}>
-                  {company?.name || 'Your Company'}
+              {company?.website && (
+                <Text style={styles.companyDetails}>{company.website}</Text>
+              )}
+            </View>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.quoteTitle}>QUOTE</Text>
+            <Text style={styles.quoteDetails}>
+              #{quote.id?.slice(0, 8).toUpperCase() || 'UNKNOWN'}
+            </Text>
+            <Text style={styles.quoteDetails}>
+              Date: {formatDate(quote.createdAt || new Date())}
+            </Text>
+            <Text style={styles.quoteDetails}>
+              Valid Until: {getValidUntilDate()}
+            </Text>
+          </View>
+        </View>
+
+        {/* Client & Project Info */}
+        <View style={styles.metaSection}>
+          <View style={styles.metaColumn}>
+            <Text style={styles.metaTitle}>Bill To</Text>
+            <Text style={styles.metaContent}>
+              {quote.clientName || 'Client Name'}
+              {'\n'}
+              {quote.clientEmail || ''}
+              {'\n'}
+              {quote.clientLocation || ''}
+              {quote.clientBudget &&
+                `\nBudget: ${formatCurrency(
+                  quote.clientBudget.toString(),
+                  quote.currency || 'USD',
+                )}`}
+            </Text>
+          </View>
+          <View style={styles.metaColumn}>
+            <Text style={styles.metaTitle}>Project</Text>
+            <Text style={styles.metaContent}>
+              {quote.projectTitle || 'Project Title'}
+              {quote.projectDescription && `\n${quote.projectDescription}`}
+              {'\n'}
+              Timeline: {quote.deliveryTimeline?.replace('_', ' ') || 'TBD'}
+              {quote.customTimeline && ` (${quote.customTimeline})`}
+              {'\n'}
+              Complexity: {quote.projectComplexity || 'Standard'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Executive Summary */}
+        {aiData?.quoteDocument?.executiveSummary && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Executive Summary</Text>
+            <Text style={styles.termsList}>
+              {aiData.quoteDocument.executiveSummary}
+            </Text>
+          </View>
+        )}
+
+        {/* Service Breakdown */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Service Breakdown</Text>
+          {aiData?.quoteDocument?.serviceBreakdown?.map((service, index) => (
+            <View key={index} style={styles.serviceItem}>
+              <View style={styles.serviceHeader}>
+                <Text style={styles.serviceName}>{service.serviceName}</Text>
+                <Text style={styles.servicePrice}>
+                  {formatCurrency(
+                    service.totalPrice.toString(),
+                    quote.currency || 'USD',
+                  )}
                 </Text>
-                <Text style={styles.companyTagline}>
-                  {company?.businessType === 'freelancer'
-                    ? 'Professional Services'
-                    : 'Business Solutions'}
+              </View>
+              <Text style={styles.serviceDescription}>
+                {service.description}
+              </Text>
+              <Text style={styles.serviceQty}>
+                Quantity: {service.quantity} ×{' '}
+                {formatCurrency(
+                  service.unitPrice.toString(),
+                  quote.currency || 'USD',
+                )}
+              </Text>
+              {service.deliverables && service.deliverables.length > 0 && (
+                <View style={styles.deliverablesList}>
+                  <Text
+                    style={{
+                      fontSize: '9pt',
+                      color: COLORS.secondary,
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Deliverables:
+                  </Text>
+                  {service.deliverables.map((d, i) => (
+                    <Text key={i} style={styles.deliverableItem}>
+                      • {d}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              {service.assumptions && service.assumptions.length > 0 && (
+                <View style={styles.deliverablesList}>
+                  <Text
+                    style={{
+                      fontSize: '9pt',
+                      color: COLORS.secondary,
+                      fontWeight: 'bold',
+                      marginTop: '4pt',
+                    }}
+                  >
+                    Assumptions:
+                  </Text>
+                  {service.assumptions.map((assumption, idx) => (
+                    <Text key={idx} style={styles.deliverableItem}>
+                      • {assumption}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          ))}
+          {!aiData?.quoteDocument?.serviceBreakdown &&
+            quote.quoteServices?.map((qs, index) => (
+              <View key={qs.id || index} style={styles.serviceItem}>
+                <View style={styles.serviceHeader}>
+                  <Text style={styles.serviceName}>
+                    {qs.service?.name || 'Service'}
+                  </Text>
+                  <Text style={styles.servicePrice}>
+                    {formatCurrency(qs.totalPrice, quote.currency || 'USD')}
+                  </Text>
+                </View>
+                {qs.service?.description && (
+                  <Text style={styles.serviceDescription}>
+                    {qs.service.description}
+                  </Text>
+                )}
+                <Text style={styles.serviceQty}>
+                  Quantity: {qs.quantity} ×{' '}
+                  {formatCurrency(qs.unitPrice, quote.currency || 'USD')}
                 </Text>
-                {company?.address && (
-                  <Text style={styles.companyDetails}>{company.address}</Text>
-                )}
-                {company?.phone && (
-                  <Text style={styles.companyDetails}>📞 {company.phone}</Text>
-                )}
-                {company?.email && (
-                  <Text style={styles.companyDetails}>✉️ {company.email}</Text>
-                )}
-                {company?.website && (
-                  <Text style={styles.companyDetails}>
-                    🌐 {company.website}
+                {qs.notes && (
+                  <Text style={styles.serviceDescription}>
+                    Notes: {qs.notes}
                   </Text>
                 )}
               </View>
+            ))}
+
+          {/* Investment Summary */}
+          <View style={styles.investmentSection}>
+            <View style={styles.investmentRow}>
+              <Text>Subtotal</Text>
+              <Text>
+                {formatCurrency(subtotal.toString(), quote.currency || 'USD')}
+              </Text>
             </View>
-            <View style={styles.headerRight}>
-              <Text style={styles.quoteTitle}>QUOTE</Text>
-              <Text style={styles.quoteNumber}>
-                #{quote.id?.slice(0, 8).toUpperCase() || 'UNKNOWN'}
-              </Text>
-              <Text style={styles.quoteDate}>
-                Date: {formatDate(quote.createdAt || new Date())}
-              </Text>
-              <Text style={styles.validUntil}>
-                Valid until: {getValidUntilDate()}
+            {taxEnabled && taxAmount > 0 && (
+              <View style={styles.investmentRow}>
+                <Text>Tax ({taxRatePercent.toFixed(1)}%)</Text>
+                <Text>
+                  {formatCurrency(
+                    taxAmount.toString(),
+                    quote.currency || 'USD',
+                  )}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.investmentRow, styles.totalRow]}>
+              <Text>Total Investment</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(
+                  totalAmount.toString(),
+                  quote.currency || 'USD',
+                )}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Content Area */}
-        <View style={styles.content}>
-          {/* Client Information & Project Overview */}
-          <View style={styles.clientSection}>
-            <View style={styles.clientHeader}>
-              <Text style={styles.billToTitle}>Bill To:</Text>
-              <Text style={styles.billToTitle}>Project Overview</Text>
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-              <View style={styles.clientInfo}>
-                <Text style={styles.clientName}>
-                  {quote.clientName || 'Client Name'}
-                </Text>
-                {quote.clientEmail && (
-                  <Text style={styles.clientDetail}>
-                    ✉️ {quote.clientEmail}
+        {/* What's NOT Included */}
+        {aiData?.quoteDocument?.exclusions &&
+          aiData.quoteDocument.exclusions.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>What&apos;s NOT Included</Text>
+              <View style={styles.termsList}>
+                {aiData.quoteDocument.exclusions.map((exclusion, index) => (
+                  <Text key={index} style={styles.termItem}>
+                    • {exclusion}
                   </Text>
-                )}
-                {quote.clientLocation && (
-                  <Text style={styles.clientDetail}>
-                    📍 {quote.clientLocation}
-                  </Text>
-                )}
-                {quote.clientBudget && (
-                  <Text style={styles.clientDetail}>
-                    💰 Budget:{' '}
-                    {formatCurrency(
-                      quote.clientBudget.toString(),
-                      quote.currency || 'USD',
-                    )}
-                  </Text>
-                )}
-              </View>
-              <View style={styles.projectInfo}>
-                <Text style={styles.projectTitle}>
-                  {quote.projectTitle || 'Project'}
-                </Text>
-                {quote.projectDescription && (
-                  <Text style={styles.clientDetail}>
-                    {quote.projectDescription}
-                  </Text>
-                )}
-                <Text style={styles.clientDetail}>
-                  📅 Timeline:{' '}
-                  {quote.deliveryTimeline?.replace('_', ' ') ||
-                    'To be determined'}
-                  {quote.customTimeline && ` (${quote.customTimeline})`}
-                </Text>
-                <Text style={styles.clientDetail}>
-                  🎯 Complexity: {quote.projectComplexity || 'Standard'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Executive Summary */}
-          {aiData?.quoteDocument?.executiveSummary && (
-            <View style={styles.section} break={false}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Executive Summary</Text>
-              </View>
-              <View style={styles.sectionContent}>
-                <Text style={styles.executiveSummary}>
-                  {aiData.quoteDocument.executiveSummary}
-                </Text>
+                ))}
               </View>
             </View>
           )}
 
-          {/* Service Breakdown */}
-          <View style={styles.section} break={false}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Service Breakdown</Text>
-            </View>
-            <View style={styles.sectionContent}>
-              {/* AI-generated services */}
-              {aiData?.quoteDocument?.serviceBreakdown?.map(
-                (service, index) => (
-                  <View key={index} style={styles.serviceItem}>
-                    <View style={styles.serviceHeader}>
-                      <Text style={styles.serviceName}>
-                        {service.serviceName}
-                      </Text>
-                      <Text style={styles.servicePrice}>
-                        {formatCurrency(
-                          service.totalPrice.toString(),
-                          quote.currency || 'USD',
-                        )}
-                      </Text>
-                    </View>
-                    <Text style={styles.serviceDescription}>
-                      {service.description}
-                    </Text>
-                    <View style={styles.serviceDetails}>
-                      <Text style={styles.serviceQty}>
-                        Quantity: {service.quantity} ×{' '}
-                        {formatCurrency(
-                          service.unitPrice.toString(),
-                          quote.currency || 'USD',
-                        )}
-                      </Text>
-                    </View>
-                    {service.deliverables &&
-                      service.deliverables.length > 0 && (
-                        <View style={styles.deliverablesList}>
-                          <Text
-                            style={[
-                              styles.serviceQty,
-                              { fontWeight: 'bold', marginBottom: 4 },
-                            ]}
-                          >
-                            Deliverables:
-                          </Text>
-                          {service.deliverables.map((deliverable, idx) => (
-                            <Text key={idx} style={styles.deliverableItem}>
-                              • {deliverable}
-                            </Text>
-                          ))}
-                        </View>
-                      )}
-                    {service.assumptions && service.assumptions.length > 0 && (
-                      <View style={styles.deliverablesList}>
-                        <Text
-                          style={[
-                            styles.serviceQty,
-                            { fontWeight: 'bold', marginBottom: 4 },
-                          ]}
-                        >
-                          Assumptions:
-                        </Text>
-                        {service.assumptions.map((assumption, idx) => (
-                          <Text key={idx} style={styles.deliverableItem}>
-                            • {assumption}
-                          </Text>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                ),
-              )}
-
-              {/* Fallback: Show basic services if no AI data */}
-              {!aiData?.quoteDocument?.serviceBreakdown &&
-                quote.quoteServices?.map((qs, index) => (
-                  <View key={qs.id || index} style={styles.serviceItem}>
-                    <View style={styles.serviceHeader}>
-                      <Text style={styles.serviceName}>
-                        {qs.service?.name || 'Service'}
-                      </Text>
-                      <Text style={styles.servicePrice}>
-                        {formatCurrency(qs.totalPrice, quote.currency || 'USD')}
-                      </Text>
-                    </View>
-                    {qs.service?.description && (
-                      <Text style={styles.serviceDescription}>
-                        {qs.service.description}
-                      </Text>
-                    )}
-                    <View style={styles.serviceDetails}>
-                      <Text style={styles.serviceQty}>
-                        Quantity: {qs.quantity} ×{' '}
-                        {formatCurrency(qs.unitPrice, quote.currency || 'USD')}
-                      </Text>
-                    </View>
-                    {qs.notes && (
-                      <Text style={styles.serviceDescription}>
-                        Notes: {qs.notes}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-
-              {/* Investment Summary */}
-              <View style={styles.investmentSection}>
-                <View style={styles.investmentRow}>
-                  <Text style={styles.investmentLabel}>Subtotal:</Text>
-                  <Text style={styles.investmentAmount}>
-                    {formatCurrency(
-                      subtotal.toString(),
-                      quote.currency || 'USD',
-                    )}
-                  </Text>
-                </View>
-                {taxEnabled && taxAmount > 0 && (
-                  <View style={styles.investmentRow}>
-                    <Text style={styles.investmentLabel}>
-                      Tax ({taxRatePercent.toFixed(1)}%):
-                    </Text>
-                    <Text style={styles.investmentAmount}>
-                      {formatCurrency(
-                        taxAmount.toString(),
-                        quote.currency || 'USD',
-                      )}
-                    </Text>
-                  </View>
-                )}
-                <View style={[styles.investmentRow, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Total Investment:</Text>
-                  <Text style={styles.totalAmount}>
-                    {formatCurrency(
-                      totalAmount.toString(),
-                      quote.currency || 'USD',
-                    )}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* What&apos;s NOT Included */}
-          {aiData?.quoteDocument?.exclusions &&
-            aiData.quoteDocument.exclusions.length > 0 && (
-              <View style={styles.section} break={false}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>
-                    What&apos;s NOT Included
-                  </Text>
-                </View>
-                <View style={styles.sectionContent}>
-                  <View style={styles.termsList}>
-                    {aiData.quoteDocument.exclusions.map((exclusion, index) => (
-                      <Text key={index} style={styles.termItem}>
-                        • {exclusion}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              </View>
+        {/* Payment Terms */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payment Terms</Text>
+          <View style={styles.termsList}>
+            {aiData?.quoteDocument?.paymentTerms ? (
+              <Text style={styles.termItem}>
+                {aiData.quoteDocument.paymentTerms}
+              </Text>
+            ) : (
+              <>
+                <Text style={styles.termItem}>
+                  • 30% deposit required upon acceptance of this quote.
+                </Text>
+                <Text style={styles.termItem}>
+                  • Remaining 70% due upon project completion.
+                </Text>
+                <Text style={styles.termItem}>
+                  • Payment terms: Net 15 days.
+                </Text>
+                <Text style={styles.termItem}>
+                  • Late payments subject to 1.5% monthly service charge.
+                </Text>
+              </>
             )}
-
-          {/* Payment Terms */}
-          <View style={styles.section} break={false}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Payment Terms</Text>
-            </View>
-            <View style={styles.sectionContent}>
-              {aiData?.quoteDocument?.paymentTerms ? (
-                <Text style={styles.executiveSummary}>
-                  {aiData.quoteDocument.paymentTerms}
-                </Text>
-              ) : (
-                <>
-                  <Text style={styles.executiveSummary}>
-                    • 30% deposit required upon acceptance of this quote
-                  </Text>
-                  <Text style={styles.executiveSummary}>
-                    • Remaining 70% due upon project completion
-                  </Text>
-                  <Text style={styles.executiveSummary}>
-                    • Payment terms: Net 15 days
-                  </Text>
-                  <Text style={styles.executiveSummary}>
-                    • Late payments subject to 1.5% monthly service charge
-                  </Text>
-                </>
-              )}
-            </View>
-          </View>
-
-          {/* Terms &amp; Conditions */}
-          <View style={styles.section} break={false}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Terms & Conditions</Text>
-            </View>
-            <View style={styles.sectionContent}>
-              {aiData?.quoteDocument?.termsAndConditions ? (
-                <View style={styles.termsList}>
-                  {aiData.quoteDocument.termsAndConditions.map(
-                    (term, index) => (
-                      <Text key={index} style={styles.termItem}>
-                        • {term}
-                      </Text>
-                    ),
-                  )}
-                </View>
-              ) : (
-                <View style={styles.termsList}>
-                  <Text style={styles.termItem}>
-                    • This quote is valid for 30 days from the date of issue
-                  </Text>
-                  <Text style={styles.termItem}>
-                    • All work will be performed in accordance with industry
-                    standards
-                  </Text>
-                  <Text style={styles.termItem}>
-                    • Changes to project scope will require written approval and
-                    may affect pricing
-                  </Text>
-                  <Text style={styles.termItem}>
-                    • Client is responsible for providing timely feedback and
-                    required materials
-                  </Text>
-                  <Text style={styles.termItem}>
-                    • Intellectual property rights transfer upon full payment
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Next Steps */}
-          <View style={styles.section} break={false}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Next Steps</Text>
-            </View>
-            <View style={styles.sectionContent}>
-              {aiData?.quoteDocument?.nextSteps ? (
-                <Text style={styles.executiveSummary}>
-                  {aiData.quoteDocument.nextSteps}
-                </Text>
-              ) : (
-                <View style={styles.nextStepsList}>
-                  <Text style={styles.nextStepItem}>
-                    1. Review this quote and reach out with any questions
-                  </Text>
-                  <Text style={styles.nextStepItem}>
-                    2. Reply with your acceptance to begin the project
-                  </Text>
-                  <Text style={styles.nextStepItem}>
-                    3. We&apos;ll send an invoice for the initial deposit
-                  </Text>
-                  <Text style={styles.nextStepItem}>
-                    4. Project kickoff call to finalize details and timeline
-                  </Text>
-                </View>
-              )}
-            </View>
           </View>
         </View>
 
-        {/* Professional Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Thank you for considering our services. We look forward to working
-            with you!
-          </Text>
-          <Text style={styles.footerText}>
-            Questions? Contact us at{' '}
-            {company?.email || company?.phone || 'your contact info'}
-          </Text>
+        {/* Next Steps */}
+        {aiData?.quoteDocument?.nextSteps && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Next Steps</Text>
+            <Text style={styles.termsList}>
+              {aiData.quoteDocument.nextSteps}
+            </Text>
+          </View>
+        )}
 
-          {/* Signature Section */}
-          <View style={styles.footerSignature}>
+        {/* Terms & Conditions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Terms & Conditions</Text>
+          <View style={styles.termsList}>
+            {aiData?.quoteDocument?.termsAndConditions?.map((term, index) => (
+              <Text key={index} style={styles.termItem}>
+                • {term}
+              </Text>
+            ))}
+            {!aiData?.quoteDocument?.termsAndConditions && (
+              <>
+                <Text style={styles.termItem}>
+                  • This quote is valid for 30 days from the date of issue.
+                </Text>
+                <Text style={styles.termItem}>
+                  • Payment terms are Net 15 days.
+                </Text>
+                <Text style={styles.termItem}>
+                  • Changes to the project scope will require written approval
+                  and may affect pricing.
+                </Text>
+                <Text style={styles.termItem}>
+                  • Intellectual property rights transfer upon full and final
+                  payment.
+                </Text>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* Acceptance Section */}
+        <View style={styles.finalSection} wrap={false}>
+          <Text style={styles.sectionTitle}>Acceptance</Text>
+          <Text style={styles.termsList}>
+            Your signature below indicates acceptance of this quote, its terms,
+            and conditions.
+          </Text>
+          <View style={styles.signatureSection}>
             <View>
               <View style={styles.signatureBox} />
-              <Text style={styles.signatureLabel}>Client Signature</Text>
+              <Text style={styles.signatureLabel}>Authorized Signature</Text>
             </View>
             <View>
               <View style={styles.signatureBox} />
@@ -838,6 +598,15 @@ export function QuotePDF({ quote }: QuotePDFProps) {
             </View>
           </View>
         </View>
+
+        {/* Footer with Page Number */}
+        <Text
+          style={styles.footer}
+          render={({ pageNumber, totalPages }) =>
+            `Page ${pageNumber} of ${totalPages}`
+          }
+          fixed
+        />
       </Page>
     </Document>
   )
