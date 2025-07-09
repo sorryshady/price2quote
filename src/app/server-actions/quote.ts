@@ -772,7 +772,20 @@ export async function createRevisedQuoteAction(data: {
       totalAmount = taxCalc.total
     }
 
-    // Get service details for updating quoteData
+    // Get company details for AI generation
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, data.companyId))
+
+    if (!company) {
+      return {
+        success: false,
+        error: 'Company not found',
+      }
+    }
+
+    // Get service details for AI generation
     const serviceDetails = await db
       .select({
         id: services.id,
@@ -787,38 +800,94 @@ export async function createRevisedQuoteAction(data: {
         ),
       )
 
-    // Update quoteData with new prices if it exists
-    let updatedQuoteData = data.quoteData
-    if (data.quoteData && data.quoteData.quoteDocument) {
-      // Create a deep copy of the quote data
-      updatedQuoteData = {
-        ...data.quoteData,
-        quoteDocument: {
-          ...data.quoteData.quoteDocument,
-          serviceBreakdown: data.selectedServices.map((service) => {
+    // Generate fresh AI quote document for the revision
+    let updatedQuoteData = null
+    try {
+      const aiResponse = await generateFinalQuoteWithAI({
+        companyData: {
+          name: company.name,
+          description: company.description || '',
+          businessType: company.businessType,
+          country: company.country,
+          currency: data.currency || 'USD',
+          aiSummary: company.aiSummary || undefined,
+          phone: company.phone || '',
+          email: company.email || '',
+        },
+        projectData: {
+          title: data.projectTitle,
+          description: data.projectDescription,
+          complexity: data.projectComplexity,
+          deliveryTimeline: data.deliveryTimeline,
+          customTimeline: data.customTimeline,
+          clientLocation: data.clientLocation,
+          clientBudget: data.clientBudget,
+        },
+        finalData: {
+          services: data.selectedServices.map((service) => {
             const serviceDetail = serviceDetails.find(
               (s) => s.id === service.serviceId,
             )
-            // Find the corresponding service in the original breakdown by name
-            const originalService =
-              data.quoteData!.quoteDocument.serviceBreakdown.find(
-                (s) => s.serviceName === serviceDetail?.name,
-              )
-
             return {
               serviceName:
                 serviceDetail?.name || `Service ${service.serviceId}`,
-              description:
-                originalService?.description ||
-                serviceDetail?.description ||
-                '',
+              finalPrice: service.unitPrice || 0,
               quantity: service.quantity,
-              unitPrice: service.unitPrice || 0,
               totalPrice: service.quantity * (service.unitPrice || 0),
-              deliverables: originalService?.deliverables || [],
             }
           }),
+          totalAmount,
+          notes: `Revision ${nextVersionNumber}: ${data.revisionNotes}${data.clientFeedback ? ` | Client Feedback: ${data.clientFeedback}` : ''}`,
+          // Include tax data for AI response
+          subtotal,
+          taxEnabled,
+          taxRate: taxEnabled && taxRate > 0 ? taxRate / 100 : 0, // Convert to decimal for AI
+          taxAmount,
         },
+      })
+
+      updatedQuoteData = aiResponse
+    } catch (error) {
+      console.error('Error generating AI quote for revision:', error)
+      // Fallback: Update existing quoteData with new prices if AI generation fails
+      if (data.quoteData && data.quoteData.quoteDocument) {
+        updatedQuoteData = {
+          ...data.quoteData,
+          quoteDocument: {
+            ...data.quoteData.quoteDocument,
+            serviceBreakdown: data.selectedServices.map((service) => {
+              const serviceDetail = serviceDetails.find(
+                (s) => s.id === service.serviceId,
+              )
+              const originalService =
+                data.quoteData!.quoteDocument.serviceBreakdown.find(
+                  (s) => s.serviceName === serviceDetail?.name,
+                )
+
+              return {
+                serviceName:
+                  serviceDetail?.name || `Service ${service.serviceId}`,
+                description:
+                  originalService?.description ||
+                  serviceDetail?.description ||
+                  '',
+                quantity: service.quantity,
+                unitPrice: service.unitPrice || 0,
+                totalPrice: service.quantity * (service.unitPrice || 0),
+                deliverables: originalService?.deliverables || [],
+              }
+            }),
+          },
+          // Add pricing section for fallback
+          pricing: {
+            subtotal,
+            taxEnabled,
+            taxRate: taxEnabled && taxRate > 0 ? taxRate / 100 : 0,
+            taxAmount,
+            totalAmount,
+            currency: data.currency || 'USD',
+          },
+        }
       }
     }
 

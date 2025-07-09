@@ -432,6 +432,16 @@ export async function generateFinalQuoteWithAI(data: {
   }
 }) {
   try {
+    // Build pricing section with proper values
+    const pricingSection = {
+      subtotal: data.finalData.subtotal || data.finalData.totalAmount,
+      taxEnabled: data.finalData.taxEnabled || false,
+      taxRate: data.finalData.taxRate || 0,
+      taxAmount: data.finalData.taxAmount || 0,
+      totalAmount: data.finalData.totalAmount,
+      currency: data.companyData.currency,
+    }
+
     const prompt = `You are an expert quote generator. Create a professional, comprehensive quote document based on the provided data.
 
 COMPANY CONTEXT:
@@ -452,6 +462,13 @@ Services: ${data.finalData.services.map((s) => `${s.serviceName}: ${s.quantity} 
 Total Amount: ${data.companyData.currency} ${data.finalData.totalAmount}
 Additional Notes: ${data.finalData.notes}
 
+PRICING BREAKDOWN:
+Subtotal: ${data.companyData.currency} ${pricingSection.subtotal}
+Tax Enabled: ${pricingSection.taxEnabled}
+Tax Rate: ${pricingSection.taxRate}
+Tax Amount: ${data.companyData.currency} ${pricingSection.taxAmount}
+Total: ${data.companyData.currency} ${pricingSection.totalAmount}
+
 TASK: Generate a professional quote document with:
 1. Executive summary
 2. Detailed service breakdown
@@ -460,6 +477,12 @@ TASK: Generate a professional quote document with:
 5. Contact information to be added in the nextSteps. 
 6. Mention payment terms but do not specify any specific payment methods (like card, bank transfer, etc).
 
+IMPORTANT:
+- The "subtotal" should be the sum of all services' total prices.
+- The "taxEnabled" should be true if the tax is enabled, false otherwise.
+- The "taxRate" should be the tax rate as a percentage.
+- The "taxAmount" should be the tax amount calculated based on the subtotal and tax rate.
+- The "totalAmount" should be the sum of the subtotal and tax amount.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -488,12 +511,12 @@ RESPONSE FORMAT (JSON only):
     "competitiveAdvantages": ["string with competitive advantages"]
   },
   "pricing": {
-    "subtotal": ${data.finalData.subtotal || data.finalData.totalAmount},
-    "taxEnabled": ${data.finalData.taxEnabled || false},
-    "taxRate": ${data.finalData.taxRate || 0},
-    "taxAmount": ${data.finalData.taxAmount || 0},
-    "totalAmount": ${data.finalData.totalAmount},
-    "currency": "${data.companyData.currency}"
+    "subtotal": ${pricingSection.subtotal},
+    "taxEnabled": ${pricingSection.taxEnabled},
+    "taxRate": ${pricingSection.taxRate},
+    "taxAmount": ${pricingSection.taxAmount},
+    "totalAmount": ${pricingSection.totalAmount},
+    "currency": "${pricingSection.currency}"
   }
 }`
 
