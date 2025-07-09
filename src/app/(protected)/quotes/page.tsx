@@ -4,18 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  Check,
-  Eye,
-  File,
-  FileDown,
-  FilePenLine,
-  GitBranch,
-  Mail,
-  RefreshCcw,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { Eye, FileDown, FilePenLine, GitBranch, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import {
@@ -57,6 +46,12 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
+import {
+  STATUS_FILTER_OPTIONS,
+  getStatusColor,
+  getStatusIcon,
+  isStatusEditable,
+} from '@/lib/quote-status-utils'
 import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 import type { Quote, QuoteStatus } from '@/types'
 
@@ -84,47 +79,7 @@ export type QuoteData = {
   }
 }
 
-function getStatusColor(status: QuoteStatus) {
-  switch (status) {
-    case 'draft':
-      return 'bg-gray-100 text-gray-800 border-gray-200'
-    case 'awaiting_client':
-      return 'bg-blue-100 text-blue-800 border-blue-200'
-    case 'under_revision':
-      return 'bg-orange-100 text-orange-800 border-orange-200'
-    case 'revised':
-      return 'bg-purple-100 text-purple-800 border-purple-200'
-    case 'accepted':
-      return 'bg-green-100 text-green-800 border-green-200'
-    case 'rejected':
-      return 'bg-red-100 text-red-800 border-red-200'
-    case 'expired':
-      return 'bg-slate-100 text-slate-800 border-slate-200'
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200'
-  }
-}
-
-function getStatusIcon(status: QuoteStatus) {
-  switch (status) {
-    case 'draft':
-      return <File className="h-4 w-4" />
-    case 'awaiting_client':
-      return <Mail className="h-4 w-4" />
-    case 'under_revision':
-      return <FilePenLine className="h-4 w-4" />
-    case 'revised':
-      return <RefreshCcw className="h-4 w-4" />
-    case 'accepted':
-      return <Check className="h-4 w-4" />
-    case 'rejected':
-      return <X className="h-4 w-4" />
-    case 'expired':
-      return <GitBranch className="h-4 w-4" />
-    default:
-      return <File className="h-4 w-4" />
-  }
-}
+// Status utilities moved to src/lib/quote-status-utils.tsx
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat('en-US', {
@@ -365,12 +320,11 @@ export default function QuotesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="revised">Revised</SelectItem>
+                {STATUS_FILTER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -441,17 +395,14 @@ export default function QuotesPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="awaiting_client">
-                              Awaiting Client
-                            </SelectItem>
-                            <SelectItem value="under_revision">
-                              Under Revision
-                            </SelectItem>
-                            <SelectItem value="revised">Revised</SelectItem>
-                            <SelectItem value="accepted">Accepted</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                            <SelectItem value="expired">Expired</SelectItem>
+                            {STATUS_FILTER_OPTIONS.slice(1).map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -545,9 +496,8 @@ export default function QuotesPage() {
                         <FileDown className="h-4 w-4" />
                         <span className="ml-1 sm:ml-2">Download</span>
                       </Button>
-                      {/* Show Edit button for revised/rejected quotes - since we're using getLatestQuotesAction, 
-                          these are already the latest versions */}
-                      {['under_revision', 'rejected'].includes(quote.status) ? (
+                      {/* Show Edit button for editable quote statuses */}
+                      {isStatusEditable(quote.status) ? (
                         <Button
                           asChild
                           variant="outline"

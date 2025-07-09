@@ -425,6 +425,7 @@ export default function ConversationDetailPage() {
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
             </SelectContent>
           </Select>
           {['under_revision', 'rejected'].includes(quoteStatus) && (

@@ -131,6 +131,7 @@ interface GenerateAIEmailData {
     | 'accepted'
     | 'rejected'
     | 'expired'
+    | 'paid'
   customContext?: string
 }
 

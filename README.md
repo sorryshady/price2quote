@@ -326,17 +326,13 @@ The application has a solid foundation with core features implemented. Next phas
 export const quoteStatusEnum = pgEnum('quote_status', [
   // Quote Lifecycle
   'draft', // Initial creation, not ready to send
-  'sent', // Sent to client, awaiting response
+  'awaiting_client', // Sent to client, awaiting response
   'under_revision', // Client requested changes, being worked on
   'revised', // Revisions completed, ready to resend
   'accepted', // Client approved the quote
   'rejected', // Client declined
   'expired', // Quote expired without response
-
-  // Project Execution (Future)
-  'project_started', // Work has begun (optional status)
-  'completed', // Work finished
-  'paid', // Final payment received
+  'paid', // Payment received - project financially complete
 ])
 ```
 
@@ -344,15 +340,17 @@ export const quoteStatusEnum = pgEnum('quote_status', [
 
 - Clear workflow progression
 - Better analytics and conversion funnel tracking
-- Foundation for payment integration
+- Payment integration ready with `paid` status
 - Eliminates confusion around revision states
+- Supports future milestone payment system
 
 #### Implementation Tasks:
 
 - [ ] Database migration for new status values
 - [ ] Update TypeScript types and validation schemas
 - [ ] Refresh all UI components (status displays, filters, badges)
-- [ ] Enhance analytics to track new conversion funnel
+- [x] Enhance analytics to track new conversion funnel
+- [x] Add `paid` status for payment completion tracking
 - [ ] Add status transition validation logic
 
 ### Phase 2: Smart Payment Integration (3-6 months)

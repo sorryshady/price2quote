@@ -6,17 +6,7 @@ import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  ArrowLeft,
-  Check,
-  File,
-  FilePenLine,
-  GitBranch,
-  Mail,
-  RefreshCw,
-  Save,
-  X,
-} from 'lucide-react'
+import { ArrowLeft, RefreshCw, Save } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
@@ -61,7 +51,8 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useRevisionLimit } from '@/hooks/use-subscription-limits'
-import type { Quote, QuoteService, QuoteStatus, Service } from '@/types'
+import { getStatusColor, getStatusIcon } from '@/lib/quote-status-utils'
+import type { Quote, QuoteService, Service } from '@/types'
 
 const editQuoteSchema = z.object({
   projectTitle: z.string().min(1, 'Project title is required'),
@@ -86,47 +77,7 @@ const editQuoteSchema = z.object({
 
 type EditQuoteFormData = z.infer<typeof editQuoteSchema>
 
-function getStatusColor(status: QuoteStatus) {
-  switch (status) {
-    case 'draft':
-      return 'bg-gray-100 text-gray-800 border-gray-200'
-    case 'awaiting_client':
-      return 'bg-blue-100 text-blue-800 border-blue-200'
-    case 'under_revision':
-      return 'bg-orange-100 text-orange-800 border-orange-200'
-    case 'revised':
-      return 'bg-purple-100 text-purple-800 border-purple-200'
-    case 'accepted':
-      return 'bg-green-100 text-green-800 border-green-200'
-    case 'rejected':
-      return 'bg-red-100 text-red-800 border-red-200'
-    case 'expired':
-      return 'bg-slate-100 text-slate-800 border-slate-200'
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200'
-  }
-}
-
-function getStatusIcon(status: QuoteStatus) {
-  switch (status) {
-    case 'draft':
-      return <File className="h-4 w-4" />
-    case 'awaiting_client':
-      return <Mail className="h-4 w-4" />
-    case 'under_revision':
-      return <FilePenLine className="h-4 w-4" />
-    case 'revised':
-      return <RefreshCw className="h-4 w-4" />
-    case 'accepted':
-      return <Check className="h-4 w-4" />
-    case 'rejected':
-      return <X className="h-4 w-4" />
-    case 'expired':
-      return <GitBranch className="h-4 w-4" />
-    default:
-      return <File className="h-4 w-4" />
-  }
-}
+// Status utilities moved to src/lib/quote-status-utils.tsx
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat('en-US', {

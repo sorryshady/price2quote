@@ -22,6 +22,7 @@ export const quoteStatusEnum = pgEnum('quote_status', [
   'accepted',
   'rejected',
   'expired',
+  'paid',
 ])
 
 // Define delivery timeline enum

@@ -23,6 +23,7 @@ interface ConversionFunnel {
   accepted: number
   rejected: number
   expired: number
+  paid: number
 }
 
 interface QuotesByMonth {
@@ -91,6 +92,7 @@ export function QuotePerformanceCharts({
     { name: 'Accepted', value: conversionFunnel.accepted, fill: '#00C49F' },
     { name: 'Rejected', value: conversionFunnel.rejected, fill: '#FF8042' },
     { name: 'Expired', value: conversionFunnel.expired, fill: '#708090' },
+    { name: 'Paid', value: conversionFunnel.paid, fill: '#10B981' },
   ].filter((item) => item.value > 0) // Only show stages with data
 
   // Format monthly data

@@ -44,6 +44,7 @@ interface QuotePerformanceAnalytics {
     accepted: number
     rejected: number
     expired: number
+    paid: number
   }
   averageTimeToAcceptance: number // in days
   revisionFrequency: number
@@ -248,7 +249,7 @@ export async function getAnalyticsDataAction(
 
     // Calculate revenue analytics using final statuses only
     const acceptedQuotes = finalQuotesData.filter(
-      (q) => q.quote.status === 'accepted',
+      (q) => q.quote.status === 'accepted' || q.quote.status === 'paid',
     )
     const totalRevenue = acceptedQuotes.reduce(
       (sum, q) => sum + parseFloat(q.quote.amount || '0'),
@@ -332,7 +333,7 @@ export async function getAnalyticsDataAction(
     // Quote performance analytics using final statuses only
     const totalQuotes = finalQuotesData.length
     const acceptedCount = finalQuotesData.filter(
-      (q) => q.quote.status === 'accepted',
+      (q) => q.quote.status === 'accepted' || q.quote.status === 'paid',
     ).length
     const acceptanceRate =
       totalQuotes > 0 ? (acceptedCount / totalQuotes) * 100 : 0
@@ -353,11 +354,14 @@ export async function getAnalyticsDataAction(
         .length,
       expired: finalQuotesData.filter((q) => q.quote.status === 'expired')
         .length,
+      paid: finalQuotesData.filter((q) => q.quote.status === 'paid').length,
     }
 
     // Calculate average time to acceptance
     const acceptedQuotesWithSentDate = finalQuotesData.filter(
-      (q) => q.quote.status === 'accepted' && q.quote.sentAt,
+      (q) =>
+        (q.quote.status === 'accepted' || q.quote.status === 'paid') &&
+        q.quote.sentAt,
     )
     const totalAcceptanceTime = acceptedQuotesWithSentDate.reduce((sum, q) => {
       const sentAt = q.quote.sentAt!
@@ -382,7 +386,8 @@ export async function getAnalyticsDataAction(
         accepted: 0,
       }
       current.created++
-      if (q.quote.status === 'accepted') current.accepted++
+      if (q.quote.status === 'accepted' || q.quote.status === 'paid')
+        current.accepted++
       quotesByMonthMap.set(monthKey, current)
     })
     const quotesByMonth = Array.from(quotesByMonthMap.entries()).map(
@@ -479,7 +484,7 @@ export async function getAnalyticsDataAction(
 
     // Business growth analytics
     const prevPeriodRevenue = prevPeriodQuotes
-      .filter((q) => q.status === 'accepted')
+      .filter((q) => q.status === 'accepted' || q.status === 'paid')
       .reduce((sum, q) => sum + parseFloat(q.amount || '0'), 0)
     const revenueGrowthRate = calculateGrowthRate(
       totalRevenue,

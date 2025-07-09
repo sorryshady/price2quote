@@ -106,7 +106,7 @@ export async function getDashboardSummaryAction(userId: string) {
 
     // For acceptance/revenue metrics, use ALL quotes (originals + revisions)
     const quotesAccepted = allQuotesThisMonth.filter(
-      (q) => q.status === 'accepted',
+      (q) => q.status === 'accepted' || q.status === 'paid',
     ).length
     const quotesRevised = allQuotesThisMonth.filter(
       (q) => q.status === 'revised',
@@ -117,7 +117,7 @@ export async function getDashboardSummaryAction(userId: string) {
 
     // Calculate revenue from ALL accepted quotes (including revised ones that got accepted)
     const acceptedQuotes = allQuotesThisMonth.filter(
-      (q) => q.status === 'accepted',
+      (q) => q.status === 'accepted' || q.status === 'paid',
     )
     const revenue = acceptedQuotes.reduce((sum, quote) => {
       const amount = parseFloat(quote.amount || '0')

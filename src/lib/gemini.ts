@@ -529,6 +529,7 @@ export async function generateAIEmail(data: {
     | 'accepted'
     | 'rejected'
     | 'expired'
+    | 'paid'
   customContext?: string
 }) {
   try {

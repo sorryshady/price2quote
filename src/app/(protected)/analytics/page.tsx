@@ -284,6 +284,7 @@ export default function AnalyticsPage() {
                         </div>
                         <p className="text-muted-foreground text-sm">
                           {analytics.quotes.conversionFunnel.accepted} accepted,{' '}
+                          {analytics.quotes.conversionFunnel.paid} paid,{' '}
                           {analytics.quotes.conversionFunnel.rejected} rejected
                         </p>
                       </div>

@@ -10,6 +10,7 @@ export type QuoteStatus =
   | 'accepted'
   | 'rejected'
   | 'expired'
+  | 'paid'
 export type EmailDirection = 'inbound' | 'outbound'
 export type EmailType =
   | 'quote_sent'
