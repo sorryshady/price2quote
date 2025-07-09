@@ -31,7 +31,10 @@ export function downloadPDF(blob: Blob, filename: string) {
 
 export function generateQuoteFilename(quote: Quote): string {
   const date = new Date().toISOString().split('T')[0]
-  const projectTitle = quote.projectTitle.replace(/[^a-zA-Z0-9]/g, '_')
-  const quoteId = quote.id.slice(0, 8)
+  const projectTitle = (quote.projectTitle || 'Project').replace(
+    /[^a-zA-Z0-9]/g,
+    '_',
+  )
+  const quoteId = quote.id?.slice(0, 8) || 'unknown'
   return `Quote_${projectTitle}_${quoteId}_${date}.pdf`
 }

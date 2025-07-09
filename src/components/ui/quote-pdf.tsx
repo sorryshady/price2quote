@@ -77,16 +77,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     backgroundColor: COLORS.background.white,
     color: COLORS.text.primary,
-    padding: 0,
+    padding: 40, // Add proper page margins
+    paddingTop: 20, // Reduce top padding since header has its own
+    paddingBottom: 20, // Reduce bottom padding for footer
     lineHeight: 1.4,
   },
 
   // Header Section
   header: {
     backgroundColor: COLORS.background.section,
-    padding: 30,
+    padding: 25, // Reduced from 30 to account for page margins
+    borderRadius: 8, // Add border radius for modern look
     borderBottom: `2px solid ${COLORS.border}`,
-    marginBottom: 0,
+    marginBottom: 25, // Add space between header and content
+    marginTop: 0,
   },
   headerContent: {
     flexDirection: 'row',
@@ -99,105 +103,106 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    width: 60,
-    height: 60,
-    marginRight: 20,
+    width: 50, // Slightly smaller to fit better
+    height: 50,
+    marginRight: 15,
     objectFit: 'contain',
-    borderRadius: 8,
+    borderRadius: 6,
   },
   companyInfo: {
     flex: 1,
   },
   companyName: {
-    fontSize: 22,
+    fontSize: 20, // Slightly smaller
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 4,
+    marginBottom: 3,
     letterSpacing: 0.3,
   },
   companyTagline: {
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    fontStyle: 'italic',
-    marginBottom: 8,
-  },
-  companyDetails: {
     fontSize: 9,
     color: COLORS.text.secondary,
-    marginBottom: 2,
+    fontStyle: 'italic',
+    marginBottom: 6,
+  },
+  companyDetails: {
+    fontSize: 8,
+    color: COLORS.text.secondary,
+    marginBottom: 1.5,
   },
   headerRight: {
     alignItems: 'flex-end',
-    minWidth: 150,
+    minWidth: 140,
   },
   quoteTitle: {
-    fontSize: 24,
+    fontSize: 22, // Slightly smaller
     fontWeight: 'bold',
     color: COLORS.accent,
-    marginBottom: 4,
-    letterSpacing: 1,
+    marginBottom: 3,
+    letterSpacing: 0.8,
   },
   quoteNumber: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.text.secondary,
     marginBottom: 2,
   },
   quoteDate: {
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.text.secondary,
     marginBottom: 2,
   },
   validUntil: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.text.muted,
     fontStyle: 'italic',
   },
 
   // Content Area
   content: {
-    padding: 30,
+    padding: 0, // Remove padding since page now has margins
+    paddingBottom: 20, // Add some bottom padding
   },
 
   // Client Information Section
   clientSection: {
-    marginBottom: 25,
-    padding: 20,
+    marginBottom: 20,
+    padding: 18, // Slightly reduced
     backgroundColor: COLORS.background.light,
-    borderRadius: 8,
+    borderRadius: 6,
     border: `1px solid ${COLORS.border}`,
   },
   clientHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   billToTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: COLORS.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   clientInfo: {
     flex: 1,
-    paddingRight: 20,
+    paddingRight: 15,
   },
   projectInfo: {
     flex: 1,
   },
   clientName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     color: COLORS.text.primary,
     marginBottom: 3,
   },
   clientDetail: {
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.text.secondary,
     marginBottom: 2,
   },
   projectTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     color: COLORS.primary,
     marginBottom: 3,
@@ -205,175 +210,185 @@ const styles = StyleSheet.create({
 
   // Section Styles
   section: {
-    marginBottom: 25,
+    marginBottom: 20, // Reduced for better spacing
     backgroundColor: COLORS.background.white,
-    borderRadius: 8,
+    borderRadius: 6,
     border: `1px solid ${COLORS.border}`,
     overflow: 'hidden',
+    breakInside: 'avoid', // Prevent breaking sections across pages
   },
   sectionHeader: {
     backgroundColor: COLORS.background.section,
-    padding: 15,
+    padding: 12, // Reduced padding
     borderBottom: `1px solid ${COLORS.border}`,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     color: COLORS.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
   sectionContent: {
-    padding: 20,
+    padding: 16, // Reduced padding
   },
 
   // Executive Summary
   executiveSummary: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.text.primary,
-    lineHeight: 1.5,
-    marginBottom: 15,
+    lineHeight: 1.4,
+    marginBottom: 12,
   },
 
   // Service Breakdown
   serviceItem: {
-    marginBottom: 20,
-    paddingBottom: 15,
+    marginBottom: 16,
+    paddingBottom: 12,
     borderBottom: `1px solid ${COLORS.border}`,
+    breakInside: 'avoid', // Keep service items together
   },
   serviceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   serviceName: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: COLORS.primary,
+    flex: 1,
+    paddingRight: 10, // Ensure text doesn't touch price
   },
   servicePrice: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: COLORS.accent,
   },
   serviceDescription: {
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.text.secondary,
-    marginBottom: 8,
-    lineHeight: 1.4,
+    marginBottom: 6,
+    lineHeight: 1.3,
   },
   serviceDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   serviceQty: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.text.secondary,
   },
   deliverablesList: {
-    marginTop: 8,
+    marginTop: 6,
   },
   deliverableItem: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.text.secondary,
-    marginBottom: 2,
-    paddingLeft: 10,
+    marginBottom: 1.5,
+    paddingLeft: 8,
   },
 
   // Investment Summary
   investmentSection: {
     backgroundColor: COLORS.background.light,
-    padding: 20,
-    marginTop: 20,
+    padding: 16, // Reduced padding
+    marginTop: 16,
+    borderRadius: 6,
+    breakInside: 'avoid', // Keep investment summary together
   },
   investmentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   investmentLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.text.primary,
   },
   investmentAmount: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.text.primary,
     fontWeight: 'bold',
   },
   subtotalRow: {
-    paddingTop: 8,
+    paddingTop: 6,
     borderTop: `1px solid ${COLORS.border}`,
   },
   totalRow: {
     borderTop: `2px solid ${COLORS.primary}`,
-    paddingTop: 10,
-    marginTop: 8,
+    paddingTop: 8,
+    marginTop: 6,
   },
   totalLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   totalAmount: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: COLORS.accent,
   },
 
   // Terms and Conditions
   termsList: {
-    marginTop: 10,
+    marginTop: 8,
   },
   termItem: {
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.text.secondary,
-    marginBottom: 6,
-    paddingLeft: 12,
+    marginBottom: 4,
+    paddingLeft: 10,
+    lineHeight: 1.3,
   },
 
   // Next Steps
   nextStepsList: {
-    marginTop: 10,
+    marginTop: 8,
   },
   nextStepItem: {
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.text.primary,
-    marginBottom: 6,
-    paddingLeft: 12,
+    marginBottom: 4,
+    paddingLeft: 10,
     fontWeight: 'bold',
+    lineHeight: 1.3,
   },
 
   // Footer
   footer: {
-    marginTop: 30,
-    padding: 20,
+    marginTop: 25,
+    padding: 16, // Reduced padding
     backgroundColor: COLORS.background.section,
+    borderRadius: 6,
     borderTop: `1px solid ${COLORS.border}`,
     textAlign: 'center',
+    breakInside: 'avoid', // Keep footer together
   },
   footerText: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.text.muted,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   footerSignature: {
-    marginTop: 15,
-    paddingTop: 15,
+    marginTop: 12,
+    paddingTop: 12,
     borderTop: `1px solid ${COLORS.border}`,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   signatureBox: {
-    width: 200,
+    width: 180, // Reduced width to fit better
     borderBottom: `1px solid ${COLORS.border}`,
     paddingBottom: 2,
   },
   signatureLabel: {
-    fontSize: 8,
+    fontSize: 7,
     color: COLORS.text.muted,
-    marginTop: 5,
+    marginTop: 4,
   },
 })
 
@@ -394,10 +409,10 @@ export function QuotePDF({ quote }: QuotePDFProps) {
     amount: string | null | undefined,
     currency: string,
   ) => {
-    return formatCurrencyUtil(amount, currency)
+    return formatCurrencyUtil(amount, currency || 'USD')
   }
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'long',
@@ -406,7 +421,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
   }
 
   const getValidUntilDate = () => {
-    const validDate = new Date(quote.createdAt)
+    const validDate = new Date(quote.createdAt || new Date())
     validDate.setDate(validDate.getDate() + 30)
     return formatDate(validDate)
   }
@@ -422,9 +437,9 @@ export function QuotePDF({ quote }: QuotePDFProps) {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.page} wrap>
         {/* Professional Header */}
-        <View style={styles.header}>
+        <View style={styles.header} fixed>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               {company?.logoUrl && (
@@ -458,10 +473,10 @@ export function QuotePDF({ quote }: QuotePDFProps) {
             <View style={styles.headerRight}>
               <Text style={styles.quoteTitle}>QUOTE</Text>
               <Text style={styles.quoteNumber}>
-                #{quote.id.slice(0, 8).toUpperCase()}
+                #{quote.id?.slice(0, 8).toUpperCase() || 'UNKNOWN'}
               </Text>
               <Text style={styles.quoteDate}>
-                Date: {formatDate(quote.createdAt)}
+                Date: {formatDate(quote.createdAt || new Date())}
               </Text>
               <Text style={styles.validUntil}>
                 Valid until: {getValidUntilDate()}
@@ -498,24 +513,28 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                     💰 Budget:{' '}
                     {formatCurrency(
                       quote.clientBudget.toString(),
-                      quote.currency,
+                      quote.currency || 'USD',
                     )}
                   </Text>
                 )}
               </View>
               <View style={styles.projectInfo}>
-                <Text style={styles.projectTitle}>{quote.projectTitle}</Text>
+                <Text style={styles.projectTitle}>
+                  {quote.projectTitle || 'Project'}
+                </Text>
                 {quote.projectDescription && (
                   <Text style={styles.clientDetail}>
                     {quote.projectDescription}
                   </Text>
                 )}
                 <Text style={styles.clientDetail}>
-                  📅 Timeline: {quote.deliveryTimeline.replace('_', ' ')}
+                  📅 Timeline:{' '}
+                  {quote.deliveryTimeline?.replace('_', ' ') ||
+                    'To be determined'}
                   {quote.customTimeline && ` (${quote.customTimeline})`}
                 </Text>
                 <Text style={styles.clientDetail}>
-                  🎯 Complexity: {quote.projectComplexity}
+                  🎯 Complexity: {quote.projectComplexity || 'Standard'}
                 </Text>
               </View>
             </View>
@@ -523,7 +542,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
 
           {/* Executive Summary */}
           {aiData?.quoteDocument?.executiveSummary && (
-            <View style={styles.section}>
+            <View style={styles.section} break={false}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Executive Summary</Text>
               </View>
@@ -536,7 +555,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
           )}
 
           {/* Service Breakdown */}
-          <View style={styles.section}>
+          <View style={styles.section} break={false}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Service Breakdown</Text>
             </View>
@@ -552,7 +571,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                       <Text style={styles.servicePrice}>
                         {formatCurrency(
                           service.totalPrice.toString(),
-                          quote.currency,
+                          quote.currency || 'USD',
                         )}
                       </Text>
                     </View>
@@ -564,7 +583,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                         Quantity: {service.quantity} ×{' '}
                         {formatCurrency(
                           service.unitPrice.toString(),
-                          quote.currency,
+                          quote.currency || 'USD',
                         )}
                       </Text>
                     </View>
@@ -616,7 +635,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                         {qs.service?.name || 'Service'}
                       </Text>
                       <Text style={styles.servicePrice}>
-                        {formatCurrency(qs.totalPrice, quote.currency)}
+                        {formatCurrency(qs.totalPrice, quote.currency || 'USD')}
                       </Text>
                     </View>
                     {qs.service?.description && (
@@ -627,7 +646,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                     <View style={styles.serviceDetails}>
                       <Text style={styles.serviceQty}>
                         Quantity: {qs.quantity} ×{' '}
-                        {formatCurrency(qs.unitPrice, quote.currency)}
+                        {formatCurrency(qs.unitPrice, quote.currency || 'USD')}
                       </Text>
                     </View>
                     {qs.notes && (
@@ -643,7 +662,10 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                 <View style={styles.investmentRow}>
                   <Text style={styles.investmentLabel}>Subtotal:</Text>
                   <Text style={styles.investmentAmount}>
-                    {formatCurrency(subtotal.toString(), quote.currency)}
+                    {formatCurrency(
+                      subtotal.toString(),
+                      quote.currency || 'USD',
+                    )}
                   </Text>
                 </View>
                 {taxEnabled && taxAmount > 0 && (
@@ -652,14 +674,20 @@ export function QuotePDF({ quote }: QuotePDFProps) {
                       Tax ({taxRatePercent.toFixed(1)}%):
                     </Text>
                     <Text style={styles.investmentAmount}>
-                      {formatCurrency(taxAmount.toString(), quote.currency)}
+                      {formatCurrency(
+                        taxAmount.toString(),
+                        quote.currency || 'USD',
+                      )}
                     </Text>
                   </View>
                 )}
                 <View style={[styles.investmentRow, styles.totalRow]}>
                   <Text style={styles.totalLabel}>Total Investment:</Text>
                   <Text style={styles.totalAmount}>
-                    {formatCurrency(totalAmount.toString(), quote.currency)}
+                    {formatCurrency(
+                      totalAmount.toString(),
+                      quote.currency || 'USD',
+                    )}
                   </Text>
                 </View>
               </View>
@@ -669,7 +697,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
           {/* What&apos;s NOT Included */}
           {aiData?.quoteDocument?.exclusions &&
             aiData.quoteDocument.exclusions.length > 0 && (
-              <View style={styles.section}>
+              <View style={styles.section} break={false}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>
                     What&apos;s NOT Included
@@ -688,7 +716,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
             )}
 
           {/* Payment Terms */}
-          <View style={styles.section}>
+          <View style={styles.section} break={false}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Payment Terms</Text>
             </View>
@@ -717,7 +745,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
           </View>
 
           {/* Terms &amp; Conditions */}
-          <View style={styles.section}>
+          <View style={styles.section} break={false}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Terms & Conditions</Text>
             </View>
@@ -758,7 +786,7 @@ export function QuotePDF({ quote }: QuotePDFProps) {
           </View>
 
           {/* Next Steps */}
-          <View style={styles.section}>
+          <View style={styles.section} break={false}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Next Steps</Text>
             </View>

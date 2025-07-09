@@ -8,6 +8,7 @@ import {
   BarChart3,
   Briefcase,
   CirclePlusIcon,
+  FileImage,
   FileText,
   HelpCircle,
   LayoutDashboard,
@@ -56,6 +57,11 @@ const data = {
       title: 'My Quotes',
       url: '/quotes',
       icon: FileText,
+    },
+    {
+      title: 'PDF Preview',
+      url: '/pdf-preview',
+      icon: FileImage,
     },
     {
       title: 'Send Email',
