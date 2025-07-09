@@ -521,7 +521,14 @@ export async function generateAIEmail(data: {
     projectDescription?: string
     createdAt: Date
   }
-  emailType: 'draft' | 'sent' | 'revised' | 'accepted' | 'rejected'
+  emailType:
+    | 'draft'
+    | 'awaiting_client'
+    | 'under_revision'
+    | 'revised'
+    | 'accepted'
+    | 'rejected'
+    | 'expired'
   customContext?: string
 }) {
   try {

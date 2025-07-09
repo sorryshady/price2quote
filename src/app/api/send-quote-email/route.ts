@@ -239,11 +239,11 @@ export async function POST(req: NextRequest) {
         // Continue even if thread saving fails
       }
 
-      // Update quote status to 'sent' if it was 'draft' or 'revised'
+      // Update quote status to 'awaiting_client' if it was 'draft' or 'revised'
       if (quoteData.status === 'draft' || quoteData.status === 'revised') {
         await db
           .update(quotes)
-          .set({ status: 'sent' })
+          .set({ status: 'awaiting_client' })
           .where(eq(quotes.id, quoteId))
       }
 

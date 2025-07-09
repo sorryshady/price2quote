@@ -38,10 +38,12 @@ interface QuotePerformanceAnalytics {
   acceptanceRate: number
   conversionFunnel: {
     draft: number
-    sent: number
+    awaiting_client: number
+    under_revision: number
+    revised: number
     accepted: number
     rejected: number
-    revised: number
+    expired: number
   }
   averageTimeToAcceptance: number // in days
   revisionFrequency: number
@@ -337,12 +339,19 @@ export async function getAnalyticsDataAction(
 
     const conversionFunnel = {
       draft: finalQuotesData.filter((q) => q.quote.status === 'draft').length,
-      sent: finalQuotesData.filter((q) => q.quote.status === 'sent').length,
+      awaiting_client: finalQuotesData.filter(
+        (q) => q.quote.status === 'awaiting_client',
+      ).length,
+      under_revision: finalQuotesData.filter(
+        (q) => q.quote.status === 'under_revision',
+      ).length,
+      revised: finalQuotesData.filter((q) => q.quote.status === 'revised')
+        .length,
       accepted: finalQuotesData.filter((q) => q.quote.status === 'accepted')
         .length,
       rejected: finalQuotesData.filter((q) => q.quote.status === 'rejected')
         .length,
-      revised: finalQuotesData.filter((q) => q.quote.status === 'revised')
+      expired: finalQuotesData.filter((q) => q.quote.status === 'expired')
         .length,
     }
 

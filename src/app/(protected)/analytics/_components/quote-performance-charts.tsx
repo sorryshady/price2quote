@@ -17,10 +17,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface ConversionFunnel {
   draft: number
-  sent: number
+  awaiting_client: number
+  under_revision: number
+  revised: number
   accepted: number
   rejected: number
-  revised: number
+  expired: number
 }
 
 interface QuotesByMonth {
@@ -75,10 +77,20 @@ export function QuotePerformanceCharts({
   // Format funnel data
   const funnelData = [
     { name: 'Draft', value: conversionFunnel.draft, fill: '#8884d8' },
-    { name: 'Sent', value: conversionFunnel.sent, fill: '#82ca9d' },
+    {
+      name: 'Awaiting Client',
+      value: conversionFunnel.awaiting_client,
+      fill: '#82ca9d',
+    },
+    {
+      name: 'Under Revision',
+      value: conversionFunnel.under_revision,
+      fill: '#FFA500',
+    },
+    { name: 'Revised', value: conversionFunnel.revised, fill: '#9932CC' },
     { name: 'Accepted', value: conversionFunnel.accepted, fill: '#00C49F' },
-    { name: 'Revised', value: conversionFunnel.revised, fill: '#FFBB28' },
     { name: 'Rejected', value: conversionFunnel.rejected, fill: '#FF8042' },
+    { name: 'Expired', value: conversionFunnel.expired, fill: '#708090' },
   ].filter((item) => item.value > 0) // Only show stages with data
 
   // Format monthly data

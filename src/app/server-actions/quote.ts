@@ -244,7 +244,7 @@ export async function updateQuoteStatusAction(
       .update(quotes)
       .set({
         status,
-        sentAt: status === 'sent' ? new Date() : undefined,
+        sentAt: status === 'awaiting_client' ? new Date() : undefined,
         updatedAt: new Date(),
       })
       .where(eq(quotes.id, quoteId))

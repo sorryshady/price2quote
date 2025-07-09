@@ -16,10 +16,12 @@ import users from './users'
 // Define quote status enum
 export const quoteStatusEnum = pgEnum('quote_status', [
   'draft',
-  'sent',
+  'awaiting_client',
+  'under_revision',
+  'revised',
   'accepted',
   'rejected',
-  'revised',
+  'expired',
 ])
 
 // Define delivery timeline enum

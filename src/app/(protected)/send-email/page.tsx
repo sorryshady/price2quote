@@ -165,7 +165,7 @@ export default function SendEmailPage() {
         )
         // Reset form after successful send
         setSelectedQuote(null)
-        // Invalidate quotes queries to update status from 'draft' or 'revised' to 'sent'
+        // Invalidate quotes queries to update status from 'draft' or 'revised' to 'awaiting_client'
         await Promise.all([
           queryClient.invalidateQueries({
             queryKey: ['quotes', user?.id || ''],

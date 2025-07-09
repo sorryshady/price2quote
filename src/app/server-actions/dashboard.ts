@@ -112,7 +112,7 @@ export async function getDashboardSummaryAction(userId: string) {
       (q) => q.status === 'revised',
     ).length
     const pendingQuotes = allQuotesThisMonth.filter(
-      (q) => q.status === 'sent',
+      (q) => q.status === 'awaiting_client',
     ).length
 
     // Calculate revenue from ALL accepted quotes (including revised ones that got accepted)
@@ -195,7 +195,9 @@ export async function getActionItemsAction(userId: string) {
       })
       .from(quotes)
       .leftJoin(companies, eq(quotes.companyId, companies.id))
-      .where(and(eq(quotes.userId, userId), eq(quotes.status, 'sent')))
+      .where(
+        and(eq(quotes.userId, userId), eq(quotes.status, 'awaiting_client')),
+      )
       .orderBy(desc(quotes.sentAt))
 
     pendingQuotes.forEach(({ quote, company }) => {

@@ -88,14 +88,18 @@ function getStatusColor(status: QuoteStatus) {
   switch (status) {
     case 'draft':
       return 'bg-gray-100 text-gray-800 border-gray-200'
-    case 'sent':
+    case 'awaiting_client':
       return 'bg-blue-100 text-blue-800 border-blue-200'
+    case 'under_revision':
+      return 'bg-orange-100 text-orange-800 border-orange-200'
+    case 'revised':
+      return 'bg-purple-100 text-purple-800 border-purple-200'
     case 'accepted':
       return 'bg-green-100 text-green-800 border-green-200'
     case 'rejected':
       return 'bg-red-100 text-red-800 border-red-200'
-    case 'revised':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    case 'expired':
+      return 'bg-slate-100 text-slate-800 border-slate-200'
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200'
   }
@@ -105,14 +109,18 @@ function getStatusIcon(status: QuoteStatus) {
   switch (status) {
     case 'draft':
       return <File className="h-4 w-4" />
-    case 'sent':
+    case 'awaiting_client':
       return <Mail className="h-4 w-4" />
+    case 'under_revision':
+      return <FilePenLine className="h-4 w-4" />
+    case 'revised':
+      return <RefreshCcw className="h-4 w-4" />
     case 'accepted':
       return <Check className="h-4 w-4" />
     case 'rejected':
       return <X className="h-4 w-4" />
-    case 'revised':
-      return <RefreshCcw className="h-4 w-4" />
+    case 'expired':
+      return <GitBranch className="h-4 w-4" />
     default:
       return <File className="h-4 w-4" />
   }
@@ -434,10 +442,16 @@ export default function QuotesPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="sent">Sent</SelectItem>
+                            <SelectItem value="awaiting_client">
+                              Awaiting Client
+                            </SelectItem>
+                            <SelectItem value="under_revision">
+                              Under Revision
+                            </SelectItem>
+                            <SelectItem value="revised">Revised</SelectItem>
                             <SelectItem value="accepted">Accepted</SelectItem>
                             <SelectItem value="rejected">Rejected</SelectItem>
-                            <SelectItem value="revised">Revised</SelectItem>
+                            <SelectItem value="expired">Expired</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -533,7 +547,7 @@ export default function QuotesPage() {
                       </Button>
                       {/* Show Edit button for revised/rejected quotes - since we're using getLatestQuotesAction, 
                           these are already the latest versions */}
-                      {['revised', 'rejected'].includes(quote.status) ? (
+                      {['under_revision', 'rejected'].includes(quote.status) ? (
                         <Button
                           asChild
                           variant="outline"

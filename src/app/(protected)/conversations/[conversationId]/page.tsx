@@ -174,7 +174,7 @@ export default function ConversationDetailPage() {
           infoSource.projectTitle || infoSource.subject || 'Conversation',
         clientName: infoSource.clientName || '',
         clientEmail: infoSource.to || '',
-        quoteStatus: infoSource.emailType || 'sent',
+        quoteStatus: infoSource.emailType || 'awaiting_client',
       })
     }
   }, [emails, conversationId, queryClient])
@@ -418,13 +418,16 @@ export default function ConversationDetailPage() {
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="awaiting_client">Awaiting Client</SelectItem>
+              <SelectItem value="under_revision">Under Revision</SelectItem>
+              <SelectItem value="revised">Revised</SelectItem>
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="revised">Revised</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
             </SelectContent>
           </Select>
-          {['revised', 'rejected'].includes(quoteStatus) && (
+          {['under_revision', 'rejected'].includes(quoteStatus) && (
             <Button asChild variant="outline" size="sm">
               <Link href={`/quotes/${quoteId}/edit`}>Edit Quote</Link>
             </Button>

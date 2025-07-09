@@ -123,7 +123,14 @@ interface GenerateAIEmailData {
   companyCountry: string
   companyAiSummary?: string
   companyPhone?: string
-  emailType: 'draft' | 'sent' | 'revised' | 'accepted' | 'rejected'
+  emailType:
+    | 'draft'
+    | 'awaiting_client'
+    | 'under_revision'
+    | 'revised'
+    | 'accepted'
+    | 'rejected'
+    | 'expired'
   customContext?: string
 }
 

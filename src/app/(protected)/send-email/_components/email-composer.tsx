@@ -62,14 +62,18 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'draft':
       return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-    case 'sent':
+    case 'awaiting_client':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+    case 'under_revision':
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+    case 'revised':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
     case 'accepted':
       return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
     case 'rejected':
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-    case 'revised':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+    case 'expired':
+      return 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200'
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
   }
@@ -97,7 +101,7 @@ Looking forward to hearing from you.
 Best regards,
 {companyName}`,
   },
-  sent: {
+  awaiting_client: {
     subject: 'Follow-up: {projectTitle} Quote',
     body: `Hi {clientName},
 
@@ -113,6 +117,24 @@ I understand you're likely reviewing the proposal and may have questions. I'm he
 {contactMethod}
 
 I'm flexible with timing and happy to work around your schedule.
+
+Best regards,
+{companyName}`,
+  },
+  under_revision: {
+    subject: 'Working on Updates - {projectTitle}',
+    body: `Hi {clientName},
+
+Thank you for your feedback on the {projectTitle} quote. I'm currently working on the revisions based on your requirements.
+
+I'm addressing:
+• Your specific feedback and requests
+• Adjustments to scope and pricing
+• Timeline modifications if needed
+
+I'll have the updated quote ready for you shortly. In the meantime, if you have any additional thoughts or requirements, please don't hesitate to share them.
+
+{contactMethod}
 
 Best regards,
 {companyName}`,
@@ -175,6 +197,27 @@ I understand that the proposal didn't align with your current needs or budget. I
 If your situation changes or you have other projects in the future, please don't hesitate to reach out. I'm always happy to help.
 
 Thank you again for the opportunity.
+
+Best regards,
+{companyName}`,
+  },
+  expired: {
+    subject: 'Quote Expired - {projectTitle}',
+    body: `Hi {clientName},
+
+I hope you're doing well. The quote I sent for your {projectTitle} project has expired, but I wanted to reach out to see if you're still interested in moving forward.
+
+If the project is still on your radar, I'd be happy to:
+
+• Provide an updated quote with current pricing
+• Discuss any changes to your requirements
+• Adjust the timeline to fit your current schedule
+
+The original investment was {amount}, and I can review this based on any updates to the scope or timeline.
+
+{contactMethod}
+
+No pressure at all - just wanted to keep the door open in case the timing works better now.
 
 Best regards,
 {companyName}`,
@@ -317,10 +360,12 @@ export function EmailComposer({
         companyPhone,
         emailType: selectedQuote.status as
           | 'draft'
-          | 'sent'
+          | 'awaiting_client'
+          | 'under_revision'
           | 'revised'
           | 'accepted'
-          | 'rejected',
+          | 'rejected'
+          | 'expired',
       })
 
       if (result.success && result.email) {

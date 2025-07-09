@@ -30,10 +30,12 @@ interface QuoteSelectorProps {
 const statusFilters = [
   { value: 'all', label: 'All', color: 'default' },
   { value: 'draft', label: 'Draft', color: 'secondary' },
-  { value: 'sent', label: 'Sent', color: 'blue' },
+  { value: 'awaiting_client', label: 'Awaiting Client', color: 'blue' },
+  { value: 'under_revision', label: 'Under Revision', color: 'orange' },
+  { value: 'revised', label: 'Revised', color: 'purple' },
   { value: 'accepted', label: 'Accepted', color: 'green' },
   { value: 'rejected', label: 'Rejected', color: 'red' },
-  { value: 'revised', label: 'Revised', color: 'orange' },
+  { value: 'expired', label: 'Expired', color: 'gray' },
 ] as const
 
 export function QuoteSelector({
@@ -70,14 +72,18 @@ export function QuoteSelector({
     switch (status) {
       case 'draft':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-      case 'sent':
+      case 'awaiting_client':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'under_revision':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      case 'revised':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
       case 'accepted':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
       case 'rejected':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      case 'revised':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      case 'expired':
+        return 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200'
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
     }
