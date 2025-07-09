@@ -5,78 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1751428519613,
-      "tag": "0000_neat_shocker",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1751440698890,
-      "tag": "0001_hot_maggott",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1751441933251,
-      "tag": "0002_left_captain_cross",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1751442189061,
-      "tag": "0003_awesome_electro",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1751447220815,
-      "tag": "0004_boring_echo",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1751459889326,
-      "tag": "0005_amused_spacker_dave",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1751524998975,
-      "tag": "0006_far_sunset_bain",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1751528344197,
-      "tag": "0007_wise_gargoyle",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1751537368466,
-      "tag": "0008_curved_virginia_dare",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1751780019341,
-      "tag": "0009_chunky_jocasta",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1737495600000,
-      "tag": "0010_enhanced_quote_status",
+      "when": 1752037941620,
+      "tag": "0000_warm_wolverine",
       "breakpoints": true
     }
   ]
