@@ -26,6 +26,7 @@ import type { Quote } from '@/types'
 interface QuoteSelectorProps {
   selectedQuoteId: string | null
   onQuoteSelect: (quote: Quote) => void
+  companyId?: string | null
 }
 
 const statusFilters = [
@@ -42,9 +43,13 @@ const statusFilters = [
 export function QuoteSelector({
   selectedQuoteId,
   onQuoteSelect,
+  companyId,
 }: QuoteSelectorProps) {
   const { user } = useAuth()
-  const { data, isLoading, error } = useLatestQuotesQuery(user?.id || '')
+  const { data, isLoading, error } = useLatestQuotesQuery(
+    user?.id || '',
+    companyId || undefined,
+  )
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] =
     useState<(typeof statusFilters)[number]['value']>('all')

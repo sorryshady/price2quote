@@ -344,6 +344,7 @@ export default function SendEmailPage() {
             <QuoteSelector
               selectedQuoteId={selectedQuote?.id || null}
               onQuoteSelect={setSelectedQuote}
+              companyId={selectedCompanyId}
             />
           </div>
           <div>
