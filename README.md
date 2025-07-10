@@ -10,7 +10,9 @@ A modern web application that helps freelancers and businesses generate AI-power
 - 📊 **Professional Quote Generation**: Create comprehensive quotes with AI assistance
 - 📄 **PDF Export**: Generate professional quote PDFs with company branding
 - 📧 **Gmail Integration**: Send quotes directly via Gmail with OAuth authentication
-- 🌍 **Multi-Currency Support**: Support for 30+ currencies worldwide
+- 🌍 **Multi-Currency Support**: Support for 30+ currencies with intelligent conversion
+- 🏢 **Multi-Company Management**: Persistent company selection with smart filtering
+- 💱 **Real-time Currency Conversion**: Automatic USD conversion for mixed-currency analytics
 - 💳 **Subscription Management**: Free and Pro tiers with usage tracking
 
 ### Technical Stack
@@ -19,7 +21,6 @@ A modern web application that helps freelancers and businesses generate AI-power
 - 🔐 **Authentication** with secure session-based auth and bcrypt
 - 🎨 **UI Components** using Radix UI and Tailwind CSS
 - 📱 **Responsive Design** with mobile-first approach
-- 🌙 **Dark Mode** support
 - 🗄️ **Database** with PostgreSQL and Drizzle ORM
 - 📝 **Form Handling** with React Hook Form and Zod
 - 🔄 **State Management** with TanStack Query and Zustand
@@ -83,6 +84,9 @@ GMAIL_CLIENT_SECRET=your_gmail_client_secret
 
 # Google Gemini AI
 GEMINI_API_KEY=your_gemini_api_key
+
+# Exchange Rate API (for currency conversion)
+EXCHANGERATE_API_KEY=your_exchangerate_api_key
 
 # Supabase (for file storage)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -207,16 +211,32 @@ The application uses Google's Gemini AI for:
 ### Pro Tier
 
 - Unlimited quotes
-- Up to 5 companies
+- Up to 5 companies with persistent selection
 - Unlimited revisions
 - Priority support
-- Advanced analytics
+- Advanced analytics with multi-currency conversion
+- Real-time exchange rate processing
 
-## 🌍 Multi-Currency Support
+## 🌍 Multi-Currency Support & Intelligent Conversion
 
-Supported currencies include:
+### Supported Currencies
 
 - USD, EUR, GBP, CAD, AUD, JPY, CHF, CNY, INR, BRL, MXN, KRW, SGD, NOK, SEK, DKK, PLN, CZK, HUF, ILS, ZAR, PHP, THB, MYR, IDR, VND, TRY, RUB, AED, SAR
+
+### Smart Currency Conversion
+
+- **Real-time Exchange Rates**: Live rates from exchangerate-api.com
+- **Automatic USD Conversion**: Mixed currencies automatically convert to USD for analytics
+- **1-Hour Caching**: Optimized API usage with intelligent caching
+- **Transparent Display**: Shows conversion rates and timestamps to users
+- **Graceful Fallbacks**: Works even when exchange rate API is unavailable
+
+### Multi-Company Management
+
+- **Persistent Selection**: Company choices saved across sessions with localStorage
+- **Smart Filtering**: Quotes and data automatically filter by selected company
+- **Consistent UX**: Same company selection behavior across all pages
+- **Pro User Support**: Seamless switching between up to 5 companies
 
 ## 🐳 Local Development with Docker
 
@@ -263,10 +283,12 @@ The application uses a comprehensive database schema including:
 ### Key Features
 
 1. **Company Onboarding**: Multi-step form with logo upload and AI summary generation
-2. **Quote Creation**: AI-assisted pricing with service selection and client management
-3. **Email Integration**: Gmail OAuth with conversation threading and PDF attachments
-4. **Quote Management**: Version history, revisions, and status tracking
-5. **Analytics**: Usage tracking and subscription management
+2. **Multi-Company Management**: Persistent company selection with smart quote filtering
+3. **Quote Creation**: AI-assisted pricing with service selection and client management
+4. **Email Integration**: Gmail OAuth with conversation threading and PDF attachments
+5. **Quote Management**: Version history, revisions, and status tracking
+6. **Analytics**: Usage tracking with intelligent currency conversion for mixed currencies
+7. **Subscription Management**: Free/Pro tiers with automated billing
 
 ## 📊 Production Deployment
 
@@ -310,9 +332,9 @@ The application includes:
 
 ## 🗺️ Product Roadmap
 
-### Current Status: MVP Ready ✅
+### Current Status: MVP Complete ✅
 
-The application has a solid foundation with core features implemented. Next phase focuses on enhancing the quote lifecycle and preparing for growth features.
+The application has achieved MVP status with all core features implemented and fully functional. Multi-company management and intelligent currency conversion are now operational, providing a professional user experience for businesses of all sizes.
 
 ### Phase 1: Enhanced Quote Management (Current Priority)
 
