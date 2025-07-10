@@ -51,6 +51,13 @@ export default function ConversationsPage() {
   const primaryCompany = companies?.[0]
   const currentCompanyId = selectedCompanyId || primaryCompany?.id
 
+  // Auto-select first company when no company is selected
+  useEffect(() => {
+    if (companies?.length && !selectedCompanyId) {
+      setSelectedCompanyId(companies[0].id)
+    }
+  }, [companies, selectedCompanyId])
+
   // Use React Query for conversations caching
   const { data: conversationsData, isLoading: isLoadingConversations } =
     useConversationsQuery(currentCompanyId)
