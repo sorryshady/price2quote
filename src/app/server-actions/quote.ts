@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 
 import db from '@/db'
 import {
@@ -1269,9 +1269,18 @@ export async function getQuoteRevisionHistoryForConversationAction(
   }
 }
 
-export async function getLatestQuotesAction(userId: string) {
+export async function getLatestQuotesAction(
+  userId: string,
+  companyId?: string,
+) {
   try {
-    // First, get all quotes for the user
+    // Build where conditions
+    const whereConditions = [eq(quotes.userId, userId)]
+    if (companyId) {
+      whereConditions.push(eq(quotes.companyId, companyId))
+    }
+
+    // First, get all quotes for the user (optionally filtered by company)
     const allQuotes = await db
       .select({
         id: quotes.id,
@@ -1310,7 +1319,11 @@ export async function getLatestQuotesAction(userId: string) {
       })
       .from(quotes)
       .leftJoin(companies, eq(quotes.companyId, companies.id))
-      .where(eq(quotes.userId, userId))
+      .where(
+        whereConditions.length === 1
+          ? whereConditions[0]
+          : and(...whereConditions),
+      )
       .orderBy(quotes.createdAt)
 
     // Group quotes by their quote family (original quote or revision chain)

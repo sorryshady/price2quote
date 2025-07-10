@@ -11,10 +11,10 @@ export function useQuotesQuery(userId: string) {
   })
 }
 
-export function useLatestQuotesQuery(userId: string) {
+export function useLatestQuotesQuery(userId: string, companyId?: string) {
   return useQuery({
-    queryKey: ['latest-quotes', userId],
-    queryFn: () => getLatestQuotesAction(userId),
+    queryKey: ['latest-quotes', userId, companyId],
+    queryFn: () => getLatestQuotesAction(userId, companyId),
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })

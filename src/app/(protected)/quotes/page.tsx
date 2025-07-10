@@ -44,6 +44,7 @@ import {
   updateQuoteStatusAction,
 } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
+import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 import {
@@ -98,16 +99,23 @@ function formatCurrency(amount: string | null, currency: string) {
 export default function QuotesPage() {
   const { user, isLoading: authLoading, isInitialized } = useAuth()
   const queryClient = useQueryClient()
+  const { companies, isLoading: companiesLoading } = useCompaniesQuery()
   const {
     currentQuotes,
     upgradeMessage,
     isLoading: limitLoading,
   } = useQuoteLimit()
+
+  // Company selection state
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
+    null,
+  )
+
   const {
     data: quotesData,
     isLoading: quotesLoading,
     error,
-  } = useLatestQuotesQuery(user?.id || '')
+  } = useLatestQuotesQuery(user?.id || '', selectedCompanyId || undefined)
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
   const [selectedQuote, setSelectedQuote] = useState<(typeof quotes)[0] | null>(
     null,
@@ -235,7 +243,13 @@ export default function QuotesPage() {
   }
 
   // Wait for auth to be initialized and all data to load
-  if (!isInitialized || authLoading || limitLoading || quotesLoading) {
+  if (
+    !isInitialized ||
+    authLoading ||
+    limitLoading ||
+    quotesLoading ||
+    companiesLoading
+  ) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
@@ -308,6 +322,31 @@ export default function QuotesPage() {
       {/* Filters and Stats */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          {/* Company Selector for Pro users with multiple companies */}
+          {companies && companies.length > 1 && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-sm font-medium">Company:</span>
+              <Select
+                value={selectedCompanyId || 'all'}
+                onValueChange={(value) =>
+                  setSelectedCompanyId(value === 'all' ? null : value)
+                }
+              >
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
             <span className="text-sm font-medium">Filter by status:</span>
             <Select
