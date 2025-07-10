@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, Mail, MailCheck, MailX } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -17,6 +18,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 import { env } from '@/env/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -38,8 +46,22 @@ export default function SendEmailPage() {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [isSending, setIsSending] = useState(false)
 
-  // Get the first company (for free users) or check if any company has email
-  const primaryCompany = companies?.[0]
+  // Company selection state
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
+    null,
+  )
+
+  // Get the selected company or first company (for free users)
+  const selectedCompany = selectedCompanyId
+    ? companies?.find((c) => c.id === selectedCompanyId)
+    : companies?.[0]
+
+  // Auto-select company for users with only one company
+  useEffect(() => {
+    if (companies?.length === 1 && !selectedCompanyId) {
+      setSelectedCompanyId(companies[0].id)
+    }
+  }, [companies, selectedCompanyId])
 
   // Handle URL parameters for success/error states
   useEffect(() => {
@@ -59,12 +81,12 @@ export default function SendEmailPage() {
   }, [searchParams, refetch])
 
   const handleConnectGmail = async () => {
-    if (!primaryCompany) return
+    if (!selectedCompany) return
 
     setIsConnecting(true)
     try {
       // Redirect to Gmail OAuth
-      window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/gmail?companyId=${primaryCompany.id}`
+      window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/auth/gmail?companyId=${selectedCompany.id}`
     } catch (error) {
       console.error('Error connecting Gmail:', error)
       toast.custom(
@@ -75,14 +97,14 @@ export default function SendEmailPage() {
   }
 
   const handleDisconnectGmail = async () => {
-    if (!primaryCompany) return
+    if (!selectedCompany) return
 
     setIsDisconnecting(true)
     try {
       const response = await fetch('/api/auth/gmail/disconnect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyId: primaryCompany.id }),
+        body: JSON.stringify({ companyId: selectedCompany.id }),
       })
 
       if (response.ok) {
@@ -152,8 +174,8 @@ export default function SendEmailPage() {
           }),
         ])
         // Invalidate conversations cache to show new email in conversations
-        if (primaryCompany?.id) {
-          await invalidateConversations(primaryCompany.id)
+        if (selectedCompany?.id) {
+          await invalidateConversations(selectedCompany.id)
           // Also invalidate the specific conversation if possible
           if (result?.threadId) {
             await queryClient.invalidateQueries({
@@ -214,7 +236,7 @@ export default function SendEmailPage() {
     )
   }
 
-  if (!primaryCompany) {
+  if (!selectedCompany) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
@@ -239,8 +261,8 @@ export default function SendEmailPage() {
   }
 
   // Use Gmail connection status from companies query
-  const hasGmailConnected = primaryCompany.gmailConnected
-  const gmailEmail = primaryCompany.gmailEmail
+  const hasGmailConnected = selectedCompany.gmailConnected
+  const gmailEmail = selectedCompany.gmailEmail
 
   return (
     <div className="space-y-6">
@@ -281,6 +303,40 @@ export default function SendEmailPage() {
         )}
       </div>
 
+      {/* Company Selector for Pro users with multiple companies */}
+      {companies && companies.length > 1 && (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <span className="text-sm font-medium">Company:</span>
+          <Select
+            value={selectedCompanyId || ''}
+            onValueChange={setSelectedCompanyId}
+          >
+            <SelectTrigger className="w-full sm:w-64">
+              <SelectValue placeholder="Select a company" />
+            </SelectTrigger>
+            <SelectContent>
+              {companies.map((company) => (
+                <SelectItem key={company.id} value={company.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{company.name}</span>
+                    {company.gmailConnected && (
+                      <Badge variant="secondary" className="text-xs">
+                        Gmail Connected
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedCompany && !selectedCompany.gmailConnected && (
+            <p className="text-sm text-amber-600">
+              ⚠️ This company doesn&apos;t have Gmail connected
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Main Content */}
       {hasGmailConnected ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -293,12 +349,12 @@ export default function SendEmailPage() {
           <div>
             <EmailComposer
               selectedQuote={selectedQuote}
-              companyName={primaryCompany?.name}
-              companyDescription={primaryCompany?.description}
-              companyBusinessType={primaryCompany?.businessType}
-              companyCountry={primaryCompany?.country}
-              companyAiSummary={primaryCompany?.aiSummary}
-              companyPhone={primaryCompany?.phone}
+              companyName={selectedCompany?.name}
+              companyDescription={selectedCompany?.description}
+              companyBusinessType={selectedCompany?.businessType}
+              companyCountry={selectedCompany?.country}
+              companyAiSummary={selectedCompany?.aiSummary}
+              companyPhone={selectedCompany?.phone}
               onSendEmail={handleSendEmail}
               isSending={isSending}
               onReset={() => setSelectedQuote(null)}
