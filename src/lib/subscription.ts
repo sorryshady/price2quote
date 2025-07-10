@@ -126,7 +126,7 @@ export async function getCurrentCompanies(userId: string): Promise<number> {
   const result = await db
     .select({ count: companies.id })
     .from(companies)
-    .where(eq(companies.userId, userId))
+    .where(and(eq(companies.userId, userId), eq(companies.isArchived, false)))
 
   return result.length
 }

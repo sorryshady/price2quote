@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { AppContainer } from '@/components/app-container'
 import { AccountInfo } from '@/components/ui/account-info'
+import { ArchivedCompaniesManager } from '@/components/ui/archived-companies-manager'
 import { ConnectedAccounts } from '@/components/ui/connected-accounts'
 import { ProfileForm } from '@/components/ui/profile-form'
 import { ProfileSecurity } from '@/components/ui/profile-security'
@@ -59,6 +60,7 @@ export default async function ProfilePage() {
           {/* Right Column - Subscription & Security */}
           <div className="space-y-6">
             <SubscriptionDisplay currentTier={user.subscriptionTier} />
+            <ArchivedCompaniesManager />
             <ProfileSecurity hasPassword={hasPassword || false} />
           </div>
         </div>

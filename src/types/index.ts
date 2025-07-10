@@ -41,6 +41,8 @@ export interface Company {
   phone?: string
   email?: string
   website?: string
+  isArchived: boolean
+  archivedAt?: Date | null
   createdAt: Date
   updatedAt: Date
   currency: string

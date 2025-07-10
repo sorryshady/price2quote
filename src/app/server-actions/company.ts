@@ -1,11 +1,12 @@
 'use server'
 
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 import db from '@/db'
 import { companies, gmailConnections, services } from '@/db/schema'
 import { generateCompanySummary } from '@/lib/gemini'
 import { uploadCompanyLogo } from '@/lib/storage'
+import { canUserCreateCompany } from '@/lib/subscription'
 import type { CompanyWithServices } from '@/types'
 
 export async function generateCompanySummaryAction(data: {
@@ -37,7 +38,7 @@ export async function getUserCompaniesAction(userId: string): Promise<{
 }> {
   try {
     const userCompanies = await db.query.companies.findMany({
-      where: eq(companies.userId, userId),
+      where: and(eq(companies.userId, userId), eq(companies.isArchived, false)),
     })
 
     // Get services and Gmail connections for each company
@@ -72,6 +73,94 @@ export async function getUserCompaniesAction(userId: string): Promise<{
   } catch (error) {
     console.error('Error fetching user companies:', error)
     return { success: false, error: 'Failed to fetch companies' }
+  }
+}
+
+export async function getArchivedCompaniesAction(userId: string): Promise<{
+  success: boolean
+  companies?: CompanyWithServices[]
+  error?: string
+}> {
+  try {
+    const archivedCompanies = await db.query.companies.findMany({
+      where: and(eq(companies.userId, userId), eq(companies.isArchived, true)),
+    })
+
+    // Get services for each archived company
+    const companiesWithServices = await Promise.all(
+      archivedCompanies.map(async (company) => {
+        const companyServices = await db.query.services.findMany({
+          where: eq(services.companyId, company.id),
+        })
+
+        return {
+          ...company,
+          services: companyServices,
+          gmailConnected: false, // Archived companies don't have active Gmail connections
+          gmailEmail: null,
+        }
+      }),
+    )
+
+    return {
+      success: true,
+      companies: companiesWithServices as CompanyWithServices[],
+    }
+  } catch (error) {
+    console.error('Error fetching archived companies:', error)
+    return { success: false, error: 'Failed to fetch archived companies' }
+  }
+}
+
+export async function reactivateCompanyAction(
+  userId: string,
+  companyId: string,
+): Promise<{
+  success: boolean
+  error?: string
+}> {
+  try {
+    // Check if user can reactivate (based on subscription limits)
+    const canCreate = await canUserCreateCompany(userId, 'free') // TODO: Get actual user tier
+
+    if (!canCreate) {
+      return {
+        success: false,
+        error:
+          'Cannot reactivate company. Upgrade to Pro to manage more companies.',
+      }
+    }
+
+    // Verify the company belongs to the user and is archived
+    const company = await db.query.companies.findFirst({
+      where: and(
+        eq(companies.id, companyId),
+        eq(companies.userId, userId),
+        eq(companies.isArchived, true),
+      ),
+    })
+
+    if (!company) {
+      return {
+        success: false,
+        error: 'Company not found or not archived',
+      }
+    }
+
+    // Reactivate the company
+    await db
+      .update(companies)
+      .set({
+        isArchived: false,
+        archivedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(companies.id, companyId))
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error reactivating company:', error)
+    return { success: false, error: 'Failed to reactivate company' }
   }
 }
 

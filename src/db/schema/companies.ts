@@ -1,4 +1,5 @@
 import {
+  boolean,
   pgEnum,
   pgTable,
   text,
@@ -40,6 +41,8 @@ const companies = pgTable('companies', {
   phone: varchar('phone', { length: 50 }),
   email: varchar('email', { length: 255 }),
   website: varchar('website', { length: 255 }),
+  isArchived: boolean('is_archived').default(false).notNull(),
+  archivedAt: timestamp('archived_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

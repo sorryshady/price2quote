@@ -1,15 +1,70 @@
 import DodoPayments from 'dodopayments'
 import { and, eq, lt } from 'drizzle-orm'
+import { inArray } from 'drizzle-orm'
 
 import db from '@/db'
-import { subscriptions, users } from '@/db/schema'
+import { companies, subscriptions, users } from '@/db/schema'
 import { env } from '@/env/server'
+import { subscriptionFeatures } from '@/lib/subscription-client'
 import type { DodoWebhookPayload, UpdateSubscriptionResult } from '@/types'
 
 export const dodoPayments = new DodoPayments({
   bearerToken: env.DODO_PAYMENTS_API_KEY,
   environment: env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
 })
+
+// Helper function to handle company overflow when downgrading subscriptions
+async function handleCompanyOverflow(userId: string, newTier: 'free' | 'pro') {
+  if (newTier === 'pro') {
+    // When upgrading to pro, reactivate all archived companies
+    await db
+      .update(companies)
+      .set({
+        isArchived: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(companies.userId, userId))
+
+    console.log(`Reactivated all companies for user ${userId} on Pro upgrade`)
+    return
+  }
+
+  // When downgrading to free, check if user has more than 1 company
+  const userCompanies = await db.query.companies.findMany({
+    where: eq(companies.userId, userId),
+    orderBy: companies.createdAt, // Keep the oldest company active (most established)
+  })
+
+  const maxCompanies = subscriptionFeatures.free.maxCompanies
+
+  if (userCompanies.length > maxCompanies) {
+    // Keep the first company active, archive the rest
+    const companiesToArchive = userCompanies.slice(maxCompanies)
+    const companyIdsToArchive = companiesToArchive.map((c) => c.id)
+
+    if (companyIdsToArchive.length > 0) {
+      await db
+        .update(companies)
+        .set({
+          isArchived: true,
+          archivedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(companies.userId, userId),
+            // Archive companies beyond the limit
+            inArray(companies.id, companyIdsToArchive),
+          ),
+        )
+
+      console.log(
+        `Archived ${companyIdsToArchive.length} companies for user ${userId} due to free tier limit. ` +
+          `Kept company: ${userCompanies[0].name}`,
+      )
+    }
+  }
+}
 
 // Helper function to update user subscription tier based on subscription status
 export async function updateUserSubscriptionTier(
@@ -18,6 +73,9 @@ export async function updateUserSubscriptionTier(
 ) {
   // Determine subscription tier based on status
   const subscriptionTier = subscriptionStatus === 'active' ? 'pro' : 'free'
+
+  // Handle company overflow when downgrading
+  await handleCompanyOverflow(userId, subscriptionTier)
 
   // Update user subscription tier
   await db
