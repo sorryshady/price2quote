@@ -69,12 +69,12 @@ export default function UpgradePage() {
       firstName: '',
       lastName: '',
       email: '',
-      phoneNumber: '',
-      street: '',
-      city: '',
-      state: '',
-      country: 'US', // Default to US
-      zipcode: '',
+      phoneNumber: '+916238059733',
+      street: 'Nilav, TC-2',
+      city: 'Trivandrum',
+      state: 'Kerala',
+      country: 'IN', // Default to US
+      zipcode: '695581',
     },
   })
 
