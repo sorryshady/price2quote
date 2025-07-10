@@ -12,3 +12,7 @@ DONE: when new unread email fetched invalidate conversation using the id.
 Negotiation is giving results in USD. Need to fix that
 Need to check the implementation of the actions required thing. Right now it shows some things but not fully functional.
 Add companies settings page to add services, remove service and edit logo, name etc.
+
+Dashboard and analytics persist on client side. Invalidate when something changes
+Add better loading states actually.
+Dashboard also has to show the currency conversion because it is also changing
