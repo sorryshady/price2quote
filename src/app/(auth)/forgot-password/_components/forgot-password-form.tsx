@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { render } from '@react-email/render'
+// import { render } from '@react-email/render'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-hot-toast'
@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 
 import { generateToken } from '@/app/server-actions'
-import ForgotPassword from '@/email-templates/forgot-password'
+// import ForgotPassword from '@/email-templates/forgot-password'
 import { env } from '@/env/client'
 import { type ForgotPasswordSchema, forgotPasswordSchema } from '@/lib/schemas'
 
@@ -51,20 +51,27 @@ const ForgotPasswordForm = () => {
       const { user } = body
       const { email, id, name, ip, location } = user
       const token = await generateToken(email, id, 'password-reset')
-      const html = await render(
-        <ForgotPassword
-          userName={name}
-          passwordResetUrl={`${env.NEXT_PUBLIC_API_URL}/reset-password?token=${token}`}
-          requestIp={ip}
-          requestLocation={location}
-        />,
-      )
+      const info = {
+        userName: name,
+        requestIp: ip,
+        requestLocation: location,
+        passwordResetUrl: `${env.NEXT_PUBLIC_API_URL}/reset-password?token=${token}`,
+      }
+      // const html = await render(
+      //   <ForgotPassword
+      //     userName={name}
+      //     passwordResetUrl={`${env.NEXT_PUBLIC_API_URL}/reset-password?token=${token}`}
+      //     requestIp={ip}
+      //     requestLocation={location}
+      //   />,
+      // )
       const emailResponse = await fetch(
         `${env.NEXT_PUBLIC_API_URL}/api/send-email`,
         {
           method: 'POST',
           body: JSON.stringify({
-            html,
+            // html,
+            info,
             userEmail: email,
             purpose: 'password-reset',
           }),

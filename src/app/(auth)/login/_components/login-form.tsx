@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { render } from '@react-email/render'
+// import { render } from '@react-email/render'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -34,7 +34,7 @@ import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/ui/password-input'
 
 import { generateToken } from '@/app/server-actions'
-import { VerifyEmail } from '@/email-templates/verify-email'
+// import { VerifyEmail } from '@/email-templates/verify-email'
 import { env } from '@/env/client'
 import { useAuthState } from '@/hooks/use-auth'
 import { type LoginSchema, loginSchema } from '@/lib/schemas'
@@ -106,14 +106,20 @@ const LoginForm = () => {
       userInfo.id,
       'email-verification',
     )
-    const html = await render(
-      <VerifyEmail
-        userName={userInfo.name}
-        requestIp={userInfo.ip}
-        requestLocation={userInfo.location}
-        verificationUrl={`${env.NEXT_PUBLIC_API_URL}/verify-email?token=${token}`}
-      />,
-    )
+    const info = {
+      userName: userInfo.name,
+      requestIp: userInfo.ip,
+      requestLocation: userInfo.location,
+      verificationUrl: `${env.NEXT_PUBLIC_API_URL}/verify-email?token=${token}`,
+    }
+    // const html = await render(
+    //   <VerifyEmail
+    //     userName={userInfo.name}
+    //     requestIp={userInfo.ip}
+    //     requestLocation={userInfo.location}
+    //     verificationUrl={`${env.NEXT_PUBLIC_API_URL}/verify-email?token=${token}`}
+    //   />,
+    // )
     setIsResending(true)
     try {
       const response = await fetch(
@@ -121,7 +127,8 @@ const LoginForm = () => {
         {
           method: 'POST',
           body: JSON.stringify({
-            html,
+            // html,
+            info,
             userEmail: userInfo.email,
             purpose: 'email-verification',
           }),
