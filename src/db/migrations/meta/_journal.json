@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1752037941620,
-      "tag": "0000_warm_wolverine",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1752041611063,
-      "tag": "0001_groovy_giant_girl",
+      "when": 1752125776999,
+      "tag": "0000_sleepy_absorbing_man",
       "breakpoints": true
     }
   ]

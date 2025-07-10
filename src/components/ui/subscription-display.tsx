@@ -3,8 +3,8 @@
 import { IconBolt, IconCrown, IconUser } from '@tabler/icons-react'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { UpgradeButton } from '@/components/ui/upgrade-button'
 
 import { useCompanyLimit, useQuoteLimit } from '@/hooks/use-subscription-limits'
 import { getSubscriptionFeatures } from '@/lib/subscription-client'
@@ -166,10 +166,7 @@ export function SubscriptionDisplay({ currentTier }: SubscriptionDisplayProps) {
                     </div>
                   </div>
 
-                  <Button className="w-full bg-amber-600 text-white hover:bg-amber-700">
-                    <IconCrown className="mr-2 h-4 w-4" />
-                    Upgrade to Pro
-                  </Button>
+                  <UpgradeButton />
                 </div>
               </div>
             </div>

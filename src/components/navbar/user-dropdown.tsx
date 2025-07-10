@@ -2,7 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
-import { LogOutIcon, SettingsIcon, UserIcon } from 'lucide-react'
+import {
+  CreditCardIcon,
+  LogOutIcon,
+  SettingsIcon,
+  UserIcon,
+} from 'lucide-react'
 
 import { Button } from '../ui/button'
 import {
@@ -77,6 +82,15 @@ const UserDropdown = ({ user, logout }: UserDropdownProps) => {
           >
             <SettingsIcon className="mr-2 h-4 w-4" />
             <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href="/billing"
+            className="flex w-full cursor-pointer items-center"
+          >
+            <CreditCardIcon className="mr-2 h-4 w-4" />
+            <span>Billing</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

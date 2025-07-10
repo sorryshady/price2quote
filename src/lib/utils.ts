@@ -19,10 +19,12 @@ export async function getLocation(ip: string) {
   if (ip === '::ffff:127.0.0.1') {
     return 'Localhost'
   }
+  // const url = `https://free.freeipapi.com/api/json/${ipAddress}`;
   const response = await fetch(`https://ipapi.co/${ip}/json/`)
   const data = await response.json()
   console.log(data)
   return data.city
+  // return data.cityName
 }
 
 /**

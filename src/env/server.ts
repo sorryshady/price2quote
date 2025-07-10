@@ -36,6 +36,8 @@ export const env = createEnv({
     GOOGLE_REDIRECT_URI: z.string().url(),
     GMAIL_REDIRECT_URI: z.string().url(),
     GEMINI_API_KEY: z.string(),
+    DODO_PAYMENTS_API_KEY: z.string(),
+    DODO_PAYMENTS_WEBHOOK_SECRET: z.string(),
     // GITHUB_CLIENT_ID: z.string(),
     // GITHUB_CLIENT_SECRET: z.string(),
     // GITHUB_REDIRECT_URI: z.string().url(),
