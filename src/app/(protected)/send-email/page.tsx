@@ -30,6 +30,7 @@ import { env } from '@/env/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useConversationsQueryClient } from '@/hooks/use-conversations-query'
+import { useSelectedCompany } from '@/hooks/use-selected-company'
 import type { Quote } from '@/types'
 
 import { EmailComposer, type EmailData } from './_components/email-composer'
@@ -46,22 +47,9 @@ export default function SendEmailPage() {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [isSending, setIsSending] = useState(false)
 
-  // Company selection state
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
-    null,
-  )
-
-  // Get the selected company or first company (for free users)
-  const selectedCompany = selectedCompanyId
-    ? companies?.find((c) => c.id === selectedCompanyId)
-    : companies?.[0]
-
-  // Auto-select first company when no company is selected
-  useEffect(() => {
-    if (companies?.length && !selectedCompanyId) {
-      setSelectedCompanyId(companies[0].id)
-    }
-  }, [companies, selectedCompanyId])
+  // Use persistent company selection
+  const { selectedCompanyId, selectedCompany, setSelectedCompanyId } =
+    useSelectedCompany(companies)
 
   // Handle URL parameters for success/error states
   useEffect(() => {

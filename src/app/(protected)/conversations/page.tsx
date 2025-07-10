@@ -33,6 +33,7 @@ import {
   useConversationsQuery,
   useConversationsQueryClient,
 } from '@/hooks/use-conversations-query'
+import { useSelectedCompany } from '@/hooks/use-selected-company'
 import type { EmailSyncStatus as EmailSyncStatusType } from '@/types'
 
 export default function ConversationsPage() {
@@ -41,22 +42,13 @@ export default function ConversationsPage() {
   const queryClient = useQueryClient()
   const { companies, isLoading, error } = useCompaniesQuery()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
-    null,
-  )
   const [syncStatus, setSyncStatus] = useState<EmailSyncStatusType | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
 
-  // Get the first company (for free users) or use selected company
-  const primaryCompany = companies?.[0]
-  const currentCompanyId = selectedCompanyId || primaryCompany?.id
-
-  // Auto-select first company when no company is selected
-  useEffect(() => {
-    if (companies?.length && !selectedCompanyId) {
-      setSelectedCompanyId(companies[0].id)
-    }
-  }, [companies, selectedCompanyId])
+  // Use persistent company selection
+  const { selectedCompanyId, selectedCompany, setSelectedCompanyId } =
+    useSelectedCompany(companies)
+  const currentCompanyId = selectedCompanyId
 
   // Use React Query for conversations caching
   const { data: conversationsData, isLoading: isLoadingConversations } =
@@ -296,7 +288,7 @@ export default function ConversationsPage() {
     )
   }
 
-  if (!primaryCompany) {
+  if (!selectedCompany) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">

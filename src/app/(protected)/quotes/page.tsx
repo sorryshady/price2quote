@@ -46,6 +46,7 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
+import { useSelectedCompany } from '@/hooks/use-selected-company'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 import {
   STATUS_FILTER_OPTIONS,
@@ -106,10 +107,9 @@ export default function QuotesPage() {
     isLoading: limitLoading,
   } = useQuoteLimit()
 
-  // Company selection state
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
-    null,
-  )
+  // Use persistent company selection
+  const { selectedCompanyId, setSelectedCompanyId } =
+    useSelectedCompany(companies)
 
   const {
     data: quotesData,
@@ -327,16 +327,13 @@ export default function QuotesPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
               <span className="text-sm font-medium">Company:</span>
               <Select
-                value={selectedCompanyId || 'all'}
-                onValueChange={(value) =>
-                  setSelectedCompanyId(value === 'all' ? null : value)
-                }
+                value={selectedCompanyId || ''}
+                onValueChange={(value) => setSelectedCompanyId(value)}
               >
                 <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Companies</SelectItem>
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}
