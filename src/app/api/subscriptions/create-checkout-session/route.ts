@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { CountryCode } from 'dodopayments/resources/misc.mjs'
+
 import { env } from '@/env/client'
 import { getUser } from '@/lib/auth'
 import { DODO_PRODUCTS } from '@/lib/constants'
@@ -24,10 +26,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Dodo Payments checkout session
-    const checkoutResponse = await dodoPayments.createCheckoutSession({
+    const checkoutResponse = await dodoPayments.subscriptions.create({
       billing: {
         city: billingInfo.city,
-        country: billingInfo.country,
+        country: billingInfo.country as CountryCode,
         state: billingInfo.state,
         street: billingInfo.street,
         zipcode: billingInfo.zipcode,

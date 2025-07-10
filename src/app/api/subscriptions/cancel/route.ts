@@ -47,7 +47,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Cancel subscription with Dodo Payments
-    const cancelResponse = await dodoPayments.cancelSubscription(subscriptionId)
+    const cancelResponse = await dodoPayments.subscriptions.update(
+      subscriptionId,
+      {
+        status: 'cancelled',
+        metadata: {},
+      },
+    )
     console.log('Dodo cancellation response:', cancelResponse)
 
     // Update subscription status in our database

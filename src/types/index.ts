@@ -180,3 +180,74 @@ export interface SyncConfig {
   includeLabels: string[]
   excludeLabels: string[]
 }
+
+// Dodo Payments webhook and API types
+export interface SubscriptionProduct {
+  activated_at: string
+  payment_frequency_interval: 'Day' | 'Week' | 'Month' | 'Year'
+  subscription_id: string
+  product_id: string
+}
+
+export interface OneTimeProduct {
+  product_id: string
+  quantity: number
+}
+
+export interface UpdateSubscriptionResult {
+  success: boolean
+  error?: {
+    message: string
+    status: number
+  }
+}
+
+// Webhook payload structure for Dodo Payments
+export interface DodoWebhookPayload {
+  type: string
+  business_id?: string
+  timestamp?: string
+  data: {
+    // Payment fields (for payment.succeeded events)
+    payload_type?: 'Payment' | 'Subscription'
+    payment_id?: string
+    total_amount?: number
+    amount?: number
+    currency?: string
+    status?: string
+    created_at?: string
+
+    // Subscription fields
+    subscription_id?: string
+    product_id?: string
+    payment_frequency_interval?: 'Day' | 'Week' | 'Month' | 'Year'
+    current_period_start?: number
+    current_period_end?: number
+
+    // Customer fields
+    customer?: {
+      customer_id?: string
+      id?: string
+      email: string
+      name?: string
+    }
+
+    // Product cart for one-time payments
+    product_cart?: OneTimeProduct[]
+
+    // Invoice fields (for specific invoice events)
+    invoice?: {
+      id: string
+      subscription_id: string
+      amount: number
+      currency?: string
+      status: string
+      paid_at?: number
+      invoice_pdf?: string
+    }
+
+    // Fallback fields that might be at root level
+    id?: string
+    customer_id?: string
+  }
+}

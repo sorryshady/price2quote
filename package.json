@@ -11,7 +11,8 @@
     "format": "prettier src/ --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "cross-env DB_MIGRATING=true drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

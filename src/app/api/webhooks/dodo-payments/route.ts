@@ -1,49 +1,59 @@
 import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { eq } from 'drizzle-orm'
 import { Webhook } from 'standardwebhooks'
 
 import db from '@/db'
-import { invoices, subscriptions, users } from '@/db/schema'
+import { invoices } from '@/db/schema'
 import { env } from '@/env/server'
+import type { DodoWebhookPayload } from '@/types'
 
 const webhook = new Webhook(env.DODO_PAYMENTS_WEBHOOK_SECRET || '')
 
-interface DodoWebhookPayload {
-  type: string
-  data: {
-    subscription?: {
-      id: string
-      subscription_id?: string
-      customer_id?: string
-      status: string
-      current_period_start: number
-      current_period_end: number
-    }
-    invoice?: {
-      id: string
-      subscription_id: string
-      amount: number
-      currency?: string
-      status: string
-      paid_at?: number
-      invoice_pdf?: string
-    }
-    customer?: {
-      id?: string
-      email: string
-      name?: string
-    }
-    // Fallback properties that might be at root level
-    id?: string
-    subscription_id?: string
-    customer_id?: string
-    status?: string
-    current_period_start?: number
-    current_period_end?: number
-  }
-}
+/**
+ * COMPREHENSIVE DODO PAYMENTS WEBHOOK HANDLER
+ *
+ * This webhook handler ensures proper synchronization between Dodo Payments
+ * and our application's user subscription system.
+ *
+ * KEY FEATURES:
+ * 1. **User Subscription Tier Updates**: Automatically updates user.subscriptionTier
+ *    in the database when subscription status changes (active = 'pro', cancelled = 'free')
+ *
+ * 2. **Database Synchronization**: Maintains subscription records in our subscriptions table
+ *    with current status, billing periods, and Dodo subscription IDs
+ *
+ * 3. **Invoice Tracking**: Records all payment attempts (successful and failed)
+ *    in our invoices table
+ *
+ * 4. **Real-time Auth State Updates**: When subscription status changes, the user's
+ *    subscription tier is immediately updated, which triggers:
+ *    - Updated subscription limits (quotes, companies, revisions)
+ *    - UI changes reflecting new subscription status
+ *    - Access to pro features
+ *
+ * 5. **Payment Success Processing**: When payments succeed, ensures user subscription
+ *    tier is set to 'pro' even if other webhook events were missed
+ *
+ * WEBHOOK EVENTS HANDLED:
+ * - customer.subscription.created
+ * - checkout.session.completed
+ * - subscription.active
+ * - subscription.renewed
+ * - customer.subscription.updated
+ * - customer.subscription.deleted
+ * - invoice.payment_succeeded
+ * - payment.succeeded
+ * - invoice.payment_failed
+ *
+ * INTEGRATION POINTS:
+ * - Updates users.subscriptionTier which affects @/hooks/use-auth
+ * - Updates subscription records used by @/hooks/use-subscription-limits
+ * - Records invoices displayed in billing pages
+ * - Triggers real-time subscription status updates throughout the app
+ */
+
+// Use the imported type from @/types
 
 export async function POST(request: NextRequest) {
   const headersList = await headers()
@@ -69,6 +79,8 @@ export async function POST(request: NextRequest) {
     switch (payload.type) {
       case 'customer.subscription.created':
       case 'checkout.session.completed':
+      case 'subscription.active':
+      case 'subscription.renewed':
         await handleSubscriptionCreated(payload)
         break
 
@@ -81,6 +93,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'invoice.payment_succeeded':
+      case 'payment.succeeded':
         await handleInvoicePaymentSucceeded(payload)
         break
 
@@ -104,61 +117,19 @@ export async function POST(request: NextRequest) {
 
 async function handleSubscriptionCreated(payload: DodoWebhookPayload) {
   try {
-    // Extract subscription data from nested structure or root level
-    const subscriptionData = payload.data.subscription || {
-      id: payload.data.id || '',
-      subscription_id: payload.data.subscription_id || '',
-      customer_id: payload.data.customer_id || payload.data.customer?.id || '',
-      status: payload.data.status || 'active',
-      current_period_start: payload.data.current_period_start || 0,
-      current_period_end: payload.data.current_period_end || 0,
-    }
-
     const customerData = payload.data.customer
 
     if (!customerData?.email) {
       throw new Error('Missing customer email')
     }
 
-    // Find the user by email to get their UUID
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, customerData.email))
-      .limit(1)
+    // Use the new helper function that handles both DB updates and user tier updates
+    const { handleSubscriptionWebhook } = await import('@/lib/dodo-payments')
+    const result = await handleSubscriptionWebhook(customerData.email, payload)
 
-    if (!user) {
-      throw new Error(`User not found with email: ${customerData.email}`)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to handle subscription webhook')
     }
-
-    // Create or update subscription record
-    await db
-      .insert(subscriptions)
-      .values({
-        userId: user.id,
-        dodoSubscriptionId:
-          subscriptionData.id || subscriptionData.subscription_id || '',
-        dodoCustomerId:
-          subscriptionData.customer_id || customerData.id || customerData.email,
-        status: subscriptionData.status,
-        currentPeriodStart: new Date(
-          subscriptionData.current_period_start * 1000,
-        ),
-        currentPeriodEnd: new Date(subscriptionData.current_period_end * 1000),
-      })
-      .onConflictDoUpdate({
-        target: subscriptions.dodoSubscriptionId,
-        set: {
-          status: subscriptionData.status,
-          currentPeriodStart: new Date(
-            subscriptionData.current_period_start * 1000,
-          ),
-          currentPeriodEnd: new Date(
-            subscriptionData.current_period_end * 1000,
-          ),
-          updatedAt: new Date(),
-        },
-      })
 
     console.log('Subscription created/updated successfully')
   } catch (error) {
@@ -169,35 +140,21 @@ async function handleSubscriptionCreated(payload: DodoWebhookPayload) {
 
 async function handleSubscriptionUpdated(payload: DodoWebhookPayload) {
   try {
-    // Extract subscription data from nested structure or root level
-    const subscriptionData = payload.data.subscription || {
-      id: payload.data.id || '',
-      subscription_id: payload.data.subscription_id || '',
-      status: payload.data.status || '',
-      current_period_start: payload.data.current_period_start || 0,
-      current_period_end: payload.data.current_period_end || 0,
+    const customerData = payload.data.customer
+
+    if (!customerData?.email) {
+      throw new Error('Missing customer email')
     }
 
-    if (!subscriptionData.id && !subscriptionData.subscription_id) {
-      throw new Error('Missing subscription ID')
-    }
+    // Use the same helper function to handle updates and user tier changes
+    const { handleSubscriptionWebhook } = await import('@/lib/dodo-payments')
+    const result = await handleSubscriptionWebhook(customerData.email, payload)
 
-    await db
-      .update(subscriptions)
-      .set({
-        status: subscriptionData.status,
-        currentPeriodStart: new Date(
-          subscriptionData.current_period_start * 1000,
-        ),
-        currentPeriodEnd: new Date(subscriptionData.current_period_end * 1000),
-        updatedAt: new Date(),
-      })
-      .where(
-        eq(
-          subscriptions.dodoSubscriptionId,
-          subscriptionData.id || subscriptionData.subscription_id || '',
-        ),
+    if (!result.success) {
+      throw new Error(
+        result.error || 'Failed to handle subscription update webhook',
       )
+    }
 
     console.log('Subscription updated successfully')
   } catch (error) {
@@ -208,28 +165,27 @@ async function handleSubscriptionUpdated(payload: DodoWebhookPayload) {
 
 async function handleSubscriptionDeleted(payload: DodoWebhookPayload) {
   try {
-    // Extract subscription data from nested structure or root level
-    const subscriptionData = payload.data.subscription || {
-      id: payload.data.id || '',
-      subscription_id: payload.data.subscription_id || '',
+    const customerData = payload.data.customer
+
+    if (!customerData?.email) {
+      throw new Error('Missing customer email')
     }
 
-    if (!subscriptionData.id && !subscriptionData.subscription_id) {
+    const subscriptionId = payload.data.subscription_id || payload.data.id
+    if (!subscriptionId) {
       throw new Error('Missing subscription ID')
     }
 
-    await db
-      .update(subscriptions)
-      .set({
-        status: 'cancelled',
-        updatedAt: new Date(),
-      })
-      .where(
-        eq(
-          subscriptions.dodoSubscriptionId,
-          subscriptionData.id || subscriptionData.subscription_id || '',
-        ),
-      )
+    // Use the helper function to handle cancellation and user tier update
+    const { cancelUserSubscription } = await import('@/lib/dodo-payments')
+    const result = await cancelUserSubscription(
+      customerData.email,
+      subscriptionId,
+    )
+
+    if (!result.success) {
+      throw new Error(result.error?.message || 'Failed to cancel subscription')
+    }
 
     console.log('Subscription cancelled successfully')
   } catch (error) {
@@ -240,31 +196,63 @@ async function handleSubscriptionDeleted(payload: DodoWebhookPayload) {
 
 async function handleInvoicePaymentSucceeded(payload: DodoWebhookPayload) {
   try {
-    const invoiceData = payload.data.invoice
+    const customerData = payload.data.customer
 
-    if (!invoiceData) {
-      throw new Error('Missing invoice data')
+    if (!customerData?.email) {
+      throw new Error('Missing customer email')
     }
 
-    // Create invoice record
+    // For payment.succeeded events, the payment data is in the root data object
+    // not in a separate invoice object
+    const paymentData = payload.data
+
+    // Create invoice record using payment data
     await db
       .insert(invoices)
       .values({
-        dodoInvoiceId: invoiceData.id,
-        subscriptionId: invoiceData.subscription_id,
-        amount: invoiceData.amount,
-        currency: invoiceData.currency || 'USD',
+        dodoInvoiceId:
+          paymentData.payment_id || paymentData.id || `pay_${Date.now()}`,
+        subscriptionId: paymentData.subscription_id || '',
+        amount: paymentData.total_amount || paymentData.amount || 0,
+        currency: paymentData.currency || 'USD',
         status: 'paid',
-        paidAt: invoiceData.paid_at
-          ? new Date(invoiceData.paid_at * 1000)
+        paidAt: paymentData.created_at
+          ? new Date(paymentData.created_at)
           : new Date(),
-        invoicePdfUrl: invoiceData.invoice_pdf,
+        invoicePdfUrl: null, // PDF not provided in payment webhook
       })
       .onConflictDoNothing()
 
-    console.log('Invoice payment succeeded processed successfully')
+    // If this is a subscription payment, ensure user subscription tier is updated
+    if (paymentData.subscription_id) {
+      const { handleSubscriptionWebhook } = await import('@/lib/dodo-payments')
+      const subscriptionPayload = {
+        ...payload,
+        data: {
+          ...payload.data,
+          subscription_id: paymentData.subscription_id,
+          status: 'active', // Payment succeeded means subscription is active
+          // Add current time as period for billing cycle
+          current_period_start: Math.floor(Date.now() / 1000),
+          current_period_end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days from now
+        },
+      }
+
+      const result = await handleSubscriptionWebhook(
+        customerData.email,
+        subscriptionPayload,
+      )
+      if (!result.success) {
+        console.warn(
+          'Failed to update user subscription tier after payment:',
+          result.error,
+        )
+      }
+    }
+
+    console.log('Payment succeeded processed successfully')
   } catch (error) {
-    console.error('Error handling invoice payment succeeded:', error)
+    console.error('Error handling payment succeeded:', error)
     throw error
   }
 }
@@ -272,6 +260,7 @@ async function handleInvoicePaymentSucceeded(payload: DodoWebhookPayload) {
 async function handleInvoicePaymentFailed(payload: DodoWebhookPayload) {
   try {
     const invoiceData = payload.data.invoice
+    const customerData = payload.data.customer
 
     if (!invoiceData) {
       throw new Error('Missing invoice data')
@@ -293,6 +282,15 @@ async function handleInvoicePaymentFailed(payload: DodoWebhookPayload) {
           status: 'failed',
         },
       })
+
+    // If this is a subscription payment failure, we might want to update subscription status
+    // This depends on your business logic - failed payments might mean past_due status
+    if (invoiceData.subscription_id && customerData?.email) {
+      console.log(
+        `Payment failed for subscription ${invoiceData.subscription_id}, customer: ${customerData.email}`,
+      )
+      // You can implement additional logic here based on your requirements
+    }
 
     console.log('Invoice payment failed processed successfully')
   } catch (error) {
