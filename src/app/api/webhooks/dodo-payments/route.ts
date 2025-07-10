@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Webhook } from 'standardwebhooks'
 
 import db from '@/db'
-import { invoices } from '@/db/schema'
+import { payments } from '@/db/schema'
 import { env } from '@/env/server'
 import type { DodoWebhookPayload } from '@/types'
 
@@ -23,8 +23,8 @@ const webhook = new Webhook(env.DODO_PAYMENTS_WEBHOOK_SECRET || '')
  * 2. **Database Synchronization**: Maintains subscription records in our subscriptions table
  *    with current status, billing periods, and Dodo subscription IDs
  *
- * 3. **Invoice Tracking**: Records all payment attempts (successful and failed)
- *    in our invoices table
+ * 3. **Payment Tracking**: Records all payment attempts (successful and failed)
+ *    in our payments table for billing history
  *
  * 4. **Real-time Auth State Updates**: When subscription status changes, the user's
  *    subscription tier is immediately updated, which triggers:
@@ -49,7 +49,7 @@ const webhook = new Webhook(env.DODO_PAYMENTS_WEBHOOK_SECRET || '')
  * INTEGRATION POINTS:
  * - Updates users.subscriptionTier which affects @/hooks/use-auth
  * - Updates subscription records used by @/hooks/use-subscription-limits
- * - Records invoices displayed in billing pages
+ * - Records payments displayed in billing pages
  * - Triggers real-time subscription status updates throughout the app
  */
 
@@ -94,11 +94,11 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded':
       case 'payment.succeeded':
-        await handleInvoicePaymentSucceeded(payload)
+        await handlePaymentSucceeded(payload)
         break
 
       case 'invoice.payment_failed':
-        await handleInvoicePaymentFailed(payload)
+        await handlePaymentFailed(payload)
         break
 
       default:
@@ -194,7 +194,7 @@ async function handleSubscriptionDeleted(payload: DodoWebhookPayload) {
   }
 }
 
-async function handleInvoicePaymentSucceeded(payload: DodoWebhookPayload) {
+async function handlePaymentSucceeded(payload: DodoWebhookPayload) {
   try {
     const customerData = payload.data.customer
 
@@ -202,24 +202,30 @@ async function handleInvoicePaymentSucceeded(payload: DodoWebhookPayload) {
       throw new Error('Missing customer email')
     }
 
+    // Get user from email to get user ID
+    const user = await getUserByEmail(customerData.email)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
     // For payment.succeeded events, the payment data is in the root data object
-    // not in a separate invoice object
     const paymentData = payload.data
 
-    // Create invoice record using payment data
+    // Create payment record using payment data
     await db
-      .insert(invoices)
+      .insert(payments)
       .values({
-        dodoInvoiceId:
+        userId: user.id,
+        dodoPaymentId:
           paymentData.payment_id || paymentData.id || `pay_${Date.now()}`,
-        subscriptionId: paymentData.subscription_id || '',
+        dodoSubscriptionId: paymentData.subscription_id || null,
         amount: paymentData.total_amount || paymentData.amount || 0,
         currency: paymentData.currency || 'USD',
-        status: 'paid',
+        status: 'succeeded',
+        paymentMethod: paymentData.payment_method || null,
         paidAt: paymentData.created_at
           ? new Date(paymentData.created_at)
           : new Date(),
-        invoicePdfUrl: null, // PDF not provided in payment webhook
       })
       .onConflictDoNothing()
 
@@ -257,44 +263,57 @@ async function handleInvoicePaymentSucceeded(payload: DodoWebhookPayload) {
   }
 }
 
-async function handleInvoicePaymentFailed(payload: DodoWebhookPayload) {
+async function handlePaymentFailed(payload: DodoWebhookPayload) {
   try {
-    const invoiceData = payload.data.invoice
     const customerData = payload.data.customer
 
-    if (!invoiceData) {
-      throw new Error('Missing invoice data')
+    if (!customerData?.email) {
+      throw new Error('Missing customer email')
     }
 
-    // Create or update invoice record with failed status
+    // Get user from email to get user ID
+    const user = await getUserByEmail(customerData.email)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const paymentData = payload.data
+
+    // Create payment record with failed status
     await db
-      .insert(invoices)
+      .insert(payments)
       .values({
-        dodoInvoiceId: invoiceData.id,
-        subscriptionId: invoiceData.subscription_id,
-        amount: invoiceData.amount,
-        currency: invoiceData.currency || 'USD',
+        userId: user.id,
+        dodoPaymentId:
+          paymentData.payment_id || paymentData.id || `pay_${Date.now()}`,
+        dodoSubscriptionId: paymentData.subscription_id || null,
+        amount: paymentData.amount || 0,
+        currency: paymentData.currency || 'USD',
         status: 'failed',
+        paymentMethod: paymentData.payment_method || null,
+        paidAt: paymentData.created_at
+          ? new Date(paymentData.created_at)
+          : new Date(),
       })
-      .onConflictDoUpdate({
-        target: invoices.dodoInvoiceId,
-        set: {
-          status: 'failed',
-        },
-      })
+      .onConflictDoNothing()
 
-    // If this is a subscription payment failure, we might want to update subscription status
-    // This depends on your business logic - failed payments might mean past_due status
-    if (invoiceData.subscription_id && customerData?.email) {
-      console.log(
-        `Payment failed for subscription ${invoiceData.subscription_id}, customer: ${customerData.email}`,
-      )
-      // You can implement additional logic here based on your requirements
-    }
-
-    console.log('Invoice payment failed processed successfully')
+    console.log('Payment failed processed successfully')
   } catch (error) {
-    console.error('Error handling invoice payment failed:', error)
+    console.error('Error handling payment failed:', error)
     throw error
   }
+}
+
+// Helper function to get user by email
+async function getUserByEmail(email: string) {
+  const { users } = await import('@/db/schema')
+  const { eq } = await import('drizzle-orm')
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1)
+
+  return user || null
 }

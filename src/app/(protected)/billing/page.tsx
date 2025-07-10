@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { CancelSubscriptionButton } from '@/components/ui/cancel-subscription-button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { UpgradeButton } from '@/components/ui/upgrade-button'
@@ -7,12 +6,12 @@ import { UpgradeButton } from '@/components/ui/upgrade-button'
 import { getSubscriptionWithInvoicesAction } from '@/app/server-actions/subscription'
 
 export default async function BillingPage() {
-  const { subscription, invoices, subscriptionTier, error } =
+  const { subscription, payments, subscriptionTier, error } =
     await getSubscriptionWithInvoicesAction()
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto">
         <Card>
           <CardContent className="pt-6">
             <p className="text-red-500">
@@ -24,12 +23,23 @@ export default async function BillingPage() {
     )
   }
 
+  // Calculate next billing date
+  const nextBillingDate = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd)
+    : null
+
+  // Check subscription status
+  const isSubscriptionActive = subscription?.status === 'active'
+  const isSubscriptionCancelled = subscription?.status === 'cancelled'
+  const hasActiveSubscription =
+    subscription && (isSubscriptionActive || isSubscriptionCancelled)
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Billing & Subscription</h1>
         <p className="text-muted-foreground">
-          Manage your subscription and view billing history
+          Manage your subscription and view payment history
         </p>
       </div>
 
@@ -47,11 +57,16 @@ export default async function BillingPage() {
               <Badge
                 variant={subscriptionTier === 'pro' ? 'default' : 'secondary'}
               >
-                {subscriptionTier === 'pro' ? 'Active' : 'Free'}
+                {subscriptionTier === 'pro' && isSubscriptionCancelled
+                  ? 'Expires Soon'
+                  : subscriptionTier === 'pro'
+                    ? 'Active'
+                    : 'Free'}
               </Badge>
             </div>
 
-            {subscription && (
+            {/* Show subscription details only if user has active subscription */}
+            {hasActiveSubscription && (
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground text-sm">Status:</span>
@@ -59,19 +74,35 @@ export default async function BillingPage() {
                     {subscription.status}
                   </span>
                 </div>
+
+                {/* Show next billing only for active subscriptions */}
+                {isSubscriptionActive && nextBillingDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-sm">
+                      Next billing:
+                    </span>
+                    <span className="text-sm font-medium">
+                      {nextBillingDate.toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+
+                {/* Show access expiry for cancelled subscriptions */}
+                {isSubscriptionCancelled && nextBillingDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-sm">
+                      Access expires:
+                    </span>
+                    <span className="text-sm font-medium">
+                      {nextBillingDate.toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+
+                {/* Show current period for any active subscription */}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground text-sm">
-                    Next billing:
-                  </span>
-                  <span className="text-sm font-medium">
-                    {new Date(
-                      subscription.currentPeriodEnd,
-                    ).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground text-sm">
-                    Billing period:
+                    Current period:
                   </span>
                   <span className="text-sm font-medium">
                     {new Date(
@@ -86,6 +117,16 @@ export default async function BillingPage() {
               </div>
             )}
 
+            {/* Show status only for free tier users */}
+            {!hasActiveSubscription && subscriptionTier === 'free' && (
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground text-sm">Status:</span>
+                  <span className="text-sm font-medium">Free Plan</span>
+                </div>
+              </div>
+            )}
+
             {subscriptionTier === 'free' && (
               <div className="border-t pt-4">
                 <p className="text-muted-foreground mb-3 text-sm">
@@ -95,17 +136,29 @@ export default async function BillingPage() {
               </div>
             )}
 
-            {subscriptionTier === 'pro' && subscription && (
+            {subscriptionTier === 'pro' &&
+              subscription &&
+              isSubscriptionActive && (
+                <div className="space-y-3 border-t pt-4">
+                  <div className="text-muted-foreground text-sm">
+                    Need to make changes to your subscription?
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <CancelSubscriptionButton
+                      subscriptionId={subscription.dodoSubscriptionId}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+
+            {subscriptionTier === 'pro' && isSubscriptionCancelled && (
               <div className="space-y-3 border-t pt-4">
                 <div className="text-muted-foreground text-sm">
-                  Need to make changes to your subscription?
+                  Your subscription has been cancelled. You&apos;ll retain
+                  access until {nextBillingDate?.toLocaleDateString()}.
                 </div>
-                <div className="flex flex-col gap-2">
-                  <CancelSubscriptionButton
-                    subscriptionId={subscription.dodoSubscriptionId}
-                    className="w-full"
-                  />
-                </div>
+                <UpgradeButton />
               </div>
             )}
           </CardContent>
@@ -159,50 +212,48 @@ export default async function BillingPage() {
         </Card>
       </div>
 
-      {/* Billing History */}
-      {invoices && invoices.length > 0 && (
+      {/* Payment History */}
+      {payments && payments.length > 0 && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Billing History</CardTitle>
+            <CardTitle>Payment History</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {invoices.map((invoice) => (
+              {payments.map((payment) => (
                 <div
-                  key={invoice.id}
+                  key={payment.id}
                   className="flex items-center justify-between rounded-lg border p-4"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {invoice.currency.toUpperCase()}{' '}
-                        {(invoice.amount / 100).toFixed(2)}
+                        {payment.currency.toUpperCase()}{' '}
+                        {(payment.amount / 100).toFixed(2)}
                       </span>
                       <Badge
                         variant={
-                          invoice.status === 'paid' ? 'default' : 'destructive'
+                          payment.status === 'succeeded'
+                            ? 'default'
+                            : 'destructive'
                         }
                       >
-                        {invoice.status}
+                        {payment.status}
                       </Badge>
+                      {payment.paymentMethod && (
+                        <span className="text-muted-foreground text-xs capitalize">
+                          via {payment.paymentMethod}
+                        </span>
+                      )}
                     </div>
                     <p className="text-muted-foreground text-sm">
-                      {invoice.paidAt
-                        ? new Date(invoice.paidAt).toLocaleDateString()
-                        : new Date(invoice.createdAt!).toLocaleDateString()}
+                      {new Date(payment.paidAt).toLocaleDateString()} at{' '}
+                      {new Date(payment.paidAt).toLocaleTimeString()}
                     </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {invoice.invoicePdfUrl && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={invoice.invoicePdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Download PDF
-                        </a>
-                      </Button>
+                    {payment.dodoSubscriptionId && (
+                      <p className="text-muted-foreground text-xs">
+                        Subscription payment
+                      </p>
                     )}
                   </div>
                 </div>
@@ -212,12 +263,12 @@ export default async function BillingPage() {
         </Card>
       )}
 
-      {/* No Billing History */}
-      {(!invoices || invoices.length === 0) && subscriptionTier === 'free' && (
+      {/* No Payment History */}
+      {(!payments || payments.length === 0) && subscriptionTier === 'free' && (
         <Card className="mt-6">
           <CardContent className="pt-6">
             <div className="py-8 text-center">
-              <h3 className="mb-2 text-lg font-medium">No billing history</h3>
+              <h3 className="mb-2 text-lg font-medium">No payment history</h3>
               <p className="text-muted-foreground mb-4">
                 Upgrade to Pro to start your subscription and access advanced
                 features

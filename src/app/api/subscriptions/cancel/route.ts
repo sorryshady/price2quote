@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 
 import db from '@/db'
-import { subscriptions, users } from '@/db/schema'
+import { subscriptions } from '@/db/schema'
 import { getUser } from '@/lib/auth'
 import { dodoPayments } from '@/lib/dodo-payments'
 
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     console.log('Dodo cancellation response:', cancelResponse)
 
     // Update subscription status in our database
+    // BUT keep the user on pro tier until the current period ends
     await db
       .update(subscriptions)
       .set({
@@ -65,21 +66,19 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(subscriptions.id, subscription.id))
 
-    // Update user subscription tier back to free
-    await db
-      .update(users)
-      .set({
-        subscriptionTier: 'free',
-      })
-      .where(eq(users.id, user.id))
+    // NOTE: We do NOT downgrade the user's subscriptionTier here
+    // The user keeps pro access until currentPeriodEnd
+    // The subscription will be handled by webhooks or a cron job later
 
     return NextResponse.json({
       success: true,
-      message: 'Subscription cancelled successfully',
+      message:
+        'Subscription cancelled successfully. You will retain Pro access until the end of your current billing period.',
       data: {
         subscriptionId,
         status: 'cancelled',
         reason: reason || 'User requested cancellation',
+        accessExpiresAt: subscription.currentPeriodEnd,
       },
     })
   } catch (error) {

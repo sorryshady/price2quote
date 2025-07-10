@@ -215,6 +215,7 @@ export interface DodoWebhookPayload {
     amount?: number
     currency?: string
     status?: string
+    payment_method?: string
     created_at?: string
 
     // Subscription fields

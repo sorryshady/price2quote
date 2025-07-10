@@ -1,5 +1,5 @@
 import DodoPayments from 'dodopayments'
-import { eq } from 'drizzle-orm'
+import { and, eq, lt } from 'drizzle-orm'
 
 import db from '@/db'
 import { subscriptions, users } from '@/db/schema'
@@ -31,6 +31,56 @@ export async function updateUserSubscriptionTier(
     `Updated user ${userId} subscription tier to: ${subscriptionTier}`,
   )
   return subscriptionTier
+}
+
+// Check for expired cancelled subscriptions and downgrade users
+export async function checkExpiredSubscriptions() {
+  try {
+    const now = new Date()
+
+    // Find all cancelled subscriptions where the current period has ended
+    // and user is still on pro tier
+    const expiredSubscriptions = await db
+      .select({
+        userId: subscriptions.userId,
+        subscriptionId: subscriptions.id,
+        dodoSubscriptionId: subscriptions.dodoSubscriptionId,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        userTier: users.subscriptionTier,
+      })
+      .from(subscriptions)
+      .innerJoin(users, eq(subscriptions.userId, users.id))
+      .where(
+        and(
+          eq(subscriptions.status, 'cancelled'),
+          lt(subscriptions.currentPeriodEnd, now),
+          eq(users.subscriptionTier, 'pro'),
+        ),
+      )
+
+    console.log(
+      `Found ${expiredSubscriptions.length} expired subscriptions to process`,
+    )
+
+    // Downgrade each expired user
+    for (const subscription of expiredSubscriptions) {
+      await updateUserSubscriptionTier(subscription.userId, 'cancelled')
+      console.log(
+        `Downgraded user ${subscription.userId} from pro to free (subscription expired: ${subscription.currentPeriodEnd})`,
+      )
+    }
+
+    return {
+      success: true,
+      processedCount: expiredSubscriptions.length,
+    }
+  } catch (error) {
+    console.error('Error checking expired subscriptions:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
 }
 
 // Handle subscription creation/activation from webhook

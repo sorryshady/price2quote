@@ -19,6 +19,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { CustomToast } from '@/components/ui/custom-toast'
 
+import { useAuth } from '@/hooks/use-auth'
+
 interface CancelSubscriptionButtonProps {
   subscriptionId: string
   className?: string
@@ -31,6 +33,7 @@ export function CancelSubscriptionButton({
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
+  const { checkAuth } = useAuth()
 
   const handleCancel = async () => {
     setIsLoading(true)
@@ -56,12 +59,20 @@ export function CancelSubscriptionButton({
       toast.custom(
         <CustomToast
           type="success"
-          message="Subscription cancelled successfully. You'll retain access until the end of your billing period."
+          message={
+            data.message ||
+            "Subscription cancelled successfully. You'll retain Pro access until the end of your billing period."
+          }
         />,
       )
 
       setIsOpen(false)
-      router.refresh() // Refresh the page to show updated status
+
+      // Refresh auth state to update any cached subscription info
+      await checkAuth()
+
+      // Refresh the page to show updated status
+      router.refresh()
     } catch (error) {
       console.error('Cancellation error:', error)
       toast.custom(
@@ -94,7 +105,10 @@ export function CancelSubscriptionButton({
               Are you sure you want to cancel your Pro subscription? You will:
             </p>
             <ul className="list-disc space-y-1 pl-5">
-              <li>Lose access to unlimited quotes</li>
+              <li>
+                Keep Pro access until the end of your current billing period
+              </li>
+              <li>Then lose access to unlimited quotes</li>
               <li>Be limited to 1 company instead of 5</li>
               <li>Be limited to 2 revisions per quote</li>
               <li>Lose priority support access</li>

@@ -3,7 +3,7 @@
 import { eq } from 'drizzle-orm'
 
 import db from '@/db'
-import { invoices, subscriptions } from '@/db/schema'
+import { payments, subscriptions } from '@/db/schema'
 import { getUser } from '@/lib/auth'
 import {
   canCreateQuoteRevision,
@@ -36,39 +36,28 @@ export async function getUserSubscriptionAction() {
   }
 }
 
-export async function getUserInvoicesAction() {
+export async function getUserPaymentsAction() {
   try {
     const user = await getUser()
     if (!user) {
       return { error: 'Unauthorized' }
     }
 
-    // Get user's subscription first
-    const [subscription] = await db
+    // Get all payments for this user
+    const userPayments = await db
       .select()
-      .from(subscriptions)
-      .where(eq(subscriptions.userId, user.id))
-      .limit(1)
+      .from(payments)
+      .where(eq(payments.userId, user.id))
+      .orderBy(payments.paidAt)
 
-    if (!subscription) {
-      return { invoices: [] }
-    }
-
-    // Get all invoices for this subscription
-    const userInvoices = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.subscriptionId, subscription.id))
-      .orderBy(invoices.createdAt)
-
-    return { invoices: userInvoices }
+    return { payments: userPayments }
   } catch (error) {
-    console.error('Error fetching user invoices:', error)
-    return { error: 'Failed to fetch invoices' }
+    console.error('Error fetching user payments:', error)
+    return { error: 'Failed to fetch payments' }
   }
 }
 
-export async function getSubscriptionWithInvoicesAction() {
+export async function getSubscriptionWithPaymentsAction() {
   try {
     const user = await getUser()
     if (!user) {
@@ -85,27 +74,36 @@ export async function getSubscriptionWithInvoicesAction() {
     if (!subscription) {
       return {
         subscription: null,
-        invoices: [],
+        payments: [],
         subscriptionTier: user.subscriptionTier,
       }
     }
 
-    // Get invoices for this subscription
-    const userInvoices = await db
+    // Get payments for this user
+    const userPayments = await db
       .select()
-      .from(invoices)
-      .where(eq(invoices.subscriptionId, subscription.id))
-      .orderBy(invoices.createdAt)
+      .from(payments)
+      .where(eq(payments.userId, user.id))
+      .orderBy(payments.paidAt)
 
     return {
       subscription,
-      invoices: userInvoices,
+      payments: userPayments,
       subscriptionTier: user.subscriptionTier,
     }
   } catch (error) {
-    console.error('Error fetching subscription with invoices:', error)
+    console.error('Error fetching subscription with payments:', error)
     return { error: 'Failed to fetch subscription data' }
   }
+}
+
+// Legacy function names for backward compatibility
+export async function getUserInvoicesAction() {
+  return getUserPaymentsAction()
+}
+
+export async function getSubscriptionWithInvoicesAction() {
+  return getSubscriptionWithPaymentsAction()
 }
 
 // Legacy subscription limit actions (kept for backward compatibility)
