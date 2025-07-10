@@ -14,6 +14,8 @@ PricingGPT follows a modern Next.js application architecture with clear separati
 - **Email**: Gmail API integration
 - **Authentication**: Custom auth with session management
 - **Payments**: Dodo Payments with webhook integration
+- **Currency Conversion**: Real-time exchange rates with caching
+- **State Management**: TanStack Query with localStorage persistence
 
 ### Folder Structure
 
@@ -54,6 +56,43 @@ subscriptions.ts // Subscription status and billing
 gmail - connections.ts // Gmail OAuth tokens
 email - threads.ts // Email conversation tracking
 ```
+
+### **Multi-Company Management Patterns**
+
+**Company Selection Architecture**:
+
+```
+User Action → useSelectedCompany Hook → localStorage → Query Updates → UI Refresh
+```
+
+**Key Components**:
+
+1. **Persistent Selection Hook** (`/hooks/use-selected-company.ts`):
+
+   - Stores selected company ID in localStorage
+   - Automatically selects first company when none selected
+   - Validates stored company ID against available companies
+   - SSR-safe implementation with try/catch blocks
+
+2. **Quote Filtering Pattern**:
+
+   - `useLatestQuotesQuery` accepts optional `companyId` parameter
+   - Server actions filter quotes based on company selection
+   - QuoteSelector component enhanced with `companyId` prop
+   - Consistent filtering across Send Email, Conversations, and My Quotes
+
+3. **Currency Conversion System** (`/lib/currency-conversion.ts`):
+
+   - Real-time exchange rates from exchangerate-api.com
+   - 1-hour caching to minimize API calls (Next.js revalidation)
+   - Automatic USD conversion when multiple currencies detected
+   - Graceful fallbacks when API unavailable
+
+4. **Analytics Enhancement**:
+   - Mixed currency detection in analytics backend
+   - Automatic conversion to USD for meaningful aggregation
+   - Professional display with exchange rates and timestamps
+   - Transparent conversion information for users
 
 ### **Subscription Billing System Patterns**
 
@@ -542,5 +581,95 @@ Performance optimizations:
 - Microservices for complex features
 - Caching layers (Redis)
 - **Payment processing monitoring and alerting**
+- **Exchange rate API usage optimization**
+- **Multi-company data partitioning**
+
+## State Management Patterns
+
+### Persistent State with localStorage
+
+**useSelectedCompany Hook Pattern**:
+
+```typescript
+// Custom hook for persistent company selection
+export function useSelectedCompany(companies: Company[] | undefined) {
+  const [selectedCompanyId, setSelectedCompanyIdState] = useState<
+    string | null
+  >(null)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('price2quote_selected_company_id')
+        if (stored && companies?.some((c) => c.id === stored)) {
+          setSelectedCompanyIdState(stored)
+        } else if (companies?.[0]) {
+          setSelectedCompanyIdState(companies[0].id)
+        }
+      } catch (error) {
+        // SSR safety fallback
+      }
+    }
+  }, [companies])
+
+  // Persist to localStorage on change
+  const setSelectedCompanyId = useCallback((companyId: string) => {
+    setSelectedCompanyIdState(companyId)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('price2quote_selected_company_id', companyId)
+    }
+  }, [])
+
+  return { selectedCompanyId, setSelectedCompanyId }
+}
+```
+
+### Query Optimization with Company Filtering
+
+**Server Action Pattern**:
+
+```typescript
+// Enhanced quote queries with company filtering
+export async function getLatestQuotesAction(
+  userId: string,
+  companyId?: string,
+): Promise<GetLatestQuotesResult> {
+  const whereConditions = [eq(quotes.userId, userId)]
+
+  if (companyId) {
+    whereConditions.push(eq(quotes.companyId, companyId))
+  }
+
+  const quotesData = await db
+    .select()
+    .from(quotes)
+    .where(and(...whereConditions))
+    .orderBy(desc(quotes.createdAt))
+}
+```
+
+### Currency Conversion Caching Pattern
+
+**External API Integration with Caching**:
+
+```typescript
+// Exchange rate fetching with Next.js revalidation
+export async function getExchangeRates(): Promise<ExchangeRates> {
+  const response = await fetch(
+    `https://v6.exchangerate-api.com/v6/${env.EXCHANGERATE_API_KEY}/latest/USD`,
+    {
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    },
+  )
+
+  if (!response.ok) {
+    // Fallback rates when API unavailable
+    return getFallbackRates()
+  }
+
+  return response.json()
+}
+```
 
 This architecture provides a solid foundation for current needs while supporting future growth and feature expansion.

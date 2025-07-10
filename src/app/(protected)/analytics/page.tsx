@@ -220,6 +220,47 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Currency Conversion Warning */}
+      {analytics.currencyInfo?.isConverted && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+          <div className="flex items-start gap-3">
+            <span className="text-blue-600">💱</span>
+            <div className="flex-1">
+              <h3 className="font-medium text-blue-800 dark:text-blue-200">
+                Currency Conversion Applied
+              </h3>
+              <p className="mb-3 text-sm text-blue-700 dark:text-blue-300">
+                Multiple currencies detected. All amounts have been converted to
+                USD for aggregation using current exchange rates.
+              </p>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {analytics.currencyInfo.originalCurrencies.map((curr) => (
+                  <div
+                    key={curr}
+                    className="text-xs text-blue-700 dark:text-blue-300"
+                  >
+                    1 {curr} = $
+                    {(1 / analytics.currencyInfo!.exchangeRates[curr]).toFixed(
+                      4,
+                    )}{' '}
+                    USD
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                Rates updated:{' '}
+                {analytics.currencyInfo!.lastUpdated.toLocaleString()}
+                <br />
+                For precise currency-specific analytics, select individual
+                companies.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Summary Cards */}
       <AnalyticsSummary data={analytics.summary} growth={analytics.growth} />
 

@@ -1,52 +1,51 @@
 # Active Context
 
-## Current Focus: Subscription Billing System Refinements COMPLETED ✅
+## Current Focus: Company Management & Analytics Enhancements COMPLETED ✅
 
-**STATUS: SUBSCRIPTION BILLING SYSTEM FULLY OPTIMIZED** - All payment processing, cancellation flows, and billing display logic now working correctly.
+**STATUS: MULTI-COMPANY EXPERIENCE FULLY OPTIMIZED** - Company selection persistence, quote filtering, and mixed currency analytics with real-time exchange rates now implemented.
 
-### COMPLETED BILLING SYSTEM IMPROVEMENTS:
+### COMPLETED COMPANY MANAGEMENT IMPROVEMENTS:
 
-**Problem Resolved**: Webhook payment processing failures, incorrect billing displays, and immediate subscription downgrades on cancellation.
+**Problem Resolved**: Users had to re-select companies on every page navigation, quotes weren't filtered by company, and mixed currencies showed meaningless totals.
 
-**Solution Implemented**: Complete overhaul of payment tracking, subscription management, and billing UI.
+**Solution Implemented**: Persistent company selection with localStorage, proper quote filtering, and intelligent currency conversion system.
 
 ### RECENT MAJOR UPDATES:
 
-10. **NEW: Subscription Billing System Optimization COMPLETED:**
+11. **NEW: Multi-Company Experience Optimization COMPLETED:**
 
-    - **Payment History System**: Replaced invoices table with payments table for accurate payment tracking
-      - Records payment_id, amount, currency, status, payment_method, paid_at date
-      - Links to user and subscription for proper relationship tracking
-      - Handles both subscription and one-time payments
-    - **Webhook Handler Redesign**: Fixed Dodo Payments webhook processing
-      - Resolved UUID conflicts by using user_id instead of subscription_id for payments
-      - Proper handling of payment.succeeded events with real payment data
-      - Background subscription tier updates when payments succeed
-      - Error handling for missing user data
-    - **Smart Cancellation Flow**: Pro access retained until billing period ends
-      - Cancellation marks subscription as 'cancelled' but keeps user on pro tier
-      - Automatic expiry checking downgrades users when period actually ends
-      - Background subscription monitoring in auth endpoint
-      - Clear messaging about access retention until period end
-    - **Enhanced Billing Page Display Logic**:
-      - Free tier: Shows only status ("Free Plan")
-      - Active subscription: Shows next billing date and current period
-      - Cancelled subscription: Shows access expiry date (no next billing)
-      - Payment history with method, date/time, and subscription context
-    - **Auth State Refresh**: Immediate UI updates after subscription changes
-      - Cancel button refreshes auth state and page data
-      - Real-time subscription status updates
-      - Proper badge updates in navigation
-    - **Database Schema Cleanup**: Removed unused invoices table and updated exports
-      - Generated migration to drop invoices table
-      - Updated all imports to use payments schema
-      - Clean schema organization
-    - **Automatic Renewal Handling**: Understanding of Dodo Payments renewal flow
-      - Dodo automatically charges saved payment methods at billing cycle end
-      - Webhook events sent for successful/failed renewals
-      - Current implementation properly handles renewal success events
-      - Payment records created for all transactions
-    - **Benefits**: Professional subscription management with proper timing, accurate payment tracking, and clear user communication
+    - **Persistent Company Selection**: Created `useSelectedCompany` hook with localStorage persistence
+      - Automatically selects first company when no company is selected
+      - Validates stored company ID against available companies
+      - SSR-safe implementation with try/catch blocks
+      - Used across Send Email, Conversations, and My Quotes pages
+    - **Enhanced Quote Filtering**: Fixed QuoteSelector component for proper company filtering
+      - Added `companyId` prop to QuoteSelector component
+      - Updated `useLatestQuotesQuery` to accept optional company filtering
+      - Quotes now properly filter by selected company in Send Email page
+      - Consistent filtering behavior across all pages
+    - **Currency Conversion System**: Intelligent handling of mixed currencies in analytics
+      - Real-time exchange rate fetching from exchangerate-api.com
+      - 1-hour caching to minimize API calls
+      - Automatic USD conversion when multiple currencies detected
+      - Fallback rates when API unavailable
+      - Exchange rate API key integration in environment variables
+    - **Enhanced Analytics Display**: Professional currency conversion messaging
+      - Clear warning banner showing conversion rates and timestamp
+      - Individual currency exchange rates displayed (e.g., "1 GBP = $1.2500 USD")
+      - Guidance to select individual companies for precise analytics
+      - Transparent conversion information with last updated timestamp
+    - **Company Selector Consistency**: Removed "All Companies" option from My Quotes page
+      - Consistent behavior across Send Email, Conversations, and My Quotes
+      - No more mixed filtering states that confused users
+      - Clean, predictable UX across all pages
+
+12. **PREVIOUS: Subscription Billing System Optimization COMPLETED:**
+    - Payment History System with accurate tracking
+    - Smart Cancellation Flow with Pro access retention
+    - Webhook Handler Redesign for Dodo Payments
+    - Enhanced Billing Page Display Logic
+    - Auth State Refresh for real-time updates
 
 ### CURRENT STATUS: MVP ENHANCEMENT PHASE
 
@@ -55,16 +54,17 @@
 - ✅ User Management: Authentication, company onboarding, profile management
 - ✅ Quote Creation: AI-assisted pricing, service selection, PDF generation
 - ✅ Email Integration: Gmail OAuth, conversation tracking, PDF attachments
-- ✅ Analytics: Revenue tracking, quote performance, subscription management
-- ✅ **Subscription System**: Free/Pro tiers with optimized billing and payment tracking
+- ✅ **Multi-Company Management**: Persistent selection, proper filtering, currency conversion
+- ✅ **Analytics**: Revenue tracking with intelligent currency handling
+- ✅ Subscription System: Free/Pro tiers with optimized billing
 
 ### NEXT PRIORITIES:
 
 **Phase 1** (Current): System Refinements & Polish
 
 - Enhanced quote status system implementation
-- Analytics enhancement for new payment tracking
-- Performance optimizations
+- Performance optimizations for large datasets
+- Mobile UX improvements
 
 **Phase 2** (3-6 months): Advanced Features
 
@@ -89,6 +89,8 @@
 7. **Complete Email Sending System COMPLETED**
 8. **Email Conversation Tracking System COMPLETED**
 9. **Quote PDF Generation with Company Details COMPLETED**
+10. **Subscription Billing System Optimization COMPLETED**
+11. **Multi-Company Experience Optimization COMPLETED**
 
 ## Technical Debt & Optimizations
 
@@ -100,7 +102,8 @@
 - TanStack Query for data management
 - Clean component architecture
 - Proper error handling patterns
-- **Optimized subscription billing system**
+- **Optimized multi-company management**
+- **Real-time currency conversion system**
 
 ### Performance Status: OPTIMIZED ✅
 
@@ -108,14 +111,15 @@
 - Bundle optimization: Active
 - Loading states: Comprehensive
 - Error boundaries: Implemented
-- **Payment processing: Efficient**
+- **Company selection persistence: Instant**
+- **Exchange rate caching: 1-hour duration**
 
 ### Monitoring Requirements:
 
-- Webhook delivery success rates
-- Payment processing times
-- Subscription renewal success rates
-- User experience during billing transitions
+- Exchange rate API usage (1500 requests/month limit)
+- Company selection persistence across sessions
+- Quote filtering performance with large datasets
+- Currency conversion accuracy
 
 ## Development Guidelines
 
@@ -125,7 +129,8 @@
 - Database schema in `src/db/schema/`
 - Utility functions in `src/lib/`
 - UI components in `src/components/ui/`
-- **Payment logic in `src/lib/dodo-payments.ts`**
+- **Currency conversion in `src/lib/currency-conversion.ts`**
+- **Company selection hook in `src/hooks/use-selected-company.ts`**
 
 ### Best Practices:
 
@@ -133,11 +138,19 @@
 - Comprehensive error handling
 - Loading states for all async operations
 - Toast notifications for user feedback
-- **Background subscription monitoring**
+- **Persistent state management with localStorage**
+- **Graceful fallbacks for external API dependencies**
 
 ### Testing Strategy:
 
 - Build validation before deployment
 - Manual testing of critical user flows
-- **Webhook testing with Dodo Payments**
+- **Company selection persistence testing**
+- **Currency conversion accuracy validation**
+- **Exchange rate fallback scenarios**
 - Error scenario validation
+
+### New Environment Variables:
+
+- `EXCHANGERATE_API_KEY`: For real-time currency conversion
+- Proper API key management in environment configuration

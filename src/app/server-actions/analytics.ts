@@ -11,6 +11,7 @@ import {
   services,
 } from '@/db/schema'
 import { getSession } from '@/lib/auth'
+import { convertToUSD, getExchangeRateInfo } from '@/lib/currency-conversion'
 
 interface DateRange {
   start: Date
@@ -133,6 +134,12 @@ interface ComprehensiveAnalytics {
   services: ServiceAnalytics
   emails: EmailAnalytics
   growth: BusinessGrowthAnalytics
+  currencyInfo?: {
+    isConverted: boolean
+    originalCurrencies: string[]
+    exchangeRates: { [currency: string]: number }
+    lastUpdated: Date
+  }
 }
 
 function getMonthKey(date: Date): string {
@@ -251,11 +258,49 @@ export async function getAnalyticsDataAction(
     const acceptedQuotes = finalQuotesData.filter(
       (q) => q.quote.status === 'accepted' || q.quote.status === 'paid',
     )
-    const totalRevenue = acceptedQuotes.reduce(
-      (sum, q) => sum + parseFloat(q.quote.amount || '0'),
-      0,
-    )
-    const currency = finalQuotesData[0]?.quote.currency || 'USD'
+
+    // Check if we have multiple currencies
+    const currencies = new Set(finalQuotesData.map((q) => q.quote.currency))
+    const hasMixedCurrencies = currencies.size > 1
+    const primaryCurrency = finalQuotesData[0]?.quote.currency || 'USD'
+
+    // Handle currency conversion for mixed currencies
+    let totalRevenue = 0
+    let currency = primaryCurrency
+    let currencyInfo: ComprehensiveAnalytics['currencyInfo'] = undefined
+
+    if (hasMixedCurrencies) {
+      // Convert all currencies to USD
+      const exchangeRates: { [currency: string]: number } = {}
+      const originalCurrencies = Array.from(currencies)
+
+      // Get exchange rates for all currencies
+      for (const curr of currencies) {
+        const rateInfo = await getExchangeRateInfo(curr)
+        exchangeRates[curr] = rateInfo.rate
+      }
+
+      // Convert all amounts to USD
+      for (const q of acceptedQuotes) {
+        const amount = parseFloat(q.quote.amount || '0')
+        const convertedAmount = await convertToUSD(amount, q.quote.currency)
+        totalRevenue += convertedAmount
+      }
+
+      currency = 'USD'
+      currencyInfo = {
+        isConverted: true,
+        originalCurrencies,
+        exchangeRates,
+        lastUpdated: new Date(),
+      }
+    } else {
+      // Single currency - original logic
+      totalRevenue = acceptedQuotes.reduce(
+        (sum, q) => sum + parseFloat(q.quote.amount || '0'),
+        0,
+      )
+    }
 
     // Revenue by month
     const revenueByMonthMap = new Map<string, number>()
@@ -608,6 +653,7 @@ export async function getAnalyticsDataAction(
           seasonalTrends: [], // TODO: Implement seasonal analysis
         },
       },
+      currencyInfo,
     }
 
     return { success: true, data: analytics }
