@@ -6,6 +6,13 @@ import { Download } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -133,25 +140,28 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-2">
             <DateRangeSelector value={dateRange} onChange={setDateRange} />
             {companies.length > 1 && (
-              <select
+              <Select
                 value={
                   selectedCompanyIds.length === 1
                     ? selectedCompanyIds[0]
                     : 'all'
                 }
-                onChange={(e) => {
-                  const value = e.target.value
+                onValueChange={(value) => {
                   setSelectedCompanyIds(value === 'all' ? [] : [value])
                 }}
-                className="border-input bg-background rounded border px-3 py-1 text-sm"
               >
-                <option value="all">All Companies</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4" />
@@ -182,23 +192,26 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-2">
           <DateRangeSelector value={dateRange} onChange={setDateRange} />
           {companies.length > 1 && (
-            <select
+            <Select
               value={
                 selectedCompanyIds.length === 1 ? selectedCompanyIds[0] : 'all'
               }
-              onChange={(e) => {
-                const value = e.target.value
+              onValueChange={(value) => {
                 setSelectedCompanyIds(value === 'all' ? [] : [value])
               }}
-              className="border-input bg-background rounded border px-3 py-1 text-sm"
             >
-              <option value="all">All Companies</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Companies</SelectItem>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4" />

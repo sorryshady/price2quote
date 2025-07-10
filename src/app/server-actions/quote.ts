@@ -12,6 +12,7 @@ import {
   quotes,
   services,
 } from '@/db/schema'
+import { getUser } from '@/lib/auth'
 import { generateAIAssistedQuote } from '@/lib/gemini'
 import {
   generateFinalQuoteWithAI,
@@ -74,11 +75,23 @@ export interface CreateQuoteData {
 
 export async function createQuoteAction(data: CreateQuoteData) {
   try {
+    // Get user to check actual subscription tier
+    const user = await getUser()
+    if (!user || user.id !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to create quote',
+      }
+    }
+
     // Check subscription limit - only count original quotes, not revisions
     const currentOriginalQuotes = await getCurrentMonthOriginalQuotes(
       data.userId,
     )
-    const canCreate = canCreateQuote('free', currentOriginalQuotes) // TODO: Get actual user tier
+    const canCreate = canCreateQuote(
+      user.subscriptionTier,
+      currentOriginalQuotes,
+    )
 
     if (!canCreate) {
       return {
@@ -737,8 +750,20 @@ export async function createRevisedQuoteAction(data: {
       }
     }
 
-    // Check revision limit for free tier
-    const canRevise = await canCreateQuoteRevision(data.originalQuoteId, 'free') // TODO: Get actual user tier
+    // Get user to check actual subscription tier
+    const user = await getUser()
+    if (!user || user.id !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to create revision',
+      }
+    }
+
+    // Check revision limit
+    const canRevise = await canCreateQuoteRevision(
+      data.originalQuoteId,
+      user.subscriptionTier,
+    )
     if (!canRevise) {
       return {
         success: false,

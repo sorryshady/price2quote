@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm'
 
 import db from '@/db'
 import { companies, gmailConnections, services } from '@/db/schema'
+import { getUser } from '@/lib/auth'
 import { generateCompanySummary } from '@/lib/gemini'
 import { uploadCompanyLogo } from '@/lib/storage'
 import { canUserCreateCompany } from '@/lib/subscription'
@@ -120,8 +121,17 @@ export async function reactivateCompanyAction(
   error?: string
 }> {
   try {
+    // Get user to check actual subscription tier
+    const user = await getUser()
+    if (!user || user.id !== userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to reactivate company',
+      }
+    }
+
     // Check if user can reactivate (based on subscription limits)
-    const canCreate = await canUserCreateCompany(userId, 'free') // TODO: Get actual user tier
+    const canCreate = await canUserCreateCompany(userId, user.subscriptionTier)
 
     if (!canCreate) {
       return {
@@ -188,6 +198,26 @@ export async function saveCompanyAction(data: {
   }>
 }) {
   try {
+    // Get user to check actual subscription tier
+    const user = await getUser()
+    if (!user || user.id !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to create company',
+      }
+    }
+
+    // Check subscription limit before creating company
+    const canCreate = await canUserCreateCompany(
+      data.userId,
+      user.subscriptionTier,
+    )
+    if (!canCreate) {
+      return {
+        success: false,
+        error: 'Company limit reached. Upgrade to Pro to add more companies.',
+      }
+    }
     // 1. Save company to database with 'generating' status
     const [company] = await db
       .insert(companies)
@@ -222,28 +252,53 @@ export async function saveCompanyAction(data: {
 
     // 3. Upload logo if provided
     if (data.companyProfile.logo) {
-      // Convert base64 to file for upload
-      const base64Data = data.companyProfile.logo.replace(
-        /^data:image\/[a-z]+;base64,/,
-        '',
-      )
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-      const file = new File([byteArray], 'logo.png', { type: 'image/png' })
+      try {
+        console.log('Processing company logo for company:', company.id)
 
-      const logoUrl = await uploadCompanyLogo(company.id, file)
+        // Convert base64 to file for upload
+        const originalBase64 = data.companyProfile.logo
+        const base64Data = originalBase64.replace(
+          /^data:image\/[a-z]+;base64,/,
+          '',
+        )
 
-      // Update company with logo URL
-      if (logoUrl) {
-        await db
-          .update(companies)
-          .set({ logoUrl })
-          .where(eq(companies.id, company.id))
+        console.log('Base64 data length:', base64Data.length)
+
+        // Validate base64 data before processing
+        if (!base64Data || base64Data.trim() === '') {
+          console.warn('Empty base64 data provided for logo')
+        } else {
+          const byteCharacters = atob(base64Data)
+          const byteNumbers = new Array(byteCharacters.length)
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+          }
+          const byteArray = new Uint8Array(byteNumbers)
+          const file = new File([byteArray], 'logo.png', { type: 'image/png' })
+
+          console.log('Created file for upload, size:', file.size, 'bytes')
+
+          const logoUrl = await uploadCompanyLogo(company.id, file)
+          console.log('Upload result:', logoUrl ? 'Success' : 'Failed', logoUrl)
+
+          // Update company with logo URL
+          if (logoUrl) {
+            await db
+              .update(companies)
+              .set({ logoUrl })
+              .where(eq(companies.id, company.id))
+            console.log('Updated company with logo URL:', logoUrl)
+          } else {
+            console.warn('Logo upload failed, company created without logo')
+          }
+        }
+      } catch (logoError) {
+        console.error('Error processing company logo:', logoError)
+        // Don't fail the entire company creation just because of logo issues
+        // The company will be created without a logo
       }
+    } else {
+      console.log('No logo provided for company:', company.id)
     }
 
     // 4. Trigger background AI summary generation (fire and forget)

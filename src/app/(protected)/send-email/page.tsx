@@ -56,9 +56,9 @@ export default function SendEmailPage() {
     ? companies?.find((c) => c.id === selectedCompanyId)
     : companies?.[0]
 
-  // Auto-select company for users with only one company
+  // Auto-select first company when no company is selected
   useEffect(() => {
-    if (companies?.length === 1 && !selectedCompanyId) {
+    if (companies?.length && !selectedCompanyId) {
       setSelectedCompanyId(companies[0].id)
     }
   }, [companies, selectedCompanyId])
