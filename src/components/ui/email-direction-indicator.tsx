@@ -20,21 +20,18 @@ export function EmailDirectionIndicator({
           icon: ArrowDown,
           label: 'Inbound',
           variant: 'secondary' as const,
-          color: 'text-blue-600',
         }
       case 'outbound':
         return {
           icon: ArrowUp,
           label: 'Outbound',
           variant: 'default' as const,
-          color: 'text-green-600',
         }
       default:
         return {
           icon: Mail,
           label: 'Unknown',
           variant: 'outline' as const,
-          color: 'text-gray-600',
         }
     }
   }
@@ -44,7 +41,7 @@ export function EmailDirectionIndicator({
 
   return (
     <Badge variant={config.variant} className={`gap-1 ${className}`}>
-      <Icon className={`h-3 w-3 ${config.color}`} />
+      <Icon className={`h-3 w-3`} />
       <span className="text-xs">{config.label}</span>
     </Badge>
   )

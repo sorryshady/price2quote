@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 
-import { AppContainer } from '@/components/app-container'
 import { AccountInfo } from '@/components/ui/account-info'
 import { ArchivedCompaniesManager } from '@/components/ui/archived-companies-manager'
 import { ConnectedAccounts } from '@/components/ui/connected-accounts'
@@ -28,43 +27,39 @@ export default async function ProfilePage() {
   const { user, connectedAccounts, hasPassword } = result
 
   return (
-    <AppContainer>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Profile Settings
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences
-          </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account settings and preferences
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Column - Personal & Account */}
+        <div className="space-y-6">
+          <ProfileForm
+            initialData={{
+              name: user.name || '',
+              email: user.email,
+            }}
+          />
+          <AccountInfo
+            user={{
+              email: user.email,
+              emailVerified: user.emailVerified,
+            }}
+          />
+          <ConnectedAccounts connectedAccounts={connectedAccounts || []} />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Left Column - Personal & Account */}
-          <div className="space-y-6">
-            <ProfileForm
-              initialData={{
-                name: user.name || '',
-                email: user.email,
-              }}
-            />
-            <AccountInfo
-              user={{
-                email: user.email,
-                emailVerified: user.emailVerified,
-              }}
-            />
-            <ConnectedAccounts connectedAccounts={connectedAccounts || []} />
-          </div>
-
-          {/* Right Column - Subscription & Security */}
-          <div className="space-y-6">
-            <SubscriptionDisplay currentTier={user.subscriptionTier} />
-            <ArchivedCompaniesManager />
-            <ProfileSecurity hasPassword={hasPassword || false} />
-          </div>
+        {/* Right Column - Subscription & Security */}
+        <div className="space-y-6">
+          <SubscriptionDisplay currentTier={user.subscriptionTier} />
+          <ArchivedCompaniesManager />
+          <ProfileSecurity hasPassword={hasPassword || false} />
         </div>
       </div>
-    </AppContainer>
+    </div>
   )
 }

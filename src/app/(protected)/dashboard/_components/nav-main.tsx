@@ -35,7 +35,9 @@ export function NavMain({
                 <Link
                   href={item.url}
                   className={cn({
-                    'bg-primary text-primary-foreground': pathname === item.url,
+                    'bg-primary text-primary-foreground':
+                      pathname === item.url ||
+                      pathname.includes(item.url.split('/')[1]),
                   })}
                 >
                   {item.icon && <item.icon />}

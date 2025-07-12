@@ -1,6 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   SidebarInset,
   SidebarProvider,
@@ -74,9 +75,9 @@ export default function ProtectedLayout({
               </div>
             </div>
           </header>
-          <div className="border-sidebar-border h-[calc(100vh-3rem)] w-full overflow-y-auto rounded-md border p-4 shadow">
+          <ScrollArea className="shadows h-[calc(100vh-3rem)] w-full rounded-md border p-4">
             <ProtectedContent>{children}</ProtectedContent>
-          </div>
+          </ScrollArea>
         </main>
       </SidebarInset>
     </SidebarProvider>

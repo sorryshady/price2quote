@@ -427,7 +427,7 @@ export default function QuotesPage() {
                             handleStatusChange(quote.id, value as QuoteStatus)
                           }
                         >
-                          <SelectTrigger className="h-8 w-24 text-xs">
+                          <SelectTrigger className="h-8 w-full text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
