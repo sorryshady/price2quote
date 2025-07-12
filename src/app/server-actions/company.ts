@@ -362,7 +362,7 @@ export async function updateCompanyAction(data: {
       }
     }
 
-    // Update company basic info
+    // Update company basic info and set AI summary status to generating
     await db
       .update(companies)
       .set({
@@ -375,6 +375,7 @@ export async function updateCompanyAction(data: {
         phone: data.companyProfile.phone,
         email: data.companyProfile.email,
         website: data.companyProfile.website,
+        aiSummaryStatus: 'generating',
         updatedAt: new Date(),
       })
       .where(eq(companies.id, data.companyId))
@@ -410,6 +411,26 @@ export async function updateCompanyAction(data: {
         console.error('Error processing company logo:', logoError)
         // Don't fail the entire update just because of logo issues
       }
+    }
+
+    // Regenerate AI summary in background after successful update
+    // Get updated company data with services for AI summary
+    const updatedCompany = await db.query.companies.findFirst({
+      where: eq(companies.id, data.companyId),
+      with: {
+        services: true,
+      },
+    })
+
+    if (updatedCompany) {
+      generateAISummaryInBackground(data.companyId, {
+        name: updatedCompany.name,
+        description: updatedCompany.description || '',
+        businessType: updatedCompany.businessType,
+        country: updatedCompany.country,
+        currency: updatedCompany.currency,
+        services: updatedCompany.services || [],
+      })
     }
 
     return { success: true }
@@ -501,6 +522,34 @@ export async function updateCompanyServicesAction(data: {
 
     for (const service of servicesToRemove) {
       await db.delete(services).where(eq(services.id, service.id))
+    }
+
+    // Set AI summary status to generating and regenerate in background
+    await db
+      .update(companies)
+      .set({
+        aiSummaryStatus: 'generating',
+        updatedAt: new Date(),
+      })
+      .where(eq(companies.id, data.companyId))
+
+    // Get updated company data with services for AI summary
+    const updatedCompany = await db.query.companies.findFirst({
+      where: eq(companies.id, data.companyId),
+      with: {
+        services: true,
+      },
+    })
+
+    if (updatedCompany) {
+      generateAISummaryInBackground(data.companyId, {
+        name: updatedCompany.name,
+        description: updatedCompany.description || '',
+        businessType: updatedCompany.businessType,
+        country: updatedCompany.country,
+        currency: updatedCompany.currency,
+        services: updatedCompany.services || [],
+      })
     }
 
     return { success: true }

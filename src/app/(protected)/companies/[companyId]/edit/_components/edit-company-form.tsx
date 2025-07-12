@@ -8,7 +8,10 @@ import toast from 'react-hot-toast'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomToast } from '@/components/ui/custom-toast'
 
-import { updateCompanyAction } from '@/app/server-actions'
+import {
+  updateCompanyAction,
+  updateCompanyServicesAction,
+} from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import type { CompanyWithServices, Service } from '@/types'
@@ -109,7 +112,8 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
 
     setIsSubmitting(true)
     try {
-      const result = await updateCompanyAction({
+      // Save company info and profile
+      const companyResult = await updateCompanyAction({
         userId: user.id,
         companyId: company.id,
         companyInfo: formData.companyInfo as {
@@ -128,20 +132,52 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
         },
       })
 
-      if (result.success) {
-        toast.custom(
-          <CustomToast message="Company updated successfully" type="success" />,
-        )
-        refetch()
-        router.push(`/companies/${company.id}`)
-      } else {
+      if (!companyResult.success) {
         toast.custom(
           <CustomToast
-            message={result.error || 'Failed to update company'}
+            message={companyResult.error || 'Failed to update company'}
             type="error"
           />,
         )
+        return
       }
+
+      // Save services if there are any
+      if (formData.services && formData.services.length > 0) {
+        const servicesWithNames = formData.services.filter(
+          (service) => service.name && service.name.trim() !== '',
+        )
+
+        if (servicesWithNames.length > 0) {
+          const servicesResult = await updateCompanyServicesAction({
+            userId: user.id,
+            companyId: company.id,
+            services: servicesWithNames.map((service) => ({
+              id: service.id,
+              name: service.name,
+              description: service.description || '',
+              skillLevel: service.skillLevel,
+              basePrice: service.basePrice || '',
+            })),
+          })
+
+          if (!servicesResult.success) {
+            toast.custom(
+              <CustomToast
+                message={servicesResult.error || 'Failed to update services'}
+                type="error"
+              />,
+            )
+            return
+          }
+        }
+      }
+
+      toast.custom(
+        <CustomToast message="Company updated successfully" type="success" />,
+      )
+      refetch()
+      router.push(`/companies/${company.id}`)
     } catch (error) {
       console.error('Error updating company:', error)
       toast.custom(
@@ -179,7 +215,6 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
         return (
           <EditStepServices
             data={formData.services}
-            companyId={company.id}
             onUpdate={(data) => updateFormData('services', data)}
             onPrevious={handlePrevious}
             onSave={handleSave}

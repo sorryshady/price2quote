@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { Loader2 } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,13 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 
 import { STORAGE_KEY } from './step-company-info'
 
 const SKILL_LEVELS = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
+  { value: 'beginner', label: 'Beginner', variant: 'secondary' as const },
+  { value: 'intermediate', label: 'Intermediate', variant: 'default' as const },
+  { value: 'advanced', label: 'Advanced', variant: 'destructive' as const },
 ]
 
 interface Service {
@@ -274,7 +276,7 @@ export function StepServices({
                 <SelectContent>
                   {SKILL_LEVELS.map((lvl) => (
                     <SelectItem key={lvl.value} value={lvl.value}>
-                      {lvl.label}
+                      <Badge variant={lvl.variant}>{lvl.label}</Badge>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -285,13 +287,13 @@ export function StepServices({
             <Label htmlFor="service-desc" className="mb-1">
               Description
             </Label>
-            <Input
-              id="service-desc"
+            <Textarea
+              placeholder="Describe this service... (optional)"
               value={form.description}
               onChange={(e) =>
                 setForm((f) => ({ ...f, description: e.target.value }))
               }
-              placeholder="Optional"
+              rows={3}
               className="mt-1"
             />
           </div>

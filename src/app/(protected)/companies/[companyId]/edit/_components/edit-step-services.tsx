@@ -3,12 +3,10 @@
 import { useEffect, useState } from 'react'
 
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react'
-import toast from 'react-hot-toast'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CustomToast } from '@/components/ui/custom-toast'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -20,14 +18,10 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 
-import { updateCompanyServicesAction } from '@/app/server-actions'
-import { useAuth } from '@/hooks/use-auth'
-import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import type { Service } from '@/types'
 
 interface EditStepServicesProps {
   data: Service[]
-  companyId: string
   onUpdate: (data: Service[]) => void
   onPrevious: () => void
   onSave: () => Promise<void>
@@ -44,16 +38,12 @@ interface ServiceForm {
 
 export function EditStepServices({
   data,
-  companyId,
   onUpdate,
   onPrevious,
   onSave,
   isSubmitting,
 }: EditStepServicesProps) {
-  const { user } = useAuth()
-  const { refetch } = useCompaniesQuery()
   const [services, setServices] = useState<ServiceForm[]>([])
-  const [isUpdatingServices, setIsUpdatingServices] = useState(false)
 
   // Initialize services from data
   useEffect(() => {
@@ -107,48 +97,6 @@ export function EditStepServices({
     newServices[index] = { ...newServices[index], [field]: value }
     setServices(newServices)
     onUpdate(newServices as Service[])
-  }
-
-  const handleSaveServices = async () => {
-    if (!user?.id) {
-      toast.custom(
-        <CustomToast message="Please log in to save services" type="error" />,
-      )
-      return
-    }
-
-    setIsUpdatingServices(true)
-    try {
-      const result = await updateCompanyServicesAction({
-        userId: user.id,
-        companyId,
-        services: services.filter((s) => s.name.trim() !== ''), // Only save services with names
-      })
-
-      if (result.success) {
-        toast.custom(
-          <CustomToast
-            message="Services updated successfully"
-            type="success"
-          />,
-        )
-        refetch()
-      } else {
-        toast.custom(
-          <CustomToast
-            message={result.error || 'Failed to update services'}
-            type="error"
-          />,
-        )
-      }
-    } catch (error) {
-      console.error('Error updating services:', error)
-      toast.custom(
-        <CustomToast message="Failed to update services" type="error" />,
-      )
-    } finally {
-      setIsUpdatingServices(false)
-    }
   }
 
   return (
@@ -257,39 +205,19 @@ export function EditStepServices({
         <Button type="button" variant="outline" onClick={onPrevious}>
           Previous
         </Button>
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            onClick={handleSaveServices}
-            disabled={isUpdatingServices}
-            variant="outline"
-          >
-            {isUpdatingServices ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating Services...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Services Only
-              </>
-            )}
-          </Button>
-          <Button type="button" onClick={onSave} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving All...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save All Changes
-              </>
-            )}
-          </Button>
-        </div>
+        <Button type="button" onClick={onSave} disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving Changes...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
       </div>
     </div>
   )
