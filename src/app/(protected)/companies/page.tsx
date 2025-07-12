@@ -21,7 +21,7 @@ export default function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">My Companies</h1>
           <p className="text-muted-foreground">
