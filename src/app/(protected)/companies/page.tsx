@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 
 import { MailCheck, Plus, Settings } from 'lucide-react'
@@ -64,10 +65,12 @@ export default function CompaniesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     {company.logoUrl && (
-                      <img
+                      <Image
                         src={company.logoUrl}
                         alt={company.name}
-                        className="h-10 w-10 rounded object-cover"
+                        className="h-12 w-12 rounded object-cover"
+                        width={48}
+                        height={48}
                       />
                     )}
                     <div>

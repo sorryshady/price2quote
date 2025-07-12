@@ -53,7 +53,7 @@ export default function CompanyDetailsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-start gap-4">
           <Button asChild variant="ghost" size="sm">
             <Link href="/companies">
               <ArrowLeft className="mr-2 h-4 w-4" />

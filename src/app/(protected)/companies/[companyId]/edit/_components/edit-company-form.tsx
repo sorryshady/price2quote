@@ -13,16 +13,9 @@ import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 import type { CompanyWithServices, Service } from '@/types'
 
-// Temporary placeholder components - will be created next
-const EditStepCompanyInfo = () => (
-  <div>Company Info Step - Component to be created</div>
-)
-const EditStepCompanyProfile = () => (
-  <div>Company Profile Step - Component to be created</div>
-)
-const EditStepServices = () => (
-  <div>Services Step - Component to be created</div>
-)
+import { EditStepCompanyInfo } from './edit-step-company-info'
+import { EditStepCompanyProfile } from './edit-step-company-profile'
+import { EditStepServices } from './edit-step-services'
 
 type EditStep = 'company-info' | 'company-profile' | 'services'
 
@@ -162,11 +155,37 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'company-info':
-        return <EditStepCompanyInfo />
+        return (
+          <EditStepCompanyInfo
+            data={formData.companyInfo}
+            onUpdate={(data) => updateFormData('companyInfo', data)}
+            onNext={handleNext}
+            onSave={handleSave}
+            isSubmitting={isSubmitting}
+          />
+        )
       case 'company-profile':
-        return <EditStepCompanyProfile />
+        return (
+          <EditStepCompanyProfile
+            data={formData.companyProfile}
+            onUpdate={(data) => updateFormData('companyProfile', data)}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            onSave={handleSave}
+            isSubmitting={isSubmitting}
+          />
+        )
       case 'services':
-        return <EditStepServices />
+        return (
+          <EditStepServices
+            data={formData.services}
+            companyId={company.id}
+            onUpdate={(data) => updateFormData('services', data)}
+            onPrevious={handlePrevious}
+            onSave={handleSave}
+            isSubmitting={isSubmitting}
+          />
+        )
       default:
         return null
     }
