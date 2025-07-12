@@ -14,6 +14,7 @@ import {
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface RecentActivity {
   id: string
@@ -101,47 +102,49 @@ export function RecentActivity({ activities }: RecentActivityProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="max-h-96 space-y-3 overflow-y-auto">
-          {activities.map((activity) => (
-            <div
-              key={activity.id}
-              className="hover:bg-muted/50 flex items-start gap-3 rounded-lg border p-3 transition-colors"
-            >
-              <div className="text-muted-foreground flex-shrink-0">
-                {React.createElement(typeIcons[activity.type], {
-                  className: 'h-4 w-4',
-                })}
-              </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="text-sm font-medium">{activity.title}</h4>
-                    <Badge
-                      variant={typeColors[activity.type]}
-                      className="text-xs"
-                    >
-                      {activity.type.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  <span className="text-muted-foreground flex-shrink-0 text-xs">
-                    {formatTimeAgo(activity.timestamp)}
-                  </span>
+        <ScrollArea className="h-96">
+          <div className="space-y-3">
+            {activities.map((activity) => (
+              <div
+                key={activity.id}
+                className="hover:bg-muted/50 flex items-start gap-3 rounded-lg border p-3 transition-colors"
+              >
+                <div className="text-muted-foreground flex-shrink-0">
+                  {React.createElement(typeIcons[activity.type], {
+                    className: 'h-4 w-4',
+                  })}
                 </div>
-                <p className="text-muted-foreground truncate text-sm">
-                  {activity.description}
-                </p>
-                {activity.url && (
-                  <Link
-                    href={activity.url}
-                    className="text-primary inline-block text-xs hover:underline"
-                  >
-                    View details →
-                  </Link>
-                )}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-sm font-medium">{activity.title}</h4>
+                      <Badge
+                        variant={typeColors[activity.type]}
+                        className="text-xs"
+                      >
+                        {activity.type.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    <span className="text-muted-foreground flex-shrink-0 text-xs">
+                      {formatTimeAgo(activity.timestamp)}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground truncate text-sm">
+                    {activity.description}
+                  </p>
+                  {activity.url && (
+                    <Link
+                      href={activity.url}
+                      className="text-primary inline-block text-xs hover:underline"
+                    >
+                      View details →
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
 
         {activities.length >= 10 && (
           <div className="mt-3 border-t pt-3">
