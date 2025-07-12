@@ -29,7 +29,11 @@ import {
 
 import { useAuth } from '@/hooks/use-auth'
 import { DODO_PRODUCTS, SUBSCRIPTION_CONFIG } from '@/lib/constants'
-import { getPopularCountries } from '@/lib/data-utils'
+import {
+  getPopularCountries,
+  getStatesByCountry,
+  hasStatesData,
+} from '@/lib/data-utils'
 
 const billingFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -53,6 +57,10 @@ const COUNTRIES = getPopularCountries().map((country) => ({
 
 export default function UpgradePage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState<string>('')
+  const [availableStates, setAvailableStates] = useState<
+    Array<{ code: string; name: string }>
+  >([])
   const { user } = useAuth()
 
   const form = useForm<BillingFormData>({
@@ -61,13 +69,24 @@ export default function UpgradePage() {
       firstName: '',
       lastName: '',
       email: '',
-      phoneNumber: '+916238059733',
-      street: 'Nilav, TC-2',
-      city: 'Trivandrum',
-      state: 'Kerala',
-      country: 'IN', // Default to US
-      zipcode: '695581',
+      phoneNumber: '',
+      street: '',
+      city: '',
+      state: '',
+      country: '', // Default to US
+      zipcode: '',
     },
+    // defaultValues: {
+    //   firstName: '',
+    //   lastName: '',
+    //   email: '',
+    //   phoneNumber: '+916238059733',
+    //   street: 'Nilav, TC-2',
+    //   city: 'Trivandrum',
+    //   state: 'Kerala',
+    //   country: 'IN', // Default to US
+    //   zipcode: '695581',
+    // },
   })
 
   // Pre-populate user's email when component mounts
@@ -86,9 +105,32 @@ export default function UpgradePage() {
     }
   }, [user, form])
 
+  // Handle country selection and populate states
+  const handleCountryChange = (countryCode: string) => {
+    setSelectedCountry(countryCode)
+
+    // Reset state field when country changes
+    form.setValue('state', '')
+
+    // Get states for the selected country
+    if (hasStatesData(countryCode)) {
+      const states = getStatesByCountry(countryCode)
+      setAvailableStates(states)
+    } else {
+      setAvailableStates([])
+    }
+  }
+
+  // Initialize country and states on mount
+  useEffect(() => {
+    const currentCountry = form.getValues('country')
+    if (currentCountry) {
+      handleCountryChange(currentCountry)
+    }
+  }, [form])
+
   const onSubmit = async (data: BillingFormData) => {
     setIsLoading(true)
-
     try {
       // Create checkout session with billing information
       const response = await fetch(
@@ -111,13 +153,10 @@ export default function UpgradePage() {
           }),
         },
       )
-
       const result = await response.json()
-
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create checkout session')
       }
-
       // Redirect to Dodo Payments checkout
       window.location.href = result.payment_link
     } catch (error) {
@@ -243,35 +282,7 @@ export default function UpgradePage() {
                       )}
                     />
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>City</FormLabel>
-                            <FormControl>
-                              <Input placeholder="New York" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>State/Province</FormLabel>
-                            <FormControl>
-                              <Input placeholder="NY" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
+                    {/* Country and State - Top Row */}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
@@ -280,11 +291,14 @@ export default function UpgradePage() {
                           <FormItem>
                             <FormLabel>Country</FormLabel>
                             <Select
-                              onValueChange={field.onChange}
+                              onValueChange={(value) => {
+                                field.onChange(value)
+                                handleCountryChange(value)
+                              }}
                               defaultValue={field.value}
                             >
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                   <SelectValue placeholder="Select country" />
                                 </SelectTrigger>
                               </FormControl>
@@ -299,6 +313,64 @@ export default function UpgradePage() {
                                 ))}
                               </SelectContent>
                             </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State/Province</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              disabled={
+                                !selectedCountry || availableStates.length === 0
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue
+                                    placeholder={
+                                      !selectedCountry
+                                        ? 'Select country first'
+                                        : availableStates.length === 0
+                                          ? 'No states available'
+                                          : 'Select state'
+                                    }
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {availableStates.map((state) => (
+                                  <SelectItem
+                                    key={state.code}
+                                    value={state.code}
+                                  >
+                                    {state.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* City and ZIP Code - Bottom Row */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="New York" {...field} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
