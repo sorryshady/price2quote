@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/phone-input'
 import {
   Select,
   SelectContent,
@@ -180,7 +181,7 @@ export default function UpgradePage() {
     <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Upgrade to Pro</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mt-3">
           Complete your billing information to upgrade to the Pro plan
         </p>
       </div>
@@ -253,11 +254,12 @@ export default function UpgradePage() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input
+                          <PhoneInput {...field} defaultCountry="US" />
+                          {/* <Input
                             type="tel"
                             placeholder="+1 (555) 123-4567"
                             {...field}
-                          />
+                          /> */}
                         </FormControl>
                         <FormMessage />
                       </FormItem>

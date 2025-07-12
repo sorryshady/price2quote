@@ -5,12 +5,13 @@ import { ChangeEvent, useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ImagePlus, Loader2 } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import * as z from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { Textarea } from '@/components/ui/textarea'
 
 import { STORAGE_KEY } from './step-company-info'
@@ -182,7 +183,18 @@ export function StepCompanyProfile({
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" placeholder="Phone" {...form.register('phone')} />
+          <Controller
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                placeholder="Enter phone number"
+                value={field.value}
+                onChange={field.onChange}
+                defaultCountry="US"
+              />
+            )}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
