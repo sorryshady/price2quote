@@ -19,16 +19,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const currencies = [
-  { code: 'USD', name: 'US Dollar' },
-  { code: 'EUR', name: 'Euro' },
-  { code: 'INR', name: 'Indian Rupee' },
-  { code: 'GBP', name: 'British Pound' },
-  { code: 'AUD', name: 'Australian Dollar' },
-  { code: 'CAD', name: 'Canadian Dollar' },
-  { code: 'JPY', name: 'Japanese Yen' },
-  // Add more as needed
-]
+import { getPopularCountries, getPopularCurrencies } from '@/lib/data-utils'
+
+// Get comprehensive currency data with popular ones first
+const currencies = getPopularCurrencies()
 
 const companyInfoSchema = z.object({
   name: z.string().min(1, 'Company name is required'),
@@ -45,17 +39,8 @@ interface StepCompanyInfoProps {
   onNext: () => void
 }
 
-const countries = [
-  { code: 'US', name: 'United States' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'IN', name: 'India' },
-  { code: 'JP', name: 'Japan' },
-  // Add more countries as needed
-]
+// Get comprehensive country data with popular ones first
+const countries = getPopularCountries()
 
 export const STORAGE_KEY = 'company-setup-draft'
 

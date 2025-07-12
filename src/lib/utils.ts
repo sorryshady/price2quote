@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+import { getCurrencySymbol as getSymbol } from './data-utils'
 import { storage } from './supabase'
 
 export function cn(...inputs: ClassValue[]) {
@@ -73,18 +74,8 @@ export const formatCurrency = (
     return 'N/A'
   }
 
-  // Currency symbol mapping
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    INR: '₹',
-    AUD: 'A$',
-    CAD: 'C$',
-    JPY: '¥',
-  }
-
-  const symbol = currencySymbols[currency] || currency
+  // Get currency symbol using comprehensive data
+  const symbol = getSymbol(currency)
 
   // Default formatting options
   const defaultOptions: Intl.NumberFormatOptions = {
@@ -107,14 +98,5 @@ export const formatCurrency = (
 
 // Get currency symbol only
 export const getCurrencySymbol = (currency: string = 'USD'): string => {
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    INR: '₹',
-    AUD: 'A$',
-    CAD: 'C$',
-    JPY: '¥',
-  }
-  return currencySymbols[currency] || currency
+  return getSymbol(currency)
 }

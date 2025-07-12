@@ -2,6 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 import { env } from '@/env/server'
 
+import { getCurrencySymbol } from './data-utils'
+
 // Initialize Gemini AI client
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
@@ -110,18 +112,8 @@ export async function generateAIAssistedQuote(data: {
   }
 }): Promise<AIQuoteResponse> {
   try {
-    // Currency symbol mapping
-    const currencySymbols: Record<string, string> = {
-      USD: '$',
-      EUR: '€',
-      GBP: '£',
-      INR: '₹',
-      AUD: 'A$',
-      CAD: 'C$',
-      JPY: '¥',
-    }
-    const symbol =
-      currencySymbols[data.companyData.currency] || data.companyData.currency
+    // Get currency symbol using comprehensive data
+    const symbol = getCurrencySymbol(data.companyData.currency)
 
     const prompt = `You are an expert pricing consultant helping a business generate competitive quotes. Analyze the project requirements and provide pricing recommendations with confidence levels.
 
@@ -299,18 +291,8 @@ export async function negotiatePriceWithAI(data: {
   }
 }) {
   try {
-    // Currency symbol mapping
-    const currencySymbols: Record<string, string> = {
-      USD: '$',
-      EUR: '€',
-      GBP: '£',
-      INR: '₹',
-      AUD: 'A$',
-      CAD: 'C$',
-      JPY: '¥',
-    }
-    const symbol =
-      currencySymbols[data.companyData.currency] || data.companyData.currency
+    // Get currency symbol using comprehensive data
+    const symbol = getCurrencySymbol(data.companyData.currency)
     const prompt = `You are an expert pricing consultant helping with price negotiation. A user has proposed a different price for a service and wants your feedback.
 
 COMPANY CONTEXT:
@@ -580,17 +562,8 @@ export async function generateAIEmail(data: {
           currency: currency || 'USD',
         }).format(parseFloat(amount))
       } catch {
-        // Fallback formatting
-        const currencySymbols: Record<string, string> = {
-          USD: '$',
-          EUR: '€',
-          GBP: '£',
-          INR: '₹',
-          AUD: 'A$',
-          CAD: 'C$',
-          JPY: '¥',
-        }
-        const symbol = currencySymbols[currency] || currency
+        // Fallback formatting with comprehensive currency symbol
+        const symbol = getCurrencySymbol(currency)
         return `${symbol}${parseFloat(amount).toFixed(2)}`
       }
     }

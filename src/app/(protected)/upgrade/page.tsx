@@ -29,6 +29,7 @@ import {
 
 import { useAuth } from '@/hooks/use-auth'
 import { DODO_PRODUCTS, SUBSCRIPTION_CONFIG } from '@/lib/constants'
+import { getPopularCountries } from '@/lib/data-utils'
 
 const billingFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -44,20 +45,11 @@ const billingFormSchema = z.object({
 
 type BillingFormData = z.infer<typeof billingFormSchema>
 
-const COUNTRIES = [
-  { value: 'US', label: 'United States' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'GB', label: 'United Kingdom' },
-  { value: 'AU', label: 'Australia' },
-  { value: 'DE', label: 'Germany' },
-  { value: 'FR', label: 'France' },
-  { value: 'ES', label: 'Spain' },
-  { value: 'IT', label: 'Italy' },
-  { value: 'NL', label: 'Netherlands' },
-  { value: 'SE', label: 'Sweden' },
-  { value: 'IN', label: 'India' },
-  // Add more countries as needed
-]
+// Get comprehensive country data with popular ones first
+const COUNTRIES = getPopularCountries().map((country) => ({
+  value: country.code,
+  label: country.name,
+}))
 
 export default function UpgradePage() {
   const [isLoading, setIsLoading] = useState(false)
