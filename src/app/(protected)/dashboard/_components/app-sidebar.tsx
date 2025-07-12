@@ -78,9 +78,14 @@ const data = {
       icon: BarChart3,
     },
     {
+      title: 'My Companies',
+      url: '/companies',
+      icon: Briefcase,
+    },
+    {
       title: 'Add Company',
       url: '/add-company',
-      icon: Briefcase,
+      icon: CirclePlusIcon,
     },
   ],
   navSecondary: [

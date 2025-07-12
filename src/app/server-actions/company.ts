@@ -318,6 +318,249 @@ export async function saveCompanyAction(data: {
   }
 }
 
+export async function updateCompanyAction(data: {
+  userId: string
+  companyId: string
+  companyInfo: {
+    name: string
+    country: string
+    businessType: 'freelancer' | 'company'
+    currency: string
+  }
+  companyProfile: {
+    description: string
+    logo?: string // Base64 data
+    address?: string
+    phone?: string
+    email?: string
+    website?: string
+  }
+}) {
+  try {
+    // Get user to check authorization
+    const user = await getUser()
+    if (!user || user.id !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to update company',
+      }
+    }
+
+    // Verify the company belongs to the user
+    const company = await db.query.companies.findFirst({
+      where: and(
+        eq(companies.id, data.companyId),
+        eq(companies.userId, data.userId),
+        eq(companies.isArchived, false),
+      ),
+    })
+
+    if (!company) {
+      return {
+        success: false,
+        error: 'Company not found or access denied',
+      }
+    }
+
+    // Update company basic info
+    await db
+      .update(companies)
+      .set({
+        name: data.companyInfo.name,
+        country: data.companyInfo.country,
+        businessType: data.companyInfo.businessType,
+        currency: data.companyInfo.currency,
+        description: data.companyProfile.description,
+        address: data.companyProfile.address,
+        phone: data.companyProfile.phone,
+        email: data.companyProfile.email,
+        website: data.companyProfile.website,
+        updatedAt: new Date(),
+      })
+      .where(eq(companies.id, data.companyId))
+
+    // Handle logo upload if provided
+    if (data.companyProfile.logo) {
+      try {
+        const originalBase64 = data.companyProfile.logo
+        const base64Data = originalBase64.replace(
+          /^data:image\/[a-z]+;base64,/,
+          '',
+        )
+
+        if (base64Data && base64Data.trim() !== '') {
+          const byteCharacters = atob(base64Data)
+          const byteNumbers = new Array(byteCharacters.length)
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+          }
+          const byteArray = new Uint8Array(byteNumbers)
+          const file = new File([byteArray], 'logo.png', { type: 'image/png' })
+
+          const logoUrl = await uploadCompanyLogo(data.companyId, file)
+
+          if (logoUrl) {
+            await db
+              .update(companies)
+              .set({ logoUrl })
+              .where(eq(companies.id, data.companyId))
+          }
+        }
+      } catch (logoError) {
+        console.error('Error processing company logo:', logoError)
+        // Don't fail the entire update just because of logo issues
+      }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating company:', error)
+    return { success: false, error: 'Failed to update company' }
+  }
+}
+
+export async function updateCompanyServicesAction(data: {
+  userId: string
+  companyId: string
+  services: Array<{
+    id?: string // If provided, update existing service
+    name: string
+    description?: string
+    skillLevel: 'beginner' | 'intermediate' | 'advanced'
+    basePrice?: string
+  }>
+}) {
+  try {
+    // Get user to check authorization
+    const user = await getUser()
+    if (!user || user.id !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to update services',
+      }
+    }
+
+    // Verify the company belongs to the user
+    const company = await db.query.companies.findFirst({
+      where: and(
+        eq(companies.id, data.companyId),
+        eq(companies.userId, data.userId),
+        eq(companies.isArchived, false),
+      ),
+    })
+
+    if (!company) {
+      return {
+        success: false,
+        error: 'Company not found or access denied',
+      }
+    }
+
+    // Get current services
+    const currentServices = await db.query.services.findMany({
+      where: eq(services.companyId, data.companyId),
+    })
+
+    // Separate new services from existing ones
+    const servicesToUpdate = data.services.filter((s) => s.id)
+    const servicesToAdd = data.services.filter((s) => !s.id)
+
+    // Update existing services
+    for (const service of servicesToUpdate) {
+      await db
+        .update(services)
+        .set({
+          name: service.name,
+          description: service.description,
+          skillLevel: service.skillLevel,
+          basePrice: service.basePrice,
+          currency: company.currency,
+        })
+        .where(eq(services.id, service.id!))
+    }
+
+    // Add new services
+    if (servicesToAdd.length > 0) {
+      await db.insert(services).values(
+        servicesToAdd.map((service) => ({
+          companyId: data.companyId,
+          name: service.name,
+          description: service.description,
+          skillLevel: service.skillLevel,
+          basePrice: service.basePrice,
+          currency: company.currency,
+        })),
+      )
+    }
+
+    // Remove services that are no longer in the list
+    const updatedServiceIds = servicesToUpdate.map((s) => s.id).filter(Boolean)
+    const servicesToRemove = currentServices.filter(
+      (s) => !updatedServiceIds.includes(s.id),
+    )
+
+    for (const service of servicesToRemove) {
+      await db.delete(services).where(eq(services.id, service.id))
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating services:', error)
+    return { success: false, error: 'Failed to update services' }
+  }
+}
+
+export async function deleteServiceAction(data: {
+  userId: string
+  serviceId: string
+}) {
+  try {
+    // Get user to check authorization
+    const user = await getUser()
+    if (!user || user.id !== data.userId) {
+      return {
+        success: false,
+        error: 'Unauthorized to delete service',
+      }
+    }
+
+    // Get the service and verify ownership through company
+    const service = await db.query.services.findFirst({
+      where: eq(services.id, data.serviceId),
+    })
+
+    if (!service) {
+      return {
+        success: false,
+        error: 'Service not found',
+      }
+    }
+
+    // Verify ownership through company
+    const company = await db.query.companies.findFirst({
+      where: and(
+        eq(companies.id, service.companyId),
+        eq(companies.userId, data.userId),
+      ),
+    })
+
+    if (!company) {
+      return {
+        success: false,
+        error: 'Access denied',
+      }
+    }
+
+    // Delete the service
+    await db.delete(services).where(eq(services.id, data.serviceId))
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting service:', error)
+    return { success: false, error: 'Failed to delete service' }
+  }
+}
+
 // Background AI summary generation
 async function generateAISummaryInBackground(
   companyId: string,

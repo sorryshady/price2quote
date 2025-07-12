@@ -1,8 +1,11 @@
 'use client'
 
-import { MailCheck } from 'lucide-react'
+import Link from 'next/link'
+
+import { MailCheck, Settings } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { DashboardSkeleton } from '@/components/ui/loading-states'
 
 import { useActionItems } from '@/hooks/use-action-items'
@@ -97,12 +100,21 @@ export default function DashboardPage() {
           {/* Companies Overview with Gmail Status */}
           {companies && companies.length > 0 && (
             <div className="bg-card rounded-lg border p-6">
-              <h3 className="mb-4 text-lg font-semibold">Your Companies</h3>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Your Companies</h3>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/companies">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Manage All
+                  </Link>
+                </Button>
+              </div>
               <div className="space-y-3">
                 {companies.slice(0, 3).map((company) => (
-                  <div
+                  <Link
                     key={company.id}
-                    className="bg-background/50 flex items-center justify-between rounded-lg border p-3"
+                    href={`/companies/${company.id}`}
+                    className="bg-background/50 hover:bg-muted/50 flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {company.logoUrl && (
@@ -132,12 +144,16 @@ export default function DashboardPage() {
                     <div className="text-muted-foreground text-xs">
                       {company.currency}
                     </div>
-                  </div>
+                  </Link>
                 ))}
                 {companies.length > 3 && (
-                  <p className="text-muted-foreground pt-2 text-center text-xs">
-                    +{companies.length - 3} more companies
-                  </p>
+                  <div className="pt-2 text-center">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/companies">
+                        View all {companies.length} companies
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
