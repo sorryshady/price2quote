@@ -2,10 +2,8 @@
 
 import { useState } from 'react'
 
-import { Download } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExportDropdown } from '@/components/ui/export-dropdown'
 import {
   Select,
   SelectContent,
@@ -163,10 +161,47 @@ export default function AnalyticsPage() {
                 </SelectContent>
               </Select>
             )}
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
+            <ExportDropdown
+              data={{
+                summary: {
+                  totalRevenue: 0,
+                  totalQuotes: 0,
+                  activeClients: 0,
+                  acceptanceRate: 0,
+                  currency: 'USD',
+                },
+                revenue: {
+                  totalRevenue: 0,
+                  revenueByMonth: [],
+                  revenueByCompany: [],
+                  revenueByService: [],
+                  averageQuoteValue: 0,
+                  currency: 'USD',
+                },
+                quotes: {
+                  totalQuotes: 0,
+                  acceptanceRate: 0,
+                  conversionFunnel: {},
+                  averageTimeToAcceptance: 0,
+                  revisionFrequency: 0,
+                  quotesByMonth: [],
+                },
+                clients: {
+                  totalClients: 0,
+                  clientsByLocation: [],
+                  topClients: [],
+                },
+                emails: {
+                  totalEmails: 0,
+                  emailsByDirection: { inbound: 0, outbound: 0 },
+                  responseRate: 0,
+                  emailsByMonth: [],
+                },
+                dateRange,
+                exportedAt: new Date(),
+              }}
+              disabled={true}
+            />
           </div>
         </div>
 
@@ -213,10 +248,13 @@ export default function AnalyticsPage() {
               </SelectContent>
             </Select>
           )}
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
+          <ExportDropdown
+            data={{
+              ...analytics,
+              dateRange,
+              exportedAt: new Date(),
+            }}
+          />
         </div>
       </div>
 
