@@ -42,6 +42,7 @@ export default function ActivityPage() {
     isLoading,
     error,
     refetch,
+    isFetching,
   } = useAllActivity(user?.id, filters)
 
   if (authLoading) {
@@ -79,12 +80,12 @@ export default function ActivityPage() {
           variant="outline"
           size="sm"
           onClick={() => refetch()}
-          disabled={isLoading}
+          disabled={isFetching}
         >
           <RefreshCw
-            className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+            className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`}
           />
-          Refresh
+          {isFetching ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
 
