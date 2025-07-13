@@ -10,7 +10,8 @@ import type { DodoWebhookPayload, UpdateSubscriptionResult } from '@/types'
 
 export const dodoPayments = new DodoPayments({
   bearerToken: env.DODO_PAYMENTS_API_KEY,
-  environment: env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
+  environment: 'test_mode',
+  // environment: env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
 })
 
 // Helper function to handle company overflow when downgrading subscriptions
