@@ -569,7 +569,7 @@ export async function negotiatePriceAction(data: {
         description: company.description || '',
         businessType: company.businessType,
         country: company.country,
-        currency: 'USD',
+        currency: company.currency,
         aiSummary: company.aiSummary || undefined,
         services: [],
       },

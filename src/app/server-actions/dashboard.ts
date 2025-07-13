@@ -433,3 +433,169 @@ export async function getRecentActivityAction(userId: string) {
     return { success: false, error: 'Failed to fetch recent activity' }
   }
 }
+
+interface ActivityFilters {
+  type?:
+    | 'all'
+    | 'quote_created'
+    | 'quote_status_changed'
+    | 'email_sent'
+    | 'email_received'
+    | 'system_event'
+  dateRange?: 'all' | 'today' | 'week' | 'month' | 'quarter' | 'year'
+  limit?: number
+  offset?: number
+}
+
+export async function getAllActivityAction(
+  userId: string,
+  filters: ActivityFilters = {},
+) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id || session.user.id !== userId) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    const activities: RecentActivity[] = []
+    const { type = 'all', dateRange = 'all', limit = 50, offset = 0 } = filters
+
+    // Calculate date range
+    let dateFilter: Date | null = null
+    const now = new Date()
+
+    switch (dateRange) {
+      case 'today':
+        dateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        break
+      case 'week':
+        dateFilter = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'month':
+        dateFilter = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case 'quarter':
+        const quarterStart = Math.floor(now.getMonth() / 3) * 3
+        dateFilter = new Date(now.getFullYear(), quarterStart, 1)
+        break
+      case 'year':
+        dateFilter = new Date(now.getFullYear(), 0, 1)
+        break
+      default:
+        dateFilter = null
+    }
+
+    // Build quote conditions
+    const quoteConditions = [eq(quotes.userId, userId)]
+    if (dateFilter) {
+      quoteConditions.push(gte(quotes.createdAt, dateFilter))
+    }
+
+    // Get quotes if needed
+    if (
+      type === 'all' ||
+      type === 'quote_created' ||
+      type === 'quote_status_changed'
+    ) {
+      const quotesData = await db
+        .select({
+          quote: quotes,
+          company: companies,
+        })
+        .from(quotes)
+        .leftJoin(companies, eq(quotes.companyId, companies.id))
+        .where(and(...quoteConditions))
+        .orderBy(desc(quotes.createdAt))
+
+      quotesData.forEach(({ quote, company }) => {
+        if (type === 'all' || type === 'quote_created') {
+          activities.push({
+            id: `quote-created-${quote.id}`,
+            type: 'quote_created',
+            title: 'Quote created',
+            description: `Created "${quote.projectTitle}" for ${company?.name}`,
+            timestamp: quote.createdAt,
+            url: `/quotes/${quote.id}/versions`,
+            metadata: { quoteId: quote.id, status: quote.status },
+          })
+        }
+
+        // Add status changes if quote was updated after creation
+        if (
+          (type === 'all' || type === 'quote_status_changed') &&
+          quote.updatedAt > quote.createdAt
+        ) {
+          activities.push({
+            id: `quote-status-${quote.id}`,
+            type: 'quote_status_changed',
+            title: 'Quote status updated',
+            description: `"${quote.projectTitle}" is now ${quote.status}`,
+            timestamp: quote.updatedAt,
+            url: `/quotes/${quote.id}/versions`,
+            metadata: { quoteId: quote.id, status: quote.status },
+          })
+        }
+      })
+    }
+
+    // Build email conditions
+    const emailConditions = [eq(emailThreads.userId, userId)]
+    if (dateFilter) {
+      emailConditions.push(gte(emailThreads.sentAt, dateFilter))
+    }
+
+    // Get emails if needed
+    if (type === 'all' || type === 'email_sent' || type === 'email_received') {
+      const emailsData = await db
+        .select({
+          thread: emailThreads,
+          quote: quotes,
+        })
+        .from(emailThreads)
+        .leftJoin(quotes, eq(emailThreads.quoteId, quotes.id))
+        .where(and(...emailConditions))
+        .orderBy(desc(emailThreads.sentAt))
+
+      emailsData.forEach(({ thread, quote }) => {
+        const isOutbound = thread.direction === 'outbound'
+        const emailType = isOutbound ? 'email_sent' : 'email_received'
+
+        if (type === 'all' || type === emailType) {
+          const emailAddress = isOutbound
+            ? thread.to
+            : thread.fromEmail || thread.to
+
+          activities.push({
+            id: `email-${thread.id}`,
+            type: emailType,
+            title: isOutbound ? 'Email sent' : 'Email received',
+            description: `${isOutbound ? 'Sent to' : 'Received from'} ${emailAddress} about "${quote?.projectTitle || 'project'}"`,
+            timestamp: thread.sentAt,
+            url: `/conversations/${thread.gmailThreadId}`,
+            metadata: {
+              emailId: thread.id,
+              subject: thread.subject,
+              direction: thread.direction,
+            },
+          })
+        }
+      })
+    }
+
+    // Sort by timestamp (newest first)
+    activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+
+    // Apply pagination
+    const paginatedActivities = activities.slice(offset, offset + limit)
+
+    return {
+      success: true,
+      activities: paginatedActivities,
+      total: activities.length,
+      hasMore: offset + limit < activities.length,
+    }
+  } catch (error) {
+    console.error('Error fetching all activity:', error)
+    return { success: false, error: 'Failed to fetch all activity' }
+  }
+}

@@ -149,7 +149,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
         {activities.length >= 10 && (
           <div className="mt-3 border-t pt-3">
             <Link
-              href="/quotes"
+              href="/dashboard/activity"
               className="text-primary block w-full text-center text-sm hover:underline"
             >
               View all activity

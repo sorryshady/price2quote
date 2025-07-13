@@ -293,6 +293,7 @@ export async function negotiatePriceWithAI(data: {
   try {
     // Get currency symbol using comprehensive data
     const symbol = getCurrencySymbol(data.companyData.currency)
+    console.log('symbol', symbol)
     const prompt = `You are an expert pricing consultant helping with price negotiation. A user has proposed a different price for a service and wants your feedback.
 
 COMPANY CONTEXT:

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Eye, FileDown, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -51,6 +50,7 @@ import {
 } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import { useDashboardInvalidation } from '@/hooks/use-dashboard-invalidation'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
 import {
   downloadPDF,
@@ -100,7 +100,7 @@ export default function NewQuotePage() {
   const { user } = useAuth()
   const { companies } = useCompaniesQuery()
   const { canCreate, currentQuotes, upgradeMessage } = useQuoteLimit()
-  const queryClient = useQueryClient()
+  const { invalidateAllDashboardData } = useDashboardInvalidation()
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>(
     [],
   )
@@ -553,16 +553,8 @@ export default function NewQuotePage() {
         setSavedQuoteId(result.quote.id)
         setFinalQuoteData(finalQuoteData)
 
-        // Invalidate quotes queries to refresh the quotes list
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['quotes', user.id] }),
-          queryClient.invalidateQueries({
-            queryKey: ['latest-quotes', user.id],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ['quote-limit', user.id],
-          }),
-        ])
+        // Invalidate all dashboard data to refresh everything
+        invalidateAllDashboardData(user.id)
 
         // Show upgrade message if this was the last free quote
         if (!canCreate) {

@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, RefreshCw, Save } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -51,6 +50,7 @@ import {
 } from '@/app/server-actions/quote'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import { useDashboardInvalidation } from '@/hooks/use-dashboard-invalidation'
 import { useRevisionLimit } from '@/hooks/use-subscription-limits'
 import { getStatusColor, getStatusIcon } from '@/lib/quote-status-utils'
 import { calculateTax } from '@/lib/tax-utils'
@@ -98,7 +98,7 @@ export default function EditQuotePage() {
   const router = useRouter()
   const params = useParams()
   const quoteId = params?.quoteId as string
-  const queryClient = useQueryClient()
+  const { invalidateAllDashboardData } = useDashboardInvalidation()
 
   // Check revision limits
   const {
@@ -527,12 +527,8 @@ export default function EditQuotePage() {
 
     setSubmitting(false)
     if (result.success) {
-      // Invalidate quotes queries to refresh the quotes list
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['quotes', user.id] }),
-        queryClient.invalidateQueries({ queryKey: ['latest-quotes', user.id] }),
-        queryClient.invalidateQueries({ queryKey: ['quote-limit', user.id] }),
-      ])
+      // Invalidate all dashboard data to refresh everything
+      invalidateAllDashboardData(user.id)
 
       toast.custom(
         <CustomToast message="Quote revised successfully!" type="success" />,

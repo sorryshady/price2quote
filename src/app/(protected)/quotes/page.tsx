@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
-import { useQueryClient } from '@tanstack/react-query'
 import { Eye, FileDown, FilePenLine, GitBranch, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -45,6 +44,7 @@ import {
 } from '@/app/server-actions'
 import { useAuth } from '@/hooks/use-auth'
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
+import { useDashboardInvalidation } from '@/hooks/use-dashboard-invalidation'
 import { useLatestQuotesQuery } from '@/hooks/use-quotes-query'
 import { useSelectedCompany } from '@/hooks/use-selected-company'
 import { useQuoteLimit } from '@/hooks/use-subscription-limits'
@@ -99,7 +99,7 @@ function formatCurrency(amount: string | null, currency: string) {
 
 export default function QuotesPage() {
   const { user, isLoading: authLoading, isInitialized } = useAuth()
-  const queryClient = useQueryClient()
+  const { invalidateAllDashboardData } = useDashboardInvalidation()
   const { companies, isLoading: companiesLoading } = useCompaniesQuery()
   const {
     currentQuotes,
@@ -171,18 +171,10 @@ export default function QuotesPage() {
   ) => {
     const result = await updateQuoteStatusAction(quoteId, newStatus)
     if (result.success) {
-      // Invalidate quotes queries to refresh the list
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ['quotes', user?.id || ''],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['latest-quotes', user?.id || ''],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['conversations'],
-        }),
-      ])
+      // Invalidate all dashboard data to refresh everything
+      if (user?.id) {
+        invalidateAllDashboardData(user.id)
+      }
 
       toast.custom(
         <CustomToast
@@ -212,13 +204,8 @@ export default function QuotesPage() {
         toast.custom(
           <CustomToast message="Quote deleted successfully" type="success" />,
         )
-        // Invalidate quote limit cache and latest quotes cache
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['quote-limit', user.id] }),
-          queryClient.invalidateQueries({
-            queryKey: ['latest-quotes', user.id],
-          }),
-        ])
+        // Invalidate all dashboard data to refresh everything
+        invalidateAllDashboardData(user.id)
       } else {
         toast.custom(
           <CustomToast
