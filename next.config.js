@@ -8,6 +8,11 @@ jiti.import('./src/env/server')
 
 const nextConfig = {
   reactStrictMode: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
   images: {
     remotePatterns: [
       {

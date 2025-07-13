@@ -10,9 +10,11 @@ random quote_sent in status inside conversation.
 DONE: when new unread email fetched invalidate conversation using the id.
 
 DONE: Negotiation is giving results in USD. Need to fix that
-Need to check the implementation of the actions required thing. Right now it shows some things but not fully functional.
 DONE: Add companies settings page to add services, remove service and (REMAINING)edit logo, name etc.
 
 DONE: Dashboard and analytics persist on client side. Invalidate when something changes
 DONE: Dashboard also has to show the currency conversion because it is also changing
+
+
 Add better loading states actually.
+Need to check the implementation of the actions required thing. Right now it shows some things but not fully functional.

@@ -414,22 +414,29 @@ export async function updateCompanyAction(data: {
     }
 
     // Regenerate AI summary in background after successful update
-    // Get updated company data with services for AI summary
+    // Get updated company data and services separately for AI summary
     const updatedCompany = await db.query.companies.findFirst({
       where: eq(companies.id, data.companyId),
-      with: {
-        services: true,
-      },
     })
 
     if (updatedCompany) {
+      // Get services separately
+      const companyServices = await db.query.services.findMany({
+        where: eq(services.companyId, data.companyId),
+      })
+
       generateAISummaryInBackground(data.companyId, {
         name: updatedCompany.name,
         description: updatedCompany.description || '',
         businessType: updatedCompany.businessType,
         country: updatedCompany.country,
         currency: updatedCompany.currency,
-        services: updatedCompany.services || [],
+        services: companyServices.map((service) => ({
+          name: service.name,
+          description: service.description || undefined,
+          skillLevel: service.skillLevel,
+          basePrice: service.basePrice || undefined,
+        })),
       })
     }
 
@@ -533,22 +540,29 @@ export async function updateCompanyServicesAction(data: {
       })
       .where(eq(companies.id, data.companyId))
 
-    // Get updated company data with services for AI summary
+    // Get updated company data and services separately for AI summary
     const updatedCompany = await db.query.companies.findFirst({
       where: eq(companies.id, data.companyId),
-      with: {
-        services: true,
-      },
     })
 
     if (updatedCompany) {
+      // Get services separately
+      const companyServices = await db.query.services.findMany({
+        where: eq(services.companyId, data.companyId),
+      })
+
       generateAISummaryInBackground(data.companyId, {
         name: updatedCompany.name,
         description: updatedCompany.description || '',
         businessType: updatedCompany.businessType,
         country: updatedCompany.country,
         currency: updatedCompany.currency,
-        services: updatedCompany.services || [],
+        services: companyServices.map((service) => ({
+          name: service.name,
+          description: service.description || undefined,
+          skillLevel: service.skillLevel,
+          basePrice: service.basePrice || undefined,
+        })),
       })
     }
 

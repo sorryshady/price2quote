@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DashboardSkeleton } from '@/components/ui/loading-states'
 import { Separator } from '@/components/ui/separator'
+import { useSidebar } from '@/components/ui/sidebar'
 
 import { useCompaniesQuery } from '@/hooks/use-companies-query'
 
 export default function CompanyDetailsPage() {
+  const { open } = useSidebar()
   const params = useParams()
   const companyId = params.companyId as string
   const { companies, isLoading } = useCompaniesQuery()
@@ -52,7 +54,7 @@ export default function CompanyDetailsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex flex-col items-start gap-4">
           <Button asChild variant="ghost" size="sm">
             <Link href="/companies">
@@ -95,7 +97,9 @@ export default function CompanyDetailsPage() {
       </div>
 
       {/* Company Information */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div
+        className={`grid gap-6 ${open ? 'sm:grid-cols-1' : 'sm:grid-cols-2'} lg:grid-cols-2`}
+      >
         {/* Basic Information */}
         <Card>
           <CardHeader>
